@@ -1,0 +1,57 @@
+// English (source) strings. Keys are grouped by area. Other locales mirror these keys;
+// any key missing in a locale falls back to English automatically.
+const en = {
+  common: {
+    save: 'Save',
+    saveChanges: 'Save changes',
+    cancel: 'Cancel',
+    close: 'Close',
+    confirm: 'Confirm',
+    search: 'Search',
+    loading: 'Loading…',
+    retry: 'Try again',
+    edit: 'Edit',
+    view: 'View',
+    add: 'Add',
+    export: 'Export CSV',
+    signOut: 'Sign out',
+    profile: 'Profile',
+    settings: 'Settings',
+    notifications: 'Notifications',
+    language: 'Language',
+    noResults: 'Nothing here yet',
+    previous: 'Previous',
+    next: 'Next',
+    all: 'All',
+  },
+  auth: {
+    welcomeBack: 'Welcome back',
+    signIn: 'Sign in',
+    signingIn: 'Signing in…',
+    chooseRole: 'I am signing in as',
+    identifier: 'E-mail or mobile number',
+    password: 'Password',
+    forgot: 'Forgot password?',
+    noAccount: 'New to KisanVani?',
+    createAccount: 'Create an account',
+    haveAccount: 'Already registered?',
+    register: 'Create account',
+    registering: 'Creating account…',
+    resetTitle: 'Reset your password',
+    sendCode: 'Send verification code',
+    verifyCode: 'Verify code',
+    setNewPassword: 'Set new password',
+  },
+  roles: {
+    ADMIN: 'Admin',
+    SHOPKEEPER: 'Shopkeeper',
+    FARMER: 'Farmer',
+    MANDI_OWNER: 'Market Mandi',
+    DRIVER: 'Driver',
+  },
+  dashboard: {
+    greeting: 'Namaste, {name}',
+  },
+};
+
+export default en;
