@@ -25,10 +25,7 @@ app.use(
 );
 app.use(
   cors({
-    origin: (origin, cb) => {
-      if (!origin || config.clientUrls.includes(origin)) return cb(null, true);
-      return cb(null, false);
-    },
+    origin: config.corsOrigin,
     credentials: true,
   })
 );

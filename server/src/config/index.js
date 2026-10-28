@@ -109,4 +109,24 @@ const config = {
   log: { level: env.LOG_LEVEL, toFile: env.LOG_TO_FILE && env.NODE_ENV !== 'test' },
 };
 
+// In development, also allow localhost / 127.0.0.1 / ::1 / private LAN IPs on any port.
+// Vite moves to 5174, 5175… when 5173 is busy, and the app is often opened via 127.0.0.1 or a LAN IP;
+// a strict match against CLIENT_URL makes the browser block those responses (axios ERR_NETWORK).
+const DEV_ORIGIN_RE =
+  /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\]|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3})(:\d+)?$/;
+
+const normalizeOrigin = (o) => o.replace(/\/+$/, '').toLowerCase();
+config.clientUrls = config.clientUrls.map(normalizeOrigin);
+
+/** True when a browser Origin may call the API (shared by Express CORS and Socket.IO). */
+config.isAllowedOrigin = (origin) => {
+  if (!origin) return true; // same-origin requests, curl, mobile apps
+  const o = normalizeOrigin(origin);
+  if (config.clientUrls.includes(o)) return true;
+  return !config.isProd && DEV_ORIGIN_RE.test(o);
+};
+
+/** `origin` callback for the cors middleware and Socket.IO */
+config.corsOrigin = (origin, cb) => cb(null, config.isAllowedOrigin(origin));
+
 module.exports = config;

@@ -12,7 +12,7 @@ const registerTrackingHandlers = require('./tracking.socket');
  */
 const initSockets = (httpServer) => {
   const io = new Server(httpServer, {
-    cors: { origin: config.clientUrls, credentials: true },
+    cors: { origin: config.corsOrigin, credentials: true },
     pingInterval: 25_000,
     pingTimeout: 20_000,
   });
