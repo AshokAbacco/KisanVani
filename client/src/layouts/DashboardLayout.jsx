@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, LogOut, User, Settings, ChevronDown, Languages } from 'lucide-react';
 import Logo from '../components/common/Logo';
 import Avatar from '../components/common/Avatar';
@@ -7,34 +7,55 @@ import NotificationBell from '../components/common/NotificationBell';
 import ErrorBoundary from '../components/feedback/ErrorBoundary';
 import { useAuth } from '../context/AuthContext';
 import { useI18n, LANGUAGES } from '../i18n';
-import { NAV, QUICK_NAV, findNavItem } from '../constants/nav';
+import { NAV, QUICK_NAV, PROFILE_LINKS, findActive } from '../constants/nav';
 import { ROLES } from '../constants/roles';
 import { authApi } from '../services';
 
-const SidebarNav = ({ role, onNavigate }) => (
-  <nav className="flex-1 space-y-5 overflow-y-auto px-3 py-4" aria-label="Main">
-    {NAV[role].map((g) => (
-      <div key={g.group}>
-        <p className="px-3 pb-1.5 text-xs font-semibold text-soil-400">{g.group}</p>
-        <ul className="space-y-0.5">
-          {g.items.map((it) => (
-            <li key={it.to}>
-              <NavLink
-                to={it.to}
-                end={it.end}
-                onClick={onNavigate}
-                className={({ isActive }) => `flex items-center gap-3 rounded-lg px-3 py-2 text-[15px] transition ${isActive ? 'accent-soft accent-text font-semibold' : 'text-soil-600 hover:bg-soil-100 hover:text-soil'}`}
-              >
-                <it.icon className="h-[18px] w-[18px] shrink-0" aria-hidden />
-                <span className="truncate">{it.label}</span>
-              </NavLink>
-            </li>
-          ))}
-        </ul>
-      </div>
-    ))}
+const SidebarNav = ({ role, active, onNavigate }) => (
+  <nav className="flex-1 overflow-y-auto px-3 py-4" aria-label="Main">
+    <ul className="space-y-1">
+      {NAV[role].map((it) => {
+        const isActive = active?.item === it;
+        return (
+          <li key={it.label}>
+            <Link
+              to={it.tabs[0].to}
+              onClick={onNavigate}
+              aria-current={isActive ? 'page' : undefined}
+              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-[15px] transition ${isActive ? 'accent-soft accent-text font-semibold' : 'text-soil-600 hover:bg-soil-100 hover:text-soil'}`}
+            >
+              <it.icon className="h-[18px] w-[18px] shrink-0" aria-hidden />
+              <span className="truncate">{it.label}</span>
+            </Link>
+          </li>
+        );
+      })}
+    </ul>
   </nav>
 );
+
+/** Tab strip for the related screens of the current sidebar item (only on its list screens, not detail pages). */
+const SectionTabs = ({ active, pathname }) => {
+  if (!active || active.item.tabs.length < 2 || !active.item.tabs.some((t) => t.to === pathname)) return null;
+  return (
+    <div role="tablist" className="mb-5 flex max-w-full gap-1 overflow-x-auto overflow-y-hidden border-b border-soil-200 [scrollbar-width:none]">
+      {active.item.tabs.map((t) => {
+        const on = t === active.tab;
+        return (
+          <Link
+            key={t.to}
+            to={t.to}
+            role="tab"
+            aria-selected={on}
+            className={`-mb-px whitespace-nowrap border-b-2 px-3 py-2 text-sm font-medium transition ${on ? 'border-current accent-text' : 'border-transparent text-soil-500 hover:text-soil'}`}
+          >
+            {t.label}
+          </Link>
+        );
+      })}
+    </div>
+  );
+};
 
 const ProfileMenu = ({ user, base, onLogout }) => {
   const [open, setOpen] = useState(false);
@@ -64,6 +85,11 @@ const ProfileMenu = ({ user, base, onLogout }) => {
           <Link role="menuitem" to={settingsPath} onClick={() => setOpen(false)} className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-leafwhite">
             <Settings className="h-4 w-4" aria-hidden /> Account settings
           </Link>
+          {(PROFILE_LINKS[user.role] || []).map((l) => (
+            <Link key={l.to} role="menuitem" to={l.to} onClick={() => setOpen(false)} className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-leafwhite">
+              <l.icon className="h-4 w-4" aria-hidden /> {l.label}
+            </Link>
+          ))}
           <button role="menuitem" onClick={onLogout} className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-700 hover:bg-red-50">
             <LogOut className="h-4 w-4" aria-hidden /> Sign out
           </button>
@@ -116,7 +142,8 @@ const DashboardLayout = () => {
     navigate('/login', { replace: true });
   };
 
-  const quick = QUICK_NAV[role].map((to) => findNavItem(role, to)).filter(Boolean);
+  const active = findActive(role, location.pathname);
+  const quick = QUICK_NAV[role].map((label) => NAV[role].find((it) => it.label === label)).filter(Boolean);
   const notificationsPath = role === 'ADMIN' ? '/admin/notifications' : `${meta.base}/notifications`;
 
   return (
@@ -130,7 +157,7 @@ const DashboardLayout = () => {
           <meta.icon className="h-4 w-4 accent-text" aria-hidden />
           <span className="text-sm font-semibold accent-text">{meta.label}</span>
         </div>
-        <SidebarNav role={role} />
+        <SidebarNav role={role} active={active} />
       </aside>
 
       {/* Mobile drawer */}
@@ -144,7 +171,7 @@ const DashboardLayout = () => {
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <SidebarNav role={role} onNavigate={() => setDrawer(false)} />
+            <SidebarNav role={role} active={active} onNavigate={() => setDrawer(false)} />
           </aside>
         </div>
       )}
@@ -171,6 +198,7 @@ const DashboardLayout = () => {
         </header>
 
         <main className="mx-auto max-w-[1400px] px-4 pb-24 pt-6 sm:px-6 lg:pb-10">
+          <SectionTabs active={active} pathname={location.pathname} />
           <ErrorBoundary resetKey={location.pathname}>
             <Outlet />
           </ErrorBoundary>
@@ -180,10 +208,10 @@ const DashboardLayout = () => {
       {/* Mobile quick navigation */}
       <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-4 border-t border-soil-200 bg-white lg:hidden" aria-label="Quick">
         {quick.map((it) => (
-          <NavLink key={it.to} to={it.to} end={it.end} className={({ isActive }) => `flex flex-col items-center gap-0.5 py-2 text-[11px] ${isActive ? 'accent-text font-semibold' : 'text-soil-500'}`}>
+          <Link key={it.label} to={it.tabs[0].to} className={`flex flex-col items-center gap-0.5 py-2 text-[11px] ${active?.item === it ? 'accent-text font-semibold' : 'text-soil-500'}`}>
             <it.icon className="h-5 w-5" aria-hidden />
             <span className="max-w-full truncate px-1">{it.label}</span>
-          </NavLink>
+          </Link>
         ))}
       </nav>
     </div>

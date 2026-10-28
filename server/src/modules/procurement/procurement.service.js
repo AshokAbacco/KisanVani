@@ -1,6 +1,5 @@
 const prisma = require('../../config/prisma');
 const ApiError = require('../../utils/ApiError');
-const audit = require('../../services/audit.service');
 const { D, money, qty, sum } = require('../../utils/money');
 const { paginate, pageMeta, dateRange } = require('../../utils/pagination');
 const { nextDocumentNumber } = require('../../utils/numbering');
@@ -178,7 +177,6 @@ const receivePurchase = async (user, id, { items }) => {
       }
     }
     await tx.purchaseOrder.update({ where: { id }, data: { total: money(newTotal) } });
-    await audit.record({ actorId: user.id, action: 'PURCHASE_RECEIVED', entityType: 'PurchaseOrder', entityId: id, metadata: { total: money(newTotal).toString() } }, tx);
   });
   return getPurchase(user.id, id);
 };
@@ -188,7 +186,6 @@ const cancelPurchase = async (user, id, reason) => {
   if (po.status !== 'ORDERED') throw ApiError.conflict('Only purchases that are not yet received can be cancelled');
   if (D(po.amountPaid).gt(0)) throw ApiError.conflict('This purchase has payments recorded against it');
   await prisma.purchaseOrder.update({ where: { id }, data: { status: 'CANCELLED', notes: [po.notes, `Cancelled: ${reason}`].filter(Boolean).join('\n') } });
-  await audit.record({ actorId: user.id, action: 'PURCHASE_CANCELLED', entityType: 'PurchaseOrder', entityId: id, metadata: { reason } });
   return getPurchase(user.id, id);
 };
 

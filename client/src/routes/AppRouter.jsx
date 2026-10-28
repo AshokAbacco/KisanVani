@@ -50,7 +50,6 @@ const VehicleReviewPage = lazy(() => import('../dashboards/admin/VehicleReviewPa
 const CatalogPage = lazy(() => import('../dashboards/admin/CatalogPage'));
 const BroadcastPanel = lazy(() => import('../dashboards/admin/BroadcastPanel'));
 const PlatformSettingsPage = lazy(() => import('../dashboards/admin/PlatformSettingsPage'));
-const AuditLogsPage = lazy(() => import('../dashboards/admin/AuditLogsPage'));
 
 // Shopkeeper
 const ShopDashboard = lazy(() => import('../dashboards/shop/ShopDashboard'));
@@ -164,7 +163,6 @@ const AppRouter = () => (
             <Route path="reports" element={<ReportsPage />} />
             <Route path="notifications" element={<NotificationsPage><BroadcastPanel /></NotificationsPage>} />
             <Route path="settings" element={<PlatformSettingsPage />} />
-            <Route path="audit-logs" element={<AuditLogsPage />} />
             <Route path="profile" element={<ProfilePage />} />
             <Route path="account" element={<AccountSettingsPage />} />
           </Route>

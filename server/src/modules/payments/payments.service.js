@@ -1,6 +1,5 @@
 const prisma = require('../../config/prisma');
 const ApiError = require('../../utils/ApiError');
-const audit = require('../../services/audit.service');
 const { notify } = require('../../services/notification.service');
 const { D, money } = require('../../utils/money');
 const { paginate, pageMeta, dateRange } = require('../../utils/pagination');
@@ -83,7 +82,6 @@ const payOrder = async (user, orderId, { amount, mode, reference, notes }) => {
       },
     });
     await settlements.applyPayment(tx, orderId);
-    await audit.record({ actorId: user.id, action: 'ORDER_PAYMENT', entityType: 'Order', entityId: orderId, metadata: { amount: amt.toString(), mode, paymentNumber: payment.paymentNumber } }, tx);
     return { payment, order };
   });
 
@@ -125,7 +123,6 @@ const payTrip = async (user, tripId, { amount, mode, reference, notes }) => {
         tripId,
       },
     });
-    await audit.record({ actorId: user.id, action: 'TRANSPORT_PAYMENT', entityType: 'Trip', entityId: tripId, metadata: { amount: amt.toString(), mode } }, tx);
     return { payment, trip };
   });
   await notify(result.trip.driverId, {

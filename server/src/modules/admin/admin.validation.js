@@ -32,8 +32,4 @@ const userQuery = z
   })
   .passthrough();
 
-const auditQuery = z
-  .object({ action: z.string().max(60).optional(), entityType: z.string().max(60).optional(), actorId: z.string().uuid().optional(), entityId: z.string().max(80).optional() })
-  .passthrough();
-
-module.exports = { createUser, updateUser, setStatus, userQuery, auditQuery, idParam };
+module.exports = { createUser, updateUser, setStatus, userQuery, idParam };

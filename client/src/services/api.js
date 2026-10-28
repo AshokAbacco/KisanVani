@@ -1,7 +1,10 @@
 import axios from 'axios';
 
-export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1').replace(/\/$/, '');
-export const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || new URL(API_BASE_URL).origin;
+// Default '/api/v1' goes through the Vite proxy (see vite.config.js), so the app works from any URL it is opened on.
+// Set VITE_API_BASE_URL only when the API is on a different domain (e.g. production).
+export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '/api/v1').replace(/\/$/, '');
+// Empty = same origin as the page (also proxied in development).
+export const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || (/^https?:\/\//.test(API_BASE_URL) ? new URL(API_BASE_URL).origin : undefined);
 
 // The access token lives only in memory. The refresh token is an httpOnly cookie the browser sends to /auth.
 let accessToken = null;

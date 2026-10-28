@@ -4,7 +4,7 @@ import Button from '../../components/common/Button';
 const PRINCIPLES = [
   ['The farmer sees the price first', 'Listings show the farmer’s own rate per kilo. Commission, where a Market Mandi charges it, is shown on the settlement — never hidden in the price.'],
   ['Weights are the source of truth', 'Ordered, loaded, delivered and received quantities are recorded separately, so a shortfall can be traced to the step where it happened.'],
-  ['Nothing moves without a record', 'Every change to stock, an order, a trip or a payment leaves an entry that admins can audit but cannot quietly rewrite.'],
+  ['Nothing moves without a record', 'Every change to stock, an order, a trip or a payment leaves a record, so every party sees the same history.'],
   ['Locations are shared only with the people on the trip', 'A driver’s position is visible to the buyer, seller and requester of that load — and only while the trip is active.'],
 ];
 

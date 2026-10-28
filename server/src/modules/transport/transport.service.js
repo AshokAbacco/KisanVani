@@ -1,6 +1,5 @@
 const prisma = require('../../config/prisma');
 const ApiError = require('../../utils/ApiError');
-const audit = require('../../services/audit.service');
 const { notify, notifyMany } = require('../../services/notification.service');
 const { D, qty, money } = require('../../utils/money');
 const { paginate, pageMeta, dateRange } = require('../../utils/pagination');
@@ -103,7 +102,6 @@ const cancelRequest = async (user, id, reason) => {
       await tx.trip.update({ where: { id: active.id }, data: { status: 'CANCELLED', statusReason: reason, trackingActive: false } });
       await tx.tripEvent.create({ data: { tripId: active.id, fromStatus: active.status, toStatus: 'CANCELLED', actorId: user.id, note: reason } });
     }
-    await audit.record({ actorId: user.id, action: 'TRANSPORT_REQUEST_CANCELLED', entityType: 'TransportRequest', entityId: id, metadata: { reason } }, tx);
   });
   if (active) {
     emitTo(tripRoom(active.id), 'trip:status', { tripId: active.id, status: 'CANCELLED' });
@@ -187,7 +185,6 @@ const assignTrip = async (user, { transportRequestId, driverId, vehicleId, trans
         events: { create: { toStatus: 'ASSIGNED', actorId: user.id, note: `Assigned by ${user.name}` } },
       },
     });
-    await audit.record({ actorId: user.id, action: 'TRIP_ASSIGNED', entityType: 'Trip', entityId: t.id, metadata: { driverId, vehicleId, transportCharge } }, tx);
     return t;
   });
 
@@ -304,9 +301,6 @@ const transitionTrip = async (user, id, input) => {
     }
     if (status === 'PICKED_UP' || status === 'DELIVERED') {
       orderUpdate = await orders.syncFromTrip(tx, { ...trip, deliveredQuantityKg: data.deliveredQuantityKg }, status, user.id);
-    }
-    if (status === 'CANCELLED' && actor === 'MANAGER' && user.role === 'ADMIN') {
-      await audit.record({ actorId: user.id, action: 'TRIP_CANCELLED_BY_ADMIN', entityType: 'Trip', entityId: id, metadata: { reason: input.reason } }, tx);
     }
   });
 

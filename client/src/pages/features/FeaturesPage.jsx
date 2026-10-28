@@ -59,7 +59,7 @@ const BY_ROLE = [
       'Approve new Market Mandi Owners and Drivers, verify vehicles',
       'Search, filter and manage every user, order, trip and payment',
       'Charts for registrations, order volume, trade value and completed trips',
-      'Platform settings, broadcast notifications and a complete audit log',
+      'Platform settings and broadcast notifications',
     ],
   },
 ];

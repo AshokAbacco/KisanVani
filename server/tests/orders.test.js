@@ -152,7 +152,6 @@ describe('Order lifecycle (shop ← farmer)', () => {
     expect((await move(admin, o.id, 'ACCEPTED')).status).toBe(403);
     const c = await move(admin, o.id, 'CANCELLED', { reason: 'Duplicate order reported' });
     expect(c.status).toBe(200);
-    expect(await prisma.auditLog.count({ where: { action: 'ORDER_CANCELLED_BY_ADMIN', entityId: o.id } })).toBe(1);
   });
 });
 

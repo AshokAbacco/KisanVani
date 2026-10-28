@@ -14,5 +14,4 @@ module.exports = {
   updateUser: async (req, res) => ok(res, await service.updateUser(req.user, req.params.id, req.body, req.ip)),
   setStatus: async (req, res) => ok(res, await service.setStatus(req.user, req.params.id, req.body, req.ip)),
   revokeSessions: async (req, res) => ok(res, await service.revokeSessions(req.user, req.params.id, req.ip)),
-  auditLogs: paged((req) => service.auditLogs(req.query)),
 };

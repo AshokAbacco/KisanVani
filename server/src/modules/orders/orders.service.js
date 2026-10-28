@@ -1,7 +1,6 @@
 const { Prisma } = require('@prisma/client');
 const prisma = require('../../config/prisma');
 const ApiError = require('../../utils/ApiError');
-const audit = require('../../services/audit.service');
 const { notify } = require('../../services/notification.service');
 const { D, qty, money, sum } = require('../../utils/money');
 const { paginate, pageMeta, dateRange } = require('../../utils/pagination');
@@ -230,9 +229,6 @@ const transition = async (user, id, { status, reason, items }) => {
       for (const d of delivered) await tx.orderItem.update({ where: { id: d.id }, data: { deliveredQuantityKg: d.q } });
     }
     await tx.orderStatusHistory.create({ data: { orderId: id, fromStatus: order.status, toStatus: status, changedById: user.id, note: reason } });
-    if (user.role === 'ADMIN') {
-      await audit.record({ actorId: user.id, action: `ORDER_${status}_BY_ADMIN`, entityType: 'Order', entityId: id, metadata: { reason } }, tx);
-    }
   });
 
   for (const t of cancelledTrips) {

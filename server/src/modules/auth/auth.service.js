@@ -9,7 +9,6 @@ const { randomToken, sha256, hmac, numericCode, safeEqual } = require('../../uti
 const refreshHash = (token) => hmac(config.jwt.refreshSecret, token);
 const { ROLE_LABELS } = require('../../constants');
 const settings = require('../../services/settings.service');
-const audit = require('../../services/audit.service');
 const email = require('../../services/email.service');
 const { notifyMany } = require('../../services/notification.service');
 const repo = require('./auth.repository');
@@ -53,7 +52,7 @@ const shopCodeFor = () => `S${crypto.randomBytes(3).toString('hex').toUpperCase(
  * Creates a user with the role-specific profile in one transaction.
  * Used by self-registration and by admins creating accounts.
  */
-const createUserWithProfile = async (input, { status, actorId, action, ip }) => {
+const createUserWithProfile = async (input, { status }) => {
   const exists = await prisma.user.findFirst({
     where: { OR: [{ mobile: input.mobile }, ...(input.email ? [{ email: input.email }] : [])] },
     select: { mobile: true, email: true },
@@ -101,7 +100,6 @@ const createUserWithProfile = async (input, { status, actorId, action, ip }) => 
         ...profileData,
       },
     });
-    await audit.record({ actorId: actorId || created.id, action, entityType: 'User', entityId: created.id, metadata: { role: input.role, status }, ip }, tx);
     return created;
   });
 };
@@ -136,7 +134,6 @@ const login = async ({ identifier, password, role }, meta) => {
   if (user.status === 'DEACTIVATED') throw new ApiError(403, 'Your account has been deactivated', 'ACCOUNT_DEACTIVATED');
 
   await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
-  await audit.record({ actorId: user.id, action: 'LOGIN', entityType: 'User', entityId: user.id, ip: meta.ip });
   return buildSession(user, meta);
 };
 
@@ -148,7 +145,6 @@ const refresh = async (token, meta) => {
 
   if (record.revokedAt) {
     await prisma.refreshToken.updateMany({ where: { family: record.family, revokedAt: null }, data: { revokedAt: new Date() } });
-    await audit.record({ actorId: record.userId, action: 'REFRESH_TOKEN_REUSE', entityType: 'User', entityId: record.userId, ip: meta.ip });
     throw new ApiError(401, 'Session is no longer valid. Please sign in again.', 'REFRESH_TOKEN_REUSED');
   }
   if (record.expiresAt < new Date()) throw new ApiError(401, 'Session expired', 'REFRESH_TOKEN_EXPIRED');
@@ -181,7 +177,7 @@ const logoutAll = async (userId) => {
   await prisma.refreshToken.updateMany({ where: { userId, revokedAt: null }, data: { revokedAt: new Date() } });
 };
 
-const forgotPassword = async ({ identifier }, meta) => {
+const forgotPassword = async ({ identifier }, _meta) => {
   const user = await repo.findByIdentifier(identifier);
   // Always respond the same way so the endpoint cannot be used to discover accounts.
   const response = { message: 'If an account exists, a verification code has been sent to the registered e-mail.' };
@@ -203,7 +199,6 @@ const forgotPassword = async ({ identifier }, meta) => {
       ? 'unavailable'
       : await email.sendPasswordReset({ to: `(mobile ${user.mobile})`, name: user.name, resetUrl, otp });
 
-  await audit.record({ actorId: user.id, action: 'PASSWORD_RESET_REQUESTED', entityType: 'User', entityId: user.id, ip: meta.ip });
   if (!config.isProd && delivery === 'logged') response.devNote = 'SMTP is not configured: the code and link were written to the server log.';
   return response;
 };
@@ -231,7 +226,7 @@ const verifyOtp = async ({ identifier, otp }) => {
   return { resetToken: token };
 };
 
-const resetPassword = async ({ token, password }, meta) => {
+const resetPassword = async ({ token, password }, _meta) => {
   const record = await prisma.passwordResetToken.findUnique({ where: { tokenHash: sha256(token) } });
   if (!record || record.usedAt || record.expiresAt < new Date()) {
     throw new ApiError(400, 'This reset link is invalid or has expired', 'INVALID_RESET_TOKEN');
@@ -242,7 +237,6 @@ const resetPassword = async ({ token, password }, meta) => {
     if (used.count !== 1) throw new ApiError(400, 'This reset link has already been used', 'INVALID_RESET_TOKEN');
     await tx.user.update({ where: { id: record.userId }, data: { passwordHash, passwordChangedAt: new Date() } });
     await tx.refreshToken.updateMany({ where: { userId: record.userId, revokedAt: null }, data: { revokedAt: new Date() } });
-    await audit.record({ actorId: record.userId, action: 'PASSWORD_RESET', entityType: 'User', entityId: record.userId, ip: meta.ip }, tx);
   });
   return { message: 'Password updated. Please sign in with your new password.' };
 };
@@ -257,7 +251,6 @@ const changePassword = async (userId, { currentPassword, newPassword }, meta) =>
     prisma.user.update({ where: { id: userId }, data: { passwordHash, passwordChangedAt: new Date() } }),
     prisma.refreshToken.updateMany({ where: { userId, revokedAt: null }, data: { revokedAt: new Date() } }),
   ]);
-  await audit.record({ actorId: userId, action: 'PASSWORD_CHANGED', entityType: 'User', entityId: userId, ip: meta.ip });
   const { token } = await issueRefreshToken(userId, meta);
   return { accessToken: signAccessToken(user), refreshToken: token };
 };

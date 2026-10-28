@@ -1,6 +1,5 @@
 const prisma = require('../../config/prisma');
 const ApiError = require('../../utils/ApiError');
-const audit = require('../../services/audit.service');
 const { D, qty, money } = require('../../utils/money');
 const { paginate, pageMeta } = require('../../utils/pagination');
 
@@ -52,7 +51,6 @@ const create = async (user, data) => {
     },
     include: LISTING_INCLUDE,
   });
-  await audit.record({ actorId: user.id, action: 'LISTING_CREATED', entityType: 'HarvestListing', entityId: listing.id, metadata: { crop: listing.cropName, qty: rest.totalQuantityKg } });
   return listing;
 };
 
@@ -103,7 +101,6 @@ const setStatus = async (user, id, status) => {
     if (open) throw ApiError.conflict(`This listing has ${open} open order(s). Complete or reject them first.`);
   }
   await prisma.harvestListing.update({ where: { id }, data: { status } });
-  await audit.record({ actorId: user.id, action: `LISTING_${status}`, entityType: 'HarvestListing', entityId: id });
   return getOwned(user.id, id);
 };
 

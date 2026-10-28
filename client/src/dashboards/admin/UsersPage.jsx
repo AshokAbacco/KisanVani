@@ -4,7 +4,6 @@ import { useForm } from 'react-hook-form';
 import { UserPlus, Users, Download } from 'lucide-react';
 import PageHeader from '../../components/common/PageHeader';
 import DataTable from '../../components/tables/DataTable';
-import Tabs from '../../components/common/Tabs';
 import SearchInput from '../../components/common/SearchInput';
 import Button from '../../components/common/Button';
 import StatusBadge from '../../components/common/StatusBadge';
@@ -131,23 +130,22 @@ const UsersPage = ({ role, title = 'Users & roles', description = 'Every account
           <>
             <div className="flex flex-wrap gap-2">
               {!role && (
-                <Tabs
-                  value={list.filters.role}
-                  onChange={(r) => list.setFilters({ role: r })}
-                  tabs={[{ value: '', label: 'All roles' }, ...Object.values(ROLES).map((r) => ({ value: r.key, label: r.shortLabel || r.label }))]}
-                />
+                <select className="input h-10 w-auto py-1" aria-label="Role" value={list.filters.role} onChange={(e) => list.setFilters({ role: e.target.value })}>
+                  <option value="">All roles</option>
+                  {Object.values(ROLES).map((r) => (
+                    <option key={r.key} value={r.key}>
+                      {r.shortLabel || r.label}
+                    </option>
+                  ))}
+                </select>
               )}
-              <Tabs
-                value={list.filters.status}
-                onChange={(status) => list.setFilters({ status })}
-                tabs={[
-                  { value: '', label: 'Any status' },
-                  { value: 'PENDING_APPROVAL', label: 'Awaiting approval' },
-                  { value: 'ACTIVE', label: 'Active' },
-                  { value: 'SUSPENDED', label: 'Suspended' },
-                  { value: 'DEACTIVATED', label: 'Deactivated' },
-                ]}
-              />
+              <select className="input h-10 w-auto py-1" aria-label="Status" value={list.filters.status} onChange={(e) => list.setFilters({ status: e.target.value })}>
+                <option value="">Any status</option>
+                <option value="PENDING_APPROVAL">Awaiting approval</option>
+                <option value="ACTIVE">Active</option>
+                <option value="SUSPENDED">Suspended</option>
+                <option value="DEACTIVATED">Deactivated</option>
+              </select>
             </div>
             <SearchInput value={list.search} onChange={list.setSearch} placeholder="Name, mobile, e-mail or business" className="sm:w-72" />
           </>

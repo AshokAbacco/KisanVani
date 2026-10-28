@@ -1,7 +1,6 @@
 const { Prisma } = require('@prisma/client');
 const prisma = require('../../config/prisma');
 const ApiError = require('../../utils/ApiError');
-const audit = require('../../services/audit.service');
 const settings = require('../../services/settings.service');
 const { D, money, qty, sum } = require('../../utils/money');
 const { paginate, pageMeta, dateRange } = require('../../utils/pagination');
@@ -203,9 +202,6 @@ const printInvoice = async (user, id) => {
   const inv = await getInvoice(user, id);
   if (user.role !== 'SHOPKEEPER' || inv.shopId !== user.id) throw ApiError.forbidden('Only the issuing shop can print this invoice');
   await prisma.salesInvoice.update({ where: { id }, data: { printCount: { increment: 1 } } });
-  if (inv.printCount > 0) {
-    await audit.record({ actorId: user.id, action: 'INVOICE_REPRINTED', entityType: 'SalesInvoice', entityId: id, metadata: { copy: inv.printCount + 1 } });
-  }
   return { ...inv, printCount: inv.printCount + 1, isDuplicateCopy: inv.printCount > 0 };
 };
 
@@ -238,7 +234,6 @@ const cancelInvoice = async (user, id, reason) => {
         WHERE id = ${inv.customerId}`;
     }
     await tx.payment.updateMany({ where: { invoiceId: id, status: 'COMPLETED' }, data: { status: 'REFUNDED' } });
-    await audit.record({ actorId: user.id, action: 'INVOICE_CANCELLED', entityType: 'SalesInvoice', entityId: id, metadata: { reason, total: inv.total } }, tx);
   });
   return getInvoice(user, id);
 };

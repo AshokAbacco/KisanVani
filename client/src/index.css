@@ -88,6 +88,9 @@
 .leaflet-container {
   @apply h-full w-full rounded-xl;
   font-family: inherit;
+  /* Keep Leaflet's internal z-indexes (400-1000) inside the map so modals, menus and toasts stay on top */
+  isolation: isolate;
+  z-index: 0;
 }
 
 /* The supply-route hero animation */

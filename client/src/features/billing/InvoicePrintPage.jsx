@@ -6,7 +6,7 @@ import { PageLoader } from '../../components/common/Spinner';
 import ErrorState from '../../components/feedback/ErrorState';
 
 /**
- * Print view for a bill. Each visit records one print on the server (reprints are counted and audited);
+ * Print view for a bill. Each visit records one print on the server (reprints are counted);
  * the ref guard stops React's development double-mount from counting twice.
  */
 const InvoicePrintPage = () => {

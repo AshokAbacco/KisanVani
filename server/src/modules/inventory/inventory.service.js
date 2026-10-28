@@ -1,6 +1,5 @@
 const prisma = require('../../config/prisma');
 const ApiError = require('../../utils/ApiError');
-const audit = require('../../services/audit.service');
 const { paginate, pageMeta, dateRange } = require('../../utils/pagination');
 const { D, qty } = require('../../utils/money');
 const repo = require('./inventory.repository');
@@ -86,17 +85,8 @@ const create = async (user, data) => {
 };
 
 const update = async (user, id, data) => {
-  const before = await getOwned(user.id, id);
+  await getOwned(user.id, id);
   const item = await prisma.inventoryItem.update({ where: { id }, data, include: ITEM_INCLUDE });
-  if (data.sellingPricePerKg && !D(data.sellingPricePerKg).eq(before.sellingPricePerKg)) {
-    await audit.record({
-      actorId: user.id,
-      action: 'RATE_CHANGED',
-      entityType: 'InventoryItem',
-      entityId: id,
-      metadata: { product: before.product.name, from: before.sellingPricePerKg, to: data.sellingPricePerKg },
-    });
-  }
   return item;
 };
 
@@ -106,7 +96,6 @@ const adjust = async (user, id, { type, direction, quantityKg, note }) => {
   const change = direction === 'OUT' ? qty(quantityKg).negated() : qty(quantityKg);
   await prisma.$transaction(async (tx) => {
     await repo.applyStockChange(tx, { inventoryItemId: id, change, type, referenceType: 'Manual', note, userId: user.id });
-    await audit.record({ actorId: user.id, action: `STOCK_${type}`, entityType: 'InventoryItem', entityId: id, metadata: { change: change.toString(), note } }, tx);
   });
   return getOwned(user.id, id);
 };

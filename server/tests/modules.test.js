@@ -52,7 +52,6 @@ describe('Shop masters', () => {
     expect(low.body.data.map((i) => i.id)).toContain(inv.body.data.id);
     const rate = await api(shop.token).patch(`/api/v1/inventory/${inv.body.data.id}`).send({ sellingPricePerKg: '44' });
     expect(rate.body.data.sellingPricePerKg).toBe('44');
-    expect(await prisma.auditLog.count({ where: { action: 'RATE_CHANGED', entityId: inv.body.data.id } })).toBe(1);
 
     const cust = await api(shop.token).post('/api/v1/customers').send({ name: 'Ravi', mobile: '9812345678' });
     expect(cust.status).toBe(201);
@@ -123,14 +122,12 @@ describe('Admin', () => {
     expect(created.status).toBe(201);
     expect(created.body.data.status).toBe('ACTIVE');
 
-    const logs = await api(admin.token).get('/api/v1/admin/audit-logs?search=USER_CREATED');
-    expect(logs.body.data.length).toBeGreaterThan(0);
     const dash = await api(admin.token).get('/api/v1/admin/dashboard');
     expect(dash.body.data.cards).toMatchObject({ farmers: 1, shopkeepers: 1, mandiOwners: 1, drivers: 1 });
     expect(dash.body.data.charts).toHaveProperty('registrations');
   });
 
-  test('settings are validated per key and changes are audited', async () => {
+  test('settings are validated per key', async () => {
     expect((await api(admin.token).put('/api/v1/settings/billing.maxDiscountPercent').send({ value: 150 })).status).toBe(422);
     expect((await api(admin.token).put('/api/v1/settings/no.such.key').send({ value: 1 })).status).toBe(404);
     const ok = await api(admin.token).put('/api/v1/settings/billing.maxDiscountPercent').send({ value: 15 });

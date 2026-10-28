@@ -1,6 +1,5 @@
 const prisma = require('../../config/prisma');
 const ApiError = require('../../utils/ApiError');
-const audit = require('../../services/audit.service');
 const { notify } = require('../../services/notification.service');
 const { money } = require('../../utils/money');
 const { paginate, pageMeta, dateRange } = require('../../utils/pagination');
@@ -10,7 +9,7 @@ const authService = require('../auth/auth.service');
 const reports = require('../reports/reports.service');
 
 const dashboard = async (query) => {
-  const [roles, vehicles, verifiedVehicles, orders, tradeValue, posSales, activeTrips, pendingApprovals, pendingVehicles, recentAudit] = await Promise.all([
+  const [roles, vehicles, verifiedVehicles, orders, tradeValue, posSales, activeTrips, pendingApprovals, pendingVehicles] = await Promise.all([
     prisma.user.groupBy({ by: ['role'], _count: { _all: true } }),
     prisma.vehicle.count(),
     prisma.vehicle.count({ where: { verificationStatus: 'VERIFIED' } }),
@@ -20,7 +19,6 @@ const dashboard = async (query) => {
     prisma.trip.count({ where: { status: { in: TRIP_ACTIVE_STATUSES } } }),
     prisma.user.count({ where: { status: 'PENDING_APPROVAL' } }),
     prisma.vehicle.count({ where: { verificationStatus: 'PENDING' } }),
-    prisma.auditLog.findMany({ orderBy: { createdAt: 'desc' }, take: 8, include: { actor: { select: { name: true, role: true } } } }),
   ]);
   const byRole = Object.fromEntries(roles.map((r) => [r.role, r._count._all]));
   const charts = await reports.summary({ role: 'ADMIN' }, query);
@@ -40,7 +38,6 @@ const dashboard = async (query) => {
       pendingVehicles,
     },
     charts,
-    recentAudit,
   };
 };
 
@@ -120,19 +117,18 @@ const activityFor = async (user) => {
       return { trips, deliveredTrips: delivered._count._all, earnings: money(delivered._sum.transportCharge || 0), vehicles };
     }
     default:
-      return { auditEntries: await prisma.auditLog.count({ where: { actorId: id } }) };
+      return {};
   }
 };
 
 const getUser = async (id) => {
   const user = await authRepo.findWithProfile(id);
   if (!user) throw ApiError.notFound('User not found');
-  const [activity, auditTrail, sessions] = await Promise.all([
+  const [activity, sessions] = await Promise.all([
     activityFor(user),
-    prisma.auditLog.findMany({ where: { OR: [{ actorId: id }, { entityId: id }] }, orderBy: { createdAt: 'desc' }, take: 25, include: { actor: { select: { name: true } } } }),
     prisma.refreshToken.count({ where: { userId: id, revokedAt: null, expiresAt: { gt: new Date() } } }),
   ]);
-  return { ...user, activity, auditTrail, activeSessions: sessions };
+  return { ...user, activity, activeSessions: sessions };
 };
 
 const createUser = async (admin, input, ip) => {
@@ -140,15 +136,14 @@ const createUser = async (admin, input, ip) => {
   return getUser(user.id);
 };
 
-const updateUser = async (admin, id, data, ip) => {
+const updateUser = async (admin, id, data, _ip) => {
   const before = await prisma.user.findUnique({ where: { id } });
   if (!before) throw ApiError.notFound('User not found');
   await prisma.user.update({ where: { id }, data });
-  await audit.record({ actorId: admin.id, action: 'USER_UPDATED_BY_ADMIN', entityType: 'User', entityId: id, metadata: { changes: data }, ip });
   return getUser(id);
 };
 
-const setStatus = async (admin, id, { status, reason }, ip) => {
+const setStatus = async (admin, id, { status, reason }, _ip) => {
   if (id === admin.id) throw ApiError.badRequest('You cannot change your own account status');
   const user = await prisma.user.findUnique({ where: { id } });
   if (!user) throw ApiError.notFound('User not found');
@@ -159,7 +154,6 @@ const setStatus = async (admin, id, { status, reason }, ip) => {
   await prisma.$transaction(async (tx) => {
     await tx.user.update({ where: { id }, data: { status, statusReason: reason || null } });
     if (status !== 'ACTIVE') await tx.refreshToken.updateMany({ where: { userId: id, revokedAt: null }, data: { revokedAt: new Date() } });
-    await audit.record({ actorId: admin.id, action: `USER_${status}`, entityType: 'User', entityId: id, metadata: { from: user.status, to: status, reason }, ip }, tx);
   });
   if (status === 'ACTIVE' && user.status === 'PENDING_APPROVAL') {
     await notify(id, { type: 'ACCOUNT_APPROVED', title: 'Account approved', message: 'Welcome to KisanVani! Your account is now active.', link: '/' });
@@ -167,28 +161,9 @@ const setStatus = async (admin, id, { status, reason }, ip) => {
   return getUser(id);
 };
 
-const revokeSessions = async (admin, id, ip) => {
+const revokeSessions = async (admin, id, _ip) => {
   const res = await prisma.refreshToken.updateMany({ where: { userId: id, revokedAt: null }, data: { revokedAt: new Date() } });
-  await audit.record({ actorId: admin.id, action: 'SESSIONS_REVOKED', entityType: 'User', entityId: id, metadata: { count: res.count }, ip });
   return { revoked: res.count };
 };
 
-const auditLogs = async (query) => {
-  const { q, skip, take } = paginate(query, ['createdAt'], 'createdAt');
-  const where = {
-    ...(query.action ? { action: { contains: query.action, mode: 'insensitive' } } : {}),
-    ...(query.entityType ? { entityType: query.entityType } : {}),
-    ...(query.actorId ? { actorId: query.actorId } : {}),
-    ...(query.entityId ? { entityId: query.entityId } : {}),
-    ...dateRange(q),
-    ...(q.search ? { OR: [{ action: { contains: q.search, mode: 'insensitive' } }, { actor: { name: { contains: q.search, mode: 'insensitive' } } }] } : {}),
-  };
-  const [items, total, types] = await prisma.$transaction([
-    prisma.auditLog.findMany({ where, skip, take, orderBy: { createdAt: 'desc' }, include: { actor: { select: { id: true, name: true, role: true } } } }),
-    prisma.auditLog.count({ where }),
-    prisma.auditLog.findMany({ distinct: ['entityType'], select: { entityType: true } }),
-  ]);
-  return { items, meta: { ...pageMeta(q, total), entityTypes: types.map((t) => t.entityType) } };
-};
-
-module.exports = { dashboard, listUsers, getUser, createUser, updateUser, setStatus, revokeSessions, auditLogs };
+module.exports = { dashboard, listUsers, getUser, createUser, updateUser, setStatus, revokeSessions };

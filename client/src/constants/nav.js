@@ -1,227 +1,243 @@
 import {
   LayoutDashboard,
-  Sprout,
-  Store,
-  Warehouse,
-  Truck,
-  Car,
-  Tags,
+  Users,
   ClipboardList,
-  Route,
+  Truck,
   Wallet,
-  BarChart3,
-  Bell,
   Settings,
-  UserCog,
-  ScrollText,
   Scale,
   Boxes,
-  Receipt,
-  BookUser,
-  HandCoins,
-  MapPin,
   ShoppingCart,
+  HandCoins,
   Wheat,
-  PlusCircle,
-  Handshake,
-  FileText,
+  Route,
   Navigation,
-  PackageCheck,
-  PackageOpen,
-  History,
-  User,
-  Package,
-  Container,
-  ArrowRightLeft,
-  Banknote,
+  Car,
+  MapPin,
 } from 'lucide-react';
 
 /**
- * Sidebar navigation per role. Groups are visual sections; `end` marks exact-match links.
- * Every entry points to a real, implemented screen.
+ * Sidebar navigation per role: a short, flat list (5–6 items).
+ * Each item can carry `tabs` — related screens shown as a tab strip at the top of the page,
+ * so every existing screen stays reachable without crowding the sidebar.
+ * The first tab's `to` is where the sidebar item links. `end` = exact-match only.
  */
 export const NAV = {
   ADMIN: [
-    { group: 'Overview', items: [{ to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true }] },
     {
-      group: 'People',
-      items: [
-        { to: '/admin/farmers', label: 'Farmers', icon: Sprout },
-        { to: '/admin/shopkeepers', label: 'Shopkeepers', icon: Store },
-        { to: '/admin/mandi-owners', label: 'Market Mandi Owners', icon: Warehouse },
-        { to: '/admin/drivers', label: 'Drivers', icon: Truck },
-        { to: '/admin/vehicles', label: 'Vehicles', icon: Car },
-        { to: '/admin/users', label: 'Users & roles', icon: UserCog },
+      label: 'Dashboard',
+      icon: LayoutDashboard,
+      tabs: [
+        { to: '/admin', label: 'Overview', end: true },
+        { to: '/admin/reports', label: 'Reports' },
       ],
     },
     {
-      group: 'Trade',
-      items: [
-        { to: '/admin/catalog', label: 'Products & categories', icon: Tags },
-        { to: '/admin/orders', label: 'Orders', icon: ClipboardList },
-        { to: '/admin/transport', label: 'Transport & trips', icon: Route },
-        { to: '/admin/payments', label: 'Payments & settlements', icon: Wallet },
+      label: 'Users',
+      icon: Users,
+      tabs: [
+        { to: '/admin/users', label: 'All users' },
+        { to: '/admin/farmers', label: 'Farmers' },
+        { to: '/admin/shopkeepers', label: 'Shopkeepers' },
+        { to: '/admin/mandi-owners', label: 'Mandi owners' },
+        { to: '/admin/drivers', label: 'Drivers' },
       ],
     },
+    { label: 'Orders', icon: ClipboardList, tabs: [{ to: '/admin/orders', label: 'Orders' }] },
     {
-      group: 'Platform',
-      items: [
-        { to: '/admin/reports', label: 'Reports & analytics', icon: BarChart3 },
-        { to: '/admin/notifications', label: 'Notifications', icon: Bell },
-        { to: '/admin/settings', label: 'Platform settings', icon: Settings },
-        { to: '/admin/audit-logs', label: 'Audit logs', icon: ScrollText },
+      label: 'Transport',
+      icon: Truck,
+      tabs: [
+        { to: '/admin/transport', label: 'Trips' },
+        { to: '/admin/vehicles', label: 'Vehicles' },
+      ],
+    },
+    { label: 'Payments', icon: Wallet, tabs: [{ to: '/admin/payments', label: 'Payments' }] },
+    {
+      label: 'Platform',
+      icon: Settings,
+      tabs: [
+        { to: '/admin/catalog', label: 'Products & categories' },
+        { to: '/admin/settings', label: 'Platform settings' },
+        { to: '/admin/notifications', label: 'Broadcast' },
       ],
     },
   ],
   SHOPKEEPER: [
     {
-      group: 'Shop',
-      items: [
-        { to: '/shop', label: 'Overview', icon: LayoutDashboard, end: true },
-        { to: '/shop/pos', label: 'Billing & weighing', icon: Scale },
-        { to: '/shop/sales', label: 'Sales history', icon: Receipt },
-        { to: '/shop/credit', label: 'Udhar / Khata', icon: HandCoins },
-        { to: '/shop/customers', label: 'Customers', icon: BookUser },
+      label: 'Dashboard',
+      icon: LayoutDashboard,
+      tabs: [
+        { to: '/shop', label: 'Overview', end: true },
+        { to: '/shop/reports', label: 'Reports' },
       ],
     },
     {
-      group: 'Stock',
-      items: [
-        { to: '/shop/stock', label: 'Stock & rates master', icon: Tags },
-        { to: '/shop/inventory', label: 'Inventory', icon: Boxes },
-        { to: '/shop/purchases', label: 'Purchases', icon: PackageOpen },
-        { to: '/shop/suppliers', label: 'Suppliers', icon: Container },
+      label: 'Billing',
+      icon: Scale,
+      tabs: [
+        { to: '/shop/pos', label: 'New bill' },
+        { to: '/shop/sales', label: 'Sales history' },
       ],
     },
     {
-      group: 'Buy fresh',
-      items: [
-        { to: '/shop/order-farmers', label: 'Order from farmers', icon: Sprout },
-        { to: '/shop/order-mandi', label: 'Order from Market Mandi', icon: Warehouse },
-        { to: '/shop/orders', label: 'My orders', icon: ShoppingCart },
-        { to: '/shop/transport', label: 'Deliveries', icon: Truck },
+      label: 'Stock',
+      icon: Boxes,
+      tabs: [
+        { to: '/shop/stock', label: 'Stock & rates' },
+        { to: '/shop/inventory', label: 'Inventory' },
+        { to: '/shop/purchases', label: 'Purchases' },
+        { to: '/shop/suppliers', label: 'Suppliers' },
       ],
     },
     {
-      group: 'Accounts',
-      items: [
-        { to: '/shop/payments', label: 'Payments', icon: Wallet },
-        { to: '/shop/reports', label: 'Reports', icon: BarChart3 },
-        { to: '/shop/gps', label: 'Shop GPS profile', icon: MapPin },
-        { to: '/shop/settings', label: 'Settings', icon: Settings },
+      label: 'Orders',
+      icon: ShoppingCart,
+      tabs: [
+        { to: '/shop/orders', label: 'My orders' },
+        { to: '/shop/order-farmers', label: 'Buy from farmers' },
+        { to: '/shop/order-mandi', label: 'Buy from mandi' },
+        { to: '/shop/transport', label: 'Deliveries' },
+      ],
+    },
+    {
+      label: 'Khata',
+      icon: HandCoins,
+      tabs: [
+        { to: '/shop/credit', label: 'Udhar / Khata' },
+        { to: '/shop/customers', label: 'Customers' },
+        { to: '/shop/payments', label: 'Payments' },
       ],
     },
   ],
   FARMER: [
     {
-      group: 'Farm',
-      items: [
-        { to: '/farmer', label: 'Dashboard', icon: LayoutDashboard, end: true },
-        { to: '/farmer/crops', label: 'My crops', icon: Wheat },
-        { to: '/farmer/listings', label: 'Harvest listings', icon: Package, end: true },
-        { to: '/farmer/listings/new', label: 'Post new harvest', icon: PlusCircle },
+      label: 'Dashboard',
+      icon: LayoutDashboard,
+      tabs: [
+        { to: '/farmer', label: 'Overview', end: true },
+        { to: '/farmer/reports', label: 'Reports' },
       ],
     },
     {
-      group: 'Sales',
-      items: [
-        { to: '/farmer/orders', label: 'Orders from shops', icon: Store },
-        { to: '/farmer/mandi-orders', label: 'Orders from mandis', icon: Warehouse },
-        { to: '/farmer/transport', label: 'Transport requests', icon: Truck },
-        { to: '/farmer/earnings', label: 'Payments & earnings', icon: Wallet },
-        { to: '/farmer/sales', label: 'Sales history', icon: History },
-        { to: '/farmer/reports', label: 'Reports', icon: BarChart3 },
+      label: 'My Harvest',
+      icon: Wheat,
+      tabs: [
+        { to: '/farmer/listings', label: 'Listings' },
+        { to: '/farmer/listings/new', label: 'Post new harvest' },
+        { to: '/farmer/crops', label: 'My crops' },
       ],
     },
     {
-      group: 'Account',
-      items: [
-        { to: '/farmer/profile', label: 'Farmer profile', icon: User },
-        { to: '/farmer/settings', label: 'Settings', icon: Settings },
+      label: 'Orders',
+      icon: ClipboardList,
+      tabs: [
+        { to: '/farmer/orders', label: 'From shops' },
+        { to: '/farmer/mandi-orders', label: 'From mandis' },
+        { to: '/farmer/sales', label: 'Sales history' },
       ],
     },
+    { label: 'Transport', icon: Truck, tabs: [{ to: '/farmer/transport', label: 'Transport' }] },
+    { label: 'Earnings', icon: Wallet, tabs: [{ to: '/farmer/earnings', label: 'Earnings' }] },
   ],
   MANDI_OWNER: [
     {
-      group: 'Market Mandi',
-      items: [
-        { to: '/mandi', label: 'Dashboard', icon: LayoutDashboard, end: true },
-        { to: '/mandi/lots', label: 'Mandi lots', icon: Boxes, end: true },
-        { to: '/mandi/lots/new', label: 'Create new lot', icon: PlusCircle },
-        { to: '/mandi/products', label: 'Wholesale products', icon: Tags },
+      label: 'Dashboard',
+      icon: LayoutDashboard,
+      tabs: [
+        { to: '/mandi', label: 'Overview', end: true },
+        { to: '/mandi/reports', label: 'Reports' },
       ],
     },
     {
-      group: 'Trade',
-      items: [
-        { to: '/mandi/incoming', label: 'Incoming shop orders', icon: PackageCheck },
-        { to: '/mandi/orders', label: 'Order management', icon: ClipboardList },
-        { to: '/mandi/procurement', label: 'Farmer procurement', icon: Sprout },
-        { to: '/mandi/partners', label: 'Partners', icon: Handshake },
+      label: 'Lots',
+      icon: Boxes,
+      tabs: [
+        { to: '/mandi/lots', label: 'Mandi lots' },
+        { to: '/mandi/lots/new', label: 'Create lot' },
+        { to: '/mandi/products', label: 'Wholesale products' },
       ],
     },
     {
-      group: 'Logistics',
-      items: [
-        { to: '/mandi/transport', label: 'Transport & logistics', icon: Truck },
-        { to: '/mandi/assignments', label: 'Vehicle assignments', icon: ArrowRightLeft },
+      label: 'Orders',
+      icon: ClipboardList,
+      tabs: [
+        { to: '/mandi/incoming', label: 'Shop orders' },
+        { to: '/mandi/orders', label: 'All orders' },
+        { to: '/mandi/procurement', label: 'Buy from farmers' },
+        { to: '/mandi/partners', label: 'Partners' },
       ],
     },
     {
-      group: 'Money',
-      items: [
-        { to: '/mandi/settlements', label: 'Settlements', icon: FileText },
-        { to: '/mandi/payments', label: 'Payments', icon: Banknote },
-        { to: '/mandi/reports', label: 'Reports', icon: BarChart3 },
+      label: 'Transport',
+      icon: Truck,
+      tabs: [
+        { to: '/mandi/transport', label: 'Transport' },
+        { to: '/mandi/assignments', label: 'Vehicle assignments' },
       ],
     },
     {
-      group: 'Account',
-      items: [
-        { to: '/mandi/profile', label: 'Mandi profile', icon: Warehouse },
-        { to: '/mandi/settings', label: 'Settings', icon: Settings },
+      label: 'Payments',
+      icon: Wallet,
+      tabs: [
+        { to: '/mandi/payments', label: 'Payments' },
+        { to: '/mandi/settlements', label: 'Settlements' },
       ],
     },
   ],
   DRIVER: [
+    { label: 'Dashboard', icon: LayoutDashboard, tabs: [{ to: '/driver', label: 'Overview', end: true }] },
     {
-      group: 'Trips',
-      items: [
-        { to: '/driver', label: 'Dashboard', icon: LayoutDashboard, end: true },
-        { to: '/driver/trips', label: 'My trips', icon: Route },
-        { to: '/driver/assignments', label: 'Transport assignments', icon: ClipboardList },
-        { to: '/driver/tracking', label: 'Live tracking', icon: Navigation },
-        { to: '/driver/pickups', label: 'Pickup confirmation', icon: PackageOpen },
-        { to: '/driver/deliveries', label: 'Delivery confirmation', icon: PackageCheck },
-        { to: '/driver/history', label: 'Trip history', icon: History },
+      label: 'My Trips',
+      icon: Route,
+      tabs: [
+        { to: '/driver/trips', label: 'All trips' },
+        { to: '/driver/assignments', label: 'New assignments' },
+        { to: '/driver/pickups', label: 'Pickups' },
+        { to: '/driver/deliveries', label: 'Deliveries' },
+        { to: '/driver/history', label: 'History' },
       ],
     },
+    { label: 'Live Tracking', icon: Navigation, tabs: [{ to: '/driver/tracking', label: 'Live tracking' }] },
     {
-      group: 'Vehicle',
-      items: [
-        { to: '/driver/vehicles', label: 'Vehicle details', icon: Car },
-        { to: '/driver/documents', label: 'Vehicle documents', icon: FileText },
+      label: 'Vehicle',
+      icon: Car,
+      tabs: [
+        { to: '/driver/vehicles', label: 'Vehicle details' },
+        { to: '/driver/documents', label: 'Documents' },
       ],
     },
-    {
-      group: 'Account',
-      items: [
-        { to: '/driver/earnings', label: 'Earnings', icon: Wallet },
-        { to: '/driver/notifications', label: 'Notifications', icon: Bell },
-        { to: '/driver/profile', label: 'Driver profile', icon: User },
-        { to: '/driver/settings', label: 'Settings', icon: Settings },
-      ],
-    },
+    { label: 'Earnings', icon: Wallet, tabs: [{ to: '/driver/earnings', label: 'Earnings' }] },
   ],
 };
 
-/** Mobile bottom bar: the four most-used destinations per role. */
-export const QUICK_NAV = {
-  ADMIN: ['/admin', '/admin/users', '/admin/orders', '/admin/transport'],
-  SHOPKEEPER: ['/shop', '/shop/pos', '/shop/stock', '/shop/orders'],
-  FARMER: ['/farmer', '/farmer/listings', '/farmer/orders', '/farmer/earnings'],
-  MANDI_OWNER: ['/mandi', '/mandi/lots', '/mandi/incoming', '/mandi/transport'],
-  DRIVER: ['/driver', '/driver/trips', '/driver/tracking', '/driver/earnings'],
+/** Extra links in the top-right profile menu (besides Profile, Settings, Sign out). */
+export const PROFILE_LINKS = {
+  SHOPKEEPER: [{ to: '/shop/gps', label: 'Shop GPS location', icon: MapPin }],
 };
 
-export const findNavItem = (role, to) => NAV[role]?.flatMap((g) => g.items).find((i) => i.to === to);
+/** Mobile bottom bar: four sidebar items per role (by label). */
+export const QUICK_NAV = {
+  ADMIN: ['Dashboard', 'Users', 'Orders', 'Transport'],
+  SHOPKEEPER: ['Dashboard', 'Billing', 'Stock', 'Orders'],
+  FARMER: ['Dashboard', 'My Harvest', 'Orders', 'Earnings'],
+  MANDI_OWNER: ['Dashboard', 'Lots', 'Orders', 'Transport'],
+  DRIVER: ['Dashboard', 'My Trips', 'Live Tracking', 'Earnings'],
+};
+
+const pathMatches = (tab, pathname) => pathname === tab.to || (!tab.end && pathname.startsWith(`${tab.to}/`));
+
+/**
+ * Finds the sidebar item and tab for the current URL. The longest matching tab path wins,
+ * so "/farmer/listings/new" picks "Post new harvest" rather than "Listings",
+ * and detail pages ("/shop/orders/123") highlight their parent item.
+ */
+export const findActive = (role, pathname) => {
+  let best = null;
+  for (const item of NAV[role] || []) {
+    for (const tab of item.tabs) {
+      if (pathMatches(tab, pathname) && (!best || tab.to.length > best.tab.to.length)) best = { item, tab };
+    }
+  }
+  return best;
+};

@@ -1,6 +1,5 @@
 const prisma = require('../../config/prisma');
 const ApiError = require('../../utils/ApiError');
-const audit = require('../../services/audit.service');
 
 const slugify = (s) =>
   s
@@ -18,13 +17,11 @@ const list = ({ type, includeInactive }, isAdmin) =>
 
 const create = async (actor, data) => {
   const category = await prisma.productCategory.create({ data: { ...data, slug: slugify(data.name) } });
-  await audit.record({ actorId: actor.id, action: 'CATEGORY_CREATED', entityType: 'ProductCategory', entityId: category.id, metadata: data });
   return category;
 };
 
 const update = async (actor, id, data) => {
   const category = await prisma.productCategory.update({ where: { id }, data: { ...data, ...(data.name ? { slug: slugify(data.name) } : {}) } });
-  await audit.record({ actorId: actor.id, action: 'CATEGORY_UPDATED', entityType: 'ProductCategory', entityId: id, metadata: data });
   return category;
 };
 
@@ -41,7 +38,6 @@ const remove = async (actor, id) => {
   } else {
     await prisma.productCategory.delete({ where: { id } });
   }
-  await audit.record({ actorId: actor.id, action: inUse ? 'CATEGORY_DEACTIVATED' : 'CATEGORY_DELETED', entityType: 'ProductCategory', entityId: id });
   return { deleted: !inUse, deactivated: inUse };
 };
 

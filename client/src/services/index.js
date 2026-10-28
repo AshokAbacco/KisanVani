@@ -212,5 +212,4 @@ export const adminApi = {
   updateUser: (id, body) => dataOf(api.patch(`/admin/users/${id}`, body)),
   setStatus: (id, body) => dataOf(api.post(`/admin/users/${id}/status`, body)),
   revokeSessions: (id) => dataOf(api.post(`/admin/users/${id}/revoke-sessions`)),
-  auditLogs: (params) => unwrap(api.get('/admin/audit-logs', { params })),
 };

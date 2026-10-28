@@ -93,7 +93,7 @@ const PlatformSettingsPage = () => {
   const save = async (key, value) => {
     try {
       await settingsApi.update(key, value);
-      toast.success('Setting saved. Every change is recorded in the audit log.');
+      toast.success('Setting saved.');
       reload();
     } catch (e) {
       toast.error(e);

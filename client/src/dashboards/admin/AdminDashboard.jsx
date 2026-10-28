@@ -1,9 +1,7 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { Sprout, Store, Warehouse, Truck, Car, ClipboardList, IndianRupee, Route, UserCheck, ShieldAlert } from 'lucide-react';
 import PageHeader from '../../components/common/PageHeader';
 import StatCard from '../../components/common/StatCard';
-import Section from '../../components/common/Section';
 import Alert from '../../components/feedback/Alert';
 import Button from '../../components/common/Button';
 import DateRangeFilter from '../../components/common/DateRangeFilter';
@@ -12,7 +10,7 @@ import { AdminCharts } from '../../features/reports/ReportsPage';
 import ActiveTripsMap from '../../features/tracking/ActiveTripsMap';
 import useAsync from '../../hooks/useAsync';
 import { adminApi } from '../../services';
-import { formatINR, formatNumber, formatDateTime, humanize, toDateInput } from '../../utils/format';
+import { formatINR, formatNumber, toDateInput } from '../../utils/format';
 
 const AdminDashboard = () => {
   const [range, setRange] = useState({ from: toDateInput(new Date(Date.now() - 29 * 86400000)), to: toDateInput(new Date()) });
@@ -45,21 +43,7 @@ const AdminDashboard = () => {
             <StatCard label="Active trips" value={formatNumber(c?.activeTrips)} icon={Route} tone="blue" loading={loading} to="/admin/transport" />
           </div>
           {data?.charts && <AdminCharts d={data.charts} />}
-          <div className="grid gap-6 xl:grid-cols-[1.4fr_1fr]">
-            <ActiveTripsMap base="/admin" />
-            <Section title="Recent activity" actions={<Link to="/admin/audit-logs" className="link text-sm">Audit log</Link>} bodyClass="p-0">
-              <ul className="divide-y divide-soil-100">
-                {(data?.recentAudit || []).map((a) => (
-                  <li key={a.id} className="px-5 py-3 text-sm">
-                    <p className="font-medium">{humanize(a.action)}</p>
-                    <p className="text-xs text-soil-500">
-                      {a.actor?.name || 'System'} — {a.entityType} — {formatDateTime(a.createdAt)}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            </Section>
-          </div>
+          <ActiveTripsMap base="/admin" />
         </div>
       )}
     </>

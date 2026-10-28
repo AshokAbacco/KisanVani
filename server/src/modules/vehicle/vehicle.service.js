@@ -1,6 +1,5 @@
 const prisma = require('../../config/prisma');
 const ApiError = require('../../utils/ApiError');
-const audit = require('../../services/audit.service');
 const { notify } = require('../../services/notification.service');
 const { paginate, pageMeta } = require('../../utils/pagination');
 
@@ -38,7 +37,6 @@ const list = async (user, query) => {
 
 const create = async (user, data) => {
   const v = await prisma.vehicle.create({ data: { ...data, driverId: user.id }, include: INCLUDE });
-  await audit.record({ actorId: user.id, action: 'VEHICLE_REGISTERED', entityType: 'Vehicle', entityId: v.id, metadata: { registrationNumber: v.registrationNumber } });
   const admins = await prisma.user.findMany({ where: { role: 'ADMIN', status: 'ACTIVE' }, select: { id: true } });
   for (const a of admins) {
     await notify(a.id, { type: 'VEHICLE_VERIFICATION', title: 'Vehicle awaiting verification', message: `${user.name} registered ${v.registrationNumber}`, link: `/admin/vehicles/${v.id}` });
@@ -55,7 +53,6 @@ const update = async (user, id, data) => {
     data: { ...data, ...(needsReverify ? { verificationStatus: 'PENDING', verificationNote: 'Details changed — re-verification required' } : {}) },
     include: INCLUDE,
   });
-  if (needsReverify) await audit.record({ actorId: user.id, action: 'VEHICLE_REVERIFY_REQUIRED', entityType: 'Vehicle', entityId: id, metadata: data });
   return updated;
 };
 
@@ -92,7 +89,6 @@ const verify = async (admin, id, { status, note }) => {
   await prisma.$transaction(async (tx) => {
     await tx.vehicle.update({ where: { id }, data: { verificationStatus: status, verificationNote: note } });
     if (status === 'VERIFIED') await tx.vehicleDocument.updateMany({ where: { vehicleId: id, verificationStatus: 'PENDING' }, data: { verificationStatus: 'VERIFIED' } });
-    await audit.record({ actorId: admin.id, action: `VEHICLE_${status}`, entityType: 'Vehicle', entityId: id, metadata: { note } }, tx);
   });
   await notify(v.driverId, {
     type: 'VEHICLE_VERIFICATION',
@@ -107,7 +103,6 @@ const verifyDocument = async (admin, id, docId, { status }) => {
   const doc = await prisma.vehicleDocument.findFirst({ where: { id: docId, vehicleId: id } });
   if (!doc) throw ApiError.notFound('Document not found');
   await prisma.vehicleDocument.update({ where: { id: docId }, data: { verificationStatus: status } });
-  await audit.record({ actorId: admin.id, action: `VEHICLE_DOCUMENT_${status}`, entityType: 'VehicleDocument', entityId: docId });
   return get(admin, id);
 };
 

@@ -163,14 +163,13 @@ describe('POS invoices', () => {
     expect((await api(shop.token).post(`/api/v1/billing/invoices/${res.body.data.id}/cancel`).send({ reason: 'again' })).status).toBe(409);
   });
 
-  test('reprints are counted and audited', async () => {
+  test('reprints are counted', async () => {
     const list = await api(shop.token).get('/api/v1/billing/invoices?limit=1');
     const id = list.body.data[0].id;
     const p1 = await api(shop.token).post(`/api/v1/billing/invoices/${id}/print`);
     const p2 = await api(shop.token).post(`/api/v1/billing/invoices/${id}/print`);
     expect(p1.body.data.isDuplicateCopy).toBe(false);
     expect(p2.body.data.isDuplicateCopy).toBe(true);
-    expect(await prisma.auditLog.count({ where: { action: 'INVOICE_REPRINTED', entityId: id } })).toBe(1);
   });
 
   test('stock adjustments are logged and cannot go negative', async () => {

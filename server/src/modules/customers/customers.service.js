@@ -1,6 +1,5 @@
 const prisma = require('../../config/prisma');
 const ApiError = require('../../utils/ApiError');
-const audit = require('../../services/audit.service');
 const { money } = require('../../utils/money');
 const { paginate, pageMeta } = require('../../utils/pagination');
 const { nextDocumentNumber } = require('../../utils/numbering');
@@ -81,7 +80,6 @@ const collect = async (user, id, { amount, mode, reference, notes }) => {
         customerId: id,
       },
     });
-    await audit.record({ actorId: user.id, action: 'CREDIT_COLLECTED', entityType: 'Customer', entityId: id, metadata: { amount: amt.toString(), mode } }, tx);
     return p;
   });
   return { payment, customer: await getOwned(user.id, id) };

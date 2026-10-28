@@ -1,6 +1,5 @@
 const prisma = require('../../config/prisma');
 const ApiError = require('../../utils/ApiError');
-const audit = require('../../services/audit.service');
 const { D, qty, money } = require('../../utils/money');
 const { paginate, pageMeta } = require('../../utils/pagination');
 const { nextDocumentNumber } = require('../../utils/numbering');
@@ -52,7 +51,6 @@ const create = async (user, data) => {
       include: LOT_INCLUDE,
     })
   );
-  await audit.record({ actorId: user.id, action: 'LOT_CREATED', entityType: 'MandiLot', entityId: lot.id, metadata: { lotCode: lot.lotCode, weight: rest.totalWeightKg } });
   return lot;
 };
 
@@ -89,7 +87,6 @@ const setStatus = async (user, id, status) => {
     if (open) throw ApiError.conflict(`This lot has ${open} open order(s)`);
   }
   await prisma.mandiLot.update({ where: { id }, data: { status } });
-  await audit.record({ actorId: user.id, action: `LOT_${status}`, entityType: 'MandiLot', entityId: id });
   return getOwned(user.id, id);
 };
 
@@ -177,7 +174,6 @@ const dashboard = async (ownerId) => {
 
 const setCommission = async (user, percent) => {
   await prisma.mandiProfile.update({ where: { userId: user.id }, data: { commissionPercent: percent } });
-  await audit.record({ actorId: user.id, action: 'COMMISSION_UPDATED', entityType: 'MandiProfile', entityId: user.id, metadata: { percent } });
   return prisma.mandiProfile.findUnique({ where: { userId: user.id } });
 };
 

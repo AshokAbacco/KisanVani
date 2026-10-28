@@ -15,7 +15,7 @@ datasource db {
 enum Role {
   ADMIN
   SHOPKEEPER
-  FARMER/
+  FARMER
   MANDI_OWNER
   DRIVER
 }
@@ -213,21 +213,20 @@ model User {
   inventoryItems      InventoryItem[]
   customers           Customer[]
   suppliers           Supplier[]
-  salesInvoices       SalesInvoice[]       @relation("ShopInvoices")
+  salesInvoices       SalesInvoice[]         @relation("ShopInvoices")
   purchaseOrders      PurchaseOrder[]
-  buyerOrders         Order[]              @relation("OrderBuyer")
-  sellerOrders        Order[]              @relation("OrderSeller")
-  transportRequests   TransportRequest[]   @relation("TransportRequester")
-  driverTrips         Trip[]               @relation("TripDriver")
-  assignedTrips       Trip[]               @relation("TripAssigner")
-  vehicles            Vehicle[]            @relation("VehicleDriver")
-  paymentsMade        Payment[]            @relation("PaymentPayer")
-  paymentsReceived    Payment[]            @relation("PaymentPayee")
-  paymentsRecorded    Payment[]            @relation("PaymentRecorder")
-  settlementsPayable  Settlement[]         @relation("SettlementPayer")
-  settlementsReceived Settlement[]         @relation("SettlementPayee")
+  buyerOrders         Order[]                @relation("OrderBuyer")
+  sellerOrders        Order[]                @relation("OrderSeller")
+  transportRequests   TransportRequest[]     @relation("TransportRequester")
+  driverTrips         Trip[]                 @relation("TripDriver")
+  assignedTrips       Trip[]                 @relation("TripAssigner")
+  vehicles            Vehicle[]              @relation("VehicleDriver")
+  paymentsMade        Payment[]              @relation("PaymentPayer")
+  paymentsReceived    Payment[]              @relation("PaymentPayee")
+  paymentsRecorded    Payment[]              @relation("PaymentRecorder")
+  settlementsPayable  Settlement[]           @relation("SettlementPayer")
+  settlementsReceived Settlement[]           @relation("SettlementPayee")
   notifications       Notification[]
-  auditLogs           AuditLog[]
   inventoryTxns       InventoryTransaction[]
   orderHistory        OrderStatusHistory[]
   tripEvents          TripEvent[]
@@ -498,31 +497,31 @@ model HarvestListing {
 }
 
 model MandiLot {
-  id                  String    @id @default(uuid())
-  lotCode             String    @unique
-  mandiOwnerId        String
-  productId           String
-  categoryId          String
-  commodityName       String
-  variety             String?
-  grade               String?
-  lotType             LotType   @default(LOOSE)
-  unitSizeKg          Decimal?  @db.Decimal(10, 3)
-  totalWeightKg       Decimal   @db.Decimal(12, 3)
-  availableWeightKg   Decimal   @db.Decimal(12, 3)
-  pricePerKg          Decimal   @db.Decimal(14, 2)
-  minOrderKg          Decimal   @db.Decimal(12, 3)
-  marketYardName      String
-  location            String?
-  district            String?
-  latitude            Decimal?  @db.Decimal(9, 6)
-  longitude           Decimal?  @db.Decimal(9, 6)
-  qualityNotes        String?
-  loadingInfo         String?
-  images              String[]
-  status              LotStatus @default(DRAFT)
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
+  id                String    @id @default(uuid())
+  lotCode           String    @unique
+  mandiOwnerId      String
+  productId         String
+  categoryId        String
+  commodityName     String
+  variety           String?
+  grade             String?
+  lotType           LotType   @default(LOOSE)
+  unitSizeKg        Decimal?  @db.Decimal(10, 3)
+  totalWeightKg     Decimal   @db.Decimal(12, 3)
+  availableWeightKg Decimal   @db.Decimal(12, 3)
+  pricePerKg        Decimal   @db.Decimal(14, 2)
+  minOrderKg        Decimal   @db.Decimal(12, 3)
+  marketYardName    String
+  location          String?
+  district          String?
+  latitude          Decimal?  @db.Decimal(9, 6)
+  longitude         Decimal?  @db.Decimal(9, 6)
+  qualityNotes      String?
+  loadingInfo       String?
+  images            String[]
+  status            LotStatus @default(DRAFT)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
   mandiOwner User            @relation(fields: [mandiOwnerId], references: [id])
   product    Product         @relation(fields: [productId], references: [id])
@@ -671,18 +670,18 @@ model SalesInvoiceItem {
 
 // Off-platform purchases recorded by a shop from its own suppliers.
 model PurchaseOrder {
-  id          String              @id @default(uuid())
-  poNumber    String              @unique
-  shopId      String
-  supplierId  String
-  status      PurchaseOrderStatus @default(ORDERED)
-  total       Decimal             @db.Decimal(14, 2)
-  amountPaid  Decimal             @default(0) @db.Decimal(14, 2)
-  notes       String?
-  orderedAt   DateTime            @default(now())
-  receivedAt  DateTime?
-  createdAt   DateTime            @default(now())
-  updatedAt   DateTime            @updatedAt
+  id         String              @id @default(uuid())
+  poNumber   String              @unique
+  shopId     String
+  supplierId String
+  status     PurchaseOrderStatus @default(ORDERED)
+  total      Decimal             @db.Decimal(14, 2)
+  amountPaid Decimal             @default(0) @db.Decimal(14, 2)
+  notes      String?
+  orderedAt  DateTime            @default(now())
+  receivedAt DateTime?
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
 
   shop     User                @relation(fields: [shopId], references: [id])
   supplier Supplier            @relation(fields: [supplierId], references: [id])
@@ -1009,24 +1008,6 @@ model Notification {
   @@index([userId, readAt])
   @@index([userId, createdAt])
   @@map("notifications")
-}
-
-model AuditLog {
-  id         String   @id @default(uuid())
-  actorId    String?
-  action     String
-  entityType String
-  entityId   String?
-  metadata   Json?
-  ipAddress  String?
-  createdAt  DateTime @default(now())
-
-  actor User? @relation(fields: [actorId], references: [id])
-
-  @@index([entityType, entityId])
-  @@index([actorId, createdAt])
-  @@index([createdAt])
-  @@map("audit_logs")
 }
 
 model ApplicationSetting {

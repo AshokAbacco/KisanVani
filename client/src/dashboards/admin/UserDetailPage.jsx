@@ -12,7 +12,6 @@ import ErrorState from '../../components/feedback/ErrorState';
 import ConfirmDialog from '../../components/modals/ConfirmDialog';
 import Modal from '../../components/modals/Modal';
 import { Input } from '../../components/forms/Field';
-import { Timeline } from '../../components/common/Stepper';
 import useAsync from '../../hooks/useAsync';
 import { adminApi } from '../../services';
 import { useAuth } from '../../context/AuthContext';
@@ -33,7 +32,6 @@ const ACTIVITY_LABELS = {
   farmerProcurementOrders: 'Farmer purchases',
   trips: 'Trips',
   deliveredTrips: 'Delivered trips',
-  auditEntries: 'Audit entries',
 };
 
 const UserDetailPage = () => {
@@ -116,7 +114,7 @@ const UserDetailPage = () => {
                 </Button>
               )}
               {u.status !== 'DEACTIVATED' && (
-                <Button variant="ghost" icon={Power} onClick={() => setAction({ status: 'DEACTIVATED', title: 'Deactivate this account?', label: 'Deactivate', done: 'Account deactivated', reason: true, message: 'Use for accounts that have left the platform. Records are kept for audit.' })}>
+                <Button variant="ghost" icon={Power} onClick={() => setAction({ status: 'DEACTIVATED', title: 'Deactivate this account?', label: 'Deactivate', done: 'Account deactivated', reason: true, message: 'Use for accounts that have left the platform. Their records are kept.' })}>
                   Deactivate
                 </Button>
               )}
@@ -179,13 +177,6 @@ const UserDetailPage = () => {
             )}
           </Section>
         </div>
-        <Section title="Audit trail" description="Actions by or about this user">
-          {u.auditTrail.length ? (
-            <Timeline items={u.auditTrail.map((a) => ({ id: a.id, title: humanize(a.action), meta: `${formatDateTime(a.createdAt)} — by ${a.actor?.name || 'system'}`, note: a.metadata?.reason }))} />
-          ) : (
-            <p className="text-sm text-soil-500">No recorded activity.</p>
-          )}
-        </Section>
       </div>
       <ConfirmDialog open={!!action} onClose={() => setAction(null)} title={action?.title} message={action?.message} confirmLabel={action?.label} tone={action?.tone || 'danger'} requireReason={action?.reason} busy={busy} onConfirm={run} />
       <Modal

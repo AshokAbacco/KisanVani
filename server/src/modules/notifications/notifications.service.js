@@ -1,6 +1,5 @@
 const prisma = require('../../config/prisma');
 const ApiError = require('../../utils/ApiError');
-const audit = require('../../services/audit.service');
 const { emitTo, userRoom } = require('../../sockets/io');
 const { paginate, pageMeta } = require('../../utils/pagination');
 
@@ -34,7 +33,6 @@ const broadcast = async (admin, { role, title, message, link }) => {
   if (!users.length) return { sent: 0 };
   await prisma.notification.createMany({ data: users.map((u) => ({ userId: u.id, type: 'BROADCAST', title, message, link })) });
   for (const u of users) emitTo(userRoom(u.id), 'notification:new', { type: 'BROADCAST', title, message, link, createdAt: new Date() });
-  await audit.record({ actorId: admin.id, action: 'NOTIFICATION_BROADCAST', entityType: 'Notification', metadata: { role: role || 'ALL', title, recipients: users.length } });
   return { sent: users.length };
 };
 

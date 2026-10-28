@@ -15,7 +15,7 @@ const PrivacyPolicyPage = () => (
       <h2>How location is used</h2>
       <p>Drivers share location only after starting it on an active trip, with the browser’s permission. Positions are visible only to the parties of that trip and to admins, and sharing stops when the trip ends.</p>
       <h2>Who can see your information</h2>
-      <p>Each role sees only what it needs: buyers see the seller’s listing and contact for their orders; drivers see pickup and drop contacts for their trips. Admins can see platform records to operate and audit the service; their actions are logged.</p>
+      <p>Each role sees only what it needs: buyers see the seller’s listing and contact for their orders; drivers see pickup and drop contacts for their trips. Admins can see platform records to operate and support the service.</p>
       <h2>Security</h2>
       <p>Passwords are stored as bcrypt hashes. Sessions use short-lived access tokens and an http-only refresh cookie. Uploaded files are checked by type and content.</p>
       <h2>Retention and your rights</h2>

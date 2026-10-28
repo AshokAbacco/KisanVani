@@ -1,6 +1,5 @@
 const prisma = require('../../config/prisma');
 const ApiError = require('../../utils/ApiError');
-const audit = require('../../services/audit.service');
 const { paginate, pageMeta } = require('../../utils/pagination');
 
 const list = async (query, isAdmin) => {
@@ -28,19 +27,16 @@ const get = async (id) => {
 
 const create = async (actor, data) => {
   const p = await prisma.product.create({ data, include: { category: true } });
-  await audit.record({ actorId: actor.id, action: 'PRODUCT_CREATED', entityType: 'Product', entityId: p.id, metadata: data });
   return p;
 };
 
 const update = async (actor, id, data) => {
   const p = await prisma.product.update({ where: { id }, data, include: { category: true } });
-  await audit.record({ actorId: actor.id, action: 'PRODUCT_UPDATED', entityType: 'Product', entityId: id, metadata: data });
   return p;
 };
 
 const setImage = async (actor, id, url) => {
   const p = await prisma.product.update({ where: { id }, data: { imageUrl: url }, include: { category: true } });
-  await audit.record({ actorId: actor.id, action: 'PRODUCT_IMAGE_UPDATED', entityType: 'Product', entityId: id });
   return p;
 };
 
