@@ -14,10 +14,7 @@ const { health } = require('./controllers/health.controller');
 
 const app = express();
 
-// Trust the first proxy hop (production load balancer) plus any local hops (Vite dev proxy, VS Code / dev tunnels),
-// so req.ip is the real visitor and rate limits are per person, not shared by everyone on the tunnel.
-const isLoopback = (ip) => ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1';
-app.set('trust proxy', (ip, hop) => hop === 0 || isLoopback(ip));
+app.set('trust proxy', 1);
 app.disable('x-powered-by');
 
 app.use(
