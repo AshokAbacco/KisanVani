@@ -1,5 +1,5 @@
 const { ZodError } = require('zod');
-const { Prisma } = require('@prisma/client');
+const { Prisma } = require('../generated/prisma/client.ts');
 const multer = require('multer');
 const ApiError = require('../utils/ApiError');
 const logger = require('../config/logger');

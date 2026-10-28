@@ -1,4 +1,4 @@
-const { Prisma } = require('@prisma/client');
+const { Prisma } = require('../generated/prisma/client.ts');
 
 const Decimal = Prisma.Decimal;
 

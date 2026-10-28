@@ -1,4 +1,4 @@
-const { Prisma } = require('@prisma/client');
+const { Prisma } = require('../../generated/prisma/client.ts');
 const prisma = require('../../config/prisma');
 const ApiError = require('../../utils/ApiError');
 const settings = require('../../services/settings.service');
