@@ -119,15 +119,15 @@ const AppRouter = () => (
         <Route path="faq" element={<FaqPage />} />
         <Route path="privacy-policy" element={<PrivacyPolicyPage />} />
         <Route path="terms" element={<TermsPage />} />
-      </Route>
-    <Route path="login" element={<GuestOnly><Login /></GuestOnly>} />
-     <Route path="register" element={<GuestOnly><Register /></GuestOnly>} />
-      <Route element={<AuthLayout />}>
-       
-       
-        <Route path="forgot-password" element={<ForgotPassword />} />
-        <Route path="verify-otp" element={<VerifyOTP />} />
-        <Route path="reset-password" element={<ResetPassword />} />
+
+        {/* Auth screens share the website navbar (with the language switcher) and footer */}
+        <Route path="login" element={<GuestOnly><Login /></GuestOnly>} />
+        <Route path="register" element={<GuestOnly><Register /></GuestOnly>} />
+        <Route element={<AuthLayout />}>
+          <Route path="forgot-password" element={<ForgotPassword />} />
+          <Route path="verify-otp" element={<VerifyOTP />} />
+          <Route path="reset-password" element={<ResetPassword />} />
+        </Route>
       </Route>
 
       <Route element={<ProtectedRoute />}>

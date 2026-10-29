@@ -28,4 +28,28 @@ export const rules = {
   pincode: { validate: (v) => !v || /^\d{6}$/.test(v) || 'Pincode must be 6 digits' },
 };
 
+/**
+ * Same checks as `rules`, with messages in the active language. Used by the public/auth forms:
+ *   const { t } = useI18n(); const r = makeRules(t);
+ */
+const isMobile = (v) => /^[6-9]\d{9}$/.test(String(v).replace(/[\s-]/g, '').replace(/^\+91/, '').replace(/^0/, ''));
+
+export const makeRules = (t) => ({
+  required: (label) => ({ required: t('validation.required', '', { label }) }),
+  name: {
+    required: t('validation.nameRequired'),
+    minLength: { value: 2, message: t('validation.min2') },
+    maxLength: { value: 100, message: t('validation.tooLong') },
+  },
+  mobile: { required: t('validation.mobileRequired'), validate: (v) => isMobile(v) || t('validation.mobileInvalid') },
+  email: { pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: t('validation.emailInvalid') } },
+  password: {
+    required: t('validation.passwordRequired'),
+    minLength: { value: 8, message: t('validation.min8') },
+    maxLength: { value: 72, message: t('validation.max72') },
+    validate: (v) => (/[A-Za-z]/.test(v) && /\d/.test(v)) || t('validation.letterNumber'),
+  },
+  pincode: { validate: (v) => !v || /^\d{6}$/.test(v) || t('validation.pincode') },
+});
+
 export default rules;

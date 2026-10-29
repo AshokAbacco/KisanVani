@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import { Eye, EyeOff, Mail, Lock, ArrowRight, Leaf, Sprout, Check } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, ArrowRight, Leaf, Check } from 'lucide-react';
 import Button from '../components/common/Button';
 import Alert from '../components/feedback/Alert';
 import { useAuth } from '../context/AuthContext';
@@ -25,6 +25,10 @@ const ROLE_THUMB = {
 const inputBase =
   'w-full rounded-xl border bg-white py-2.5 pl-11 pr-4 text-[15px] text-soil shadow-sm outline-none transition placeholder:text-soil-400 focus:border-green-600 focus:ring-4 focus:ring-green-600/15';
 
+/**
+ * Rendered inside PublicLayout: the site navbar (logo, links, language switcher) sits above
+ * and the footer below. The section fills exactly the screen height left under the header.
+ */
 const Login = () => {
   const [params] = useSearchParams();
   const initialRole = LOGIN_ROLES.includes(params.get('role')) ? params.get('role') : 'FARMER';
@@ -41,6 +45,8 @@ const Login = () => {
     formState: { errors, isSubmitting },
   } = useForm();
 
+  const roleName = (r) => t(`roleNames.${r}`, ROLES[r]?.label ?? r);
+
   const submit = async (v) => {
     setError(null);
     try {
@@ -55,64 +61,46 @@ const Login = () => {
   };
 
   return (
-    /* Fixed to the screen: exactly one viewport high, the page itself never scrolls */
-    <div
-      className="fixed inset-0 h-[100dvh] w-screen overflow-hidden bg-white bg-cover bg-no-repeat bg-left"
+    <section
+      className="relative w-full bg-white bg-cover bg-no-repeat bg-left"
       style={{ backgroundImage: "url('/Home/login1.png')" }}
     >
-      <div className="mx-auto grid h-full w-full max-w-[1440px] lg:grid-cols-[1.05fr_1fr]">
-        {/* ───────── Left: brand panel ───────── */}
-        <aside className="relative hidden h-full flex-col px-10 pt-10 lg:flex xl:px-14">
-          <Link to="/" className="inline-flex w-fit items-center gap-3">
-            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-white text-green-600 shadow-md">
-              <Sprout className="h-6 w-6" aria-hidden />
-            </span>
-            <span className="font-display text-2xl font-bold text-[#0f3d1e] [text-shadow:0_1px_10px_rgba(255,255,255,0.9)]">
-              KisanVani
-            </span>
-          </Link>
-
+      <div className="mx-auto grid min-h-[calc(100dvh-4rem)] w-full max-w-[1440px] lg:min-h-[calc(100dvh-72px)] lg:grid-cols-[1.05fr_1fr]">
+        {/* ───────── Left: brand copy ───────── */}
+        <aside className="relative hidden flex-col px-10 pt-16 lg:flex xl:px-14 xl:pt-20">
           {/* Soft white glow behind the copy so it reads on the bright sky */}
-          <div className="relative isolate mt-12 max-w-xl">
+          <div className="relative isolate max-w-xl">
             <span
               className="pointer-events-none absolute -inset-x-10 -inset-y-8 -z-10 rounded-[48px] bg-[radial-gradient(ellipse_at_left,rgba(255,255,255,0.75)_0%,rgba(255,255,255,0.45)_45%,rgba(255,255,255,0)_75%)] blur-md"
               aria-hidden
             />
             <h2 className="font-display text-[44px] font-extrabold leading-[1.08] tracking-[-0.02em] text-[#0f3d1e] [text-shadow:0_1px_12px_rgba(255,255,255,0.8)] xl:text-[52px]">
-              Manage Your <span className="text-[#1f8a12]">Farm-to-Market</span> Operations
+              {t('login.heroBefore')}
+              <span className="text-[#1f8a12]">{t('login.heroHighlight')}</span>
+              {t('login.heroAfter')}
             </h2>
             <span className="mt-5 block h-1.5 w-20 rounded-full bg-yellow-400 shadow-sm" aria-hidden />
             <p className="mt-5 max-w-md text-lg font-medium leading-relaxed text-[#1e3a26] [text-shadow:0_1px_8px_rgba(255,255,255,0.9)]">
-              A single platform for Farmers, Shop Owners, Market Mandis, Drivers and Admins.
+              {t('login.heroBody')}
             </p>
           </div>
         </aside>
 
-        {/* ───────── Right: form ─────────
-            Centred in the screen. Only on very short screens (small laptops,
-            phones in landscape) does this column scroll, and its scrollbar is hidden. */}
-        <main className="flex h-full items-center justify-center overflow-y-auto px-4 py-6 sm:px-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <div className="m-auto w-full max-w-[460px] rounded-3xl bg-white/95 p-6 shadow-xl ring-1 ring-green-100 backdrop-blur sm:p-7 lg:bg-transparent lg:p-0 lg:shadow-none lg:ring-0 lg:backdrop-blur-0">
-            {/* Mobile logo */}
-            <Link to="/" className="mb-4 inline-flex items-center gap-2.5 lg:hidden">
-              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-green-600 text-white">
-                <Sprout className="h-5 w-5" aria-hidden />
-              </span>
-              <span className="font-display text-xl font-bold text-soil">KisanVani</span>
-            </Link>
-
+        {/* ───────── Right: form ───────── */}
+        <div className="flex items-center justify-center px-4 py-8 sm:px-8 lg:py-10">
+          <div className="w-full max-w-[460px] rounded-3xl bg-white/95 p-6 shadow-xl ring-1 ring-green-100 backdrop-blur sm:p-7 lg:bg-transparent lg:p-0 lg:shadow-none lg:ring-0 lg:backdrop-blur-0">
             <span className="inline-flex rounded-full bg-green-100 px-3.5 py-1 text-sm font-semibold text-green-700">
               {t('auth.signIn')}
             </span>
             <h1 className="mt-2 flex items-center gap-2 font-display text-3xl font-bold tracking-[-0.02em] text-soil sm:text-[38px]">
               {t('auth.welcomeBack')}
-              <Leaf className="h-7 w-7 -rotate-12 text-green-500" aria-hidden />
+              <Leaf className="h-7 w-7 shrink-0 -rotate-12 text-green-500" aria-hidden />
             </h1>
-            <p className="mt-1 text-sm text-soil-500">Sign in to your {ROLES[role].label} dashboard.</p>
+            <p className="mt-1 text-sm text-soil-500">{t('login.subtitle', '', { role: roleName(role) })}</p>
 
             {expired && (
               <Alert tone="warning" className="mt-4">
-                Your session ended. Please sign in again.
+                {t('login.sessionEnded')}
               </Alert>
             )}
 
@@ -153,7 +141,7 @@ const Login = () => {
                             {meta?.icon && <meta.icon className="h-5 w-5" aria-hidden />}
                           </span>
                         )}
-                        <span className="truncate">{meta?.label ?? r}</span>
+                        <span className="truncate">{roleName(r)}</span>
                         {active && (
                           <span className="ml-auto flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-600 text-white">
                             <Check className="h-3.5 w-3.5" aria-hidden />
@@ -176,10 +164,10 @@ const Login = () => {
                     id="login-identifier"
                     autoComplete="username"
                     inputMode="email"
-                    placeholder="Enter e-mail or mobile number"
+                    placeholder={t('login.identifierPlaceholder')}
                     aria-invalid={!!errors.identifier}
                     className={`${inputBase} ${errors.identifier ? 'border-red-400' : 'border-soil-200'}`}
-                    {...register('identifier', { required: 'Enter your e-mail or mobile number' })}
+                    {...register('identifier', { required: t('validation.identifierRequired') })}
                   />
                 </div>
                 {errors.identifier && <p className="mt-1 text-sm text-red-600">{errors.identifier.message}</p>}
@@ -196,15 +184,15 @@ const Login = () => {
                     id="login-password"
                     type={show ? 'text' : 'password'}
                     autoComplete="current-password"
-                    placeholder="Enter password"
+                    placeholder={t('login.passwordPlaceholder')}
                     aria-invalid={!!errors.password}
                     className={`${inputBase} pr-12 ${errors.password ? 'border-red-400' : 'border-soil-200'}`}
-                    {...register('password', { required: 'Enter your password' })}
+                    {...register('password', { required: t('validation.enterPassword') })}
                   />
                   <button
                     type="button"
                     onClick={() => setShow((s) => !s)}
-                    aria-label={show ? 'Hide password' : 'Show password'}
+                    aria-label={show ? t('login.hidePassword') : t('login.showPassword')}
                     className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-soil-400 transition hover:bg-green-50 hover:text-green-700"
                   >
                     {show ? <EyeOff className="h-5 w-5" aria-hidden /> : <Eye className="h-5 w-5" aria-hidden />}
@@ -212,7 +200,7 @@ const Login = () => {
                 </div>
                 {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>}
 
-                <div className="mt-2 flex items-center justify-between text-sm">
+                <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-sm">
                   <label className="inline-flex cursor-pointer items-center gap-2 text-soil-500">
                     <input
                       type="checkbox"
@@ -220,7 +208,7 @@ const Login = () => {
                       onChange={(e) => setShow(e.target.checked)}
                       className="h-4 w-4 rounded border-soil-300 accent-green-600"
                     />
-                    Show password
+                    {t('login.showPassword')}
                   </label>
                   <Link to="/forgot-password" className="font-semibold text-green-700 underline underline-offset-4 hover:text-green-800">
                     {t('auth.forgot')}
@@ -248,9 +236,9 @@ const Login = () => {
               </Link>
             </p>
           </div>
-        </main>
+        </div>
       </div>
-    </div>
+    </section>
   );
 };
 

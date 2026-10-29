@@ -6,10 +6,12 @@ import Button from '../components/common/Button';
 import Alert from '../components/feedback/Alert';
 import { authApi } from '../services';
 import { errorMessage } from '../utils/errors';
+import { useI18n } from '../i18n';
 
 const ForgotPassword = () => {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const { t } = useI18n();
   const {
     register,
     handleSubmit,
@@ -28,19 +30,24 @@ const ForgotPassword = () => {
 
   return (
     <>
-      <h1 className="text-3xl font-semibold">Reset your password</h1>
-      <p className="mt-2 text-soil-500">Enter the e-mail or mobile number on your account. We will send a 6-digit code and a reset link to your registered e-mail.</p>
+      <h1 className="text-3xl font-semibold">{t('auth.resetTitle')}</h1>
+      <p className="mt-2 text-soil-500">{t('forgot.body')}</p>
       <form onSubmit={handleSubmit(submit)} className="mt-8 space-y-5" noValidate>
-        <Input label="E-mail or mobile number" autoComplete="username" error={errors.identifier?.message} {...register('identifier', { required: 'Enter your e-mail or mobile number' })} />
+        <Input
+          label={t('auth.identifier')}
+          autoComplete="username"
+          error={errors.identifier?.message}
+          {...register('identifier', { required: t('validation.identifierRequired') })}
+        />
         {error && <Alert tone="error">{error}</Alert>}
         <Button type="submit" size="lg" className="w-full" loading={isSubmitting}>
-          Send verification code
+          {t('auth.sendCode')}
         </Button>
       </form>
       <p className="mt-6 text-sm text-soil-500">
-        Remembered it?{' '}
+        {t('forgot.remembered')}{' '}
         <Link to="/login" className="link">
-          Sign in
+          {t('auth.signIn')}
         </Link>
       </p>
     </>

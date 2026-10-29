@@ -7,13 +7,16 @@ import Button from '../components/common/Button';
 import Alert from '../components/feedback/Alert';
 import { authApi } from '../services';
 import { errorMessage } from '../utils/errors';
-import { rules } from '../validators';
+import { makeRules } from '../validators';
+import { useI18n } from '../i18n';
 
 const ResetPassword = () => {
   const [params] = useSearchParams();
   const token = params.get('token');
   const [done, setDone] = useState(false);
   const [error, setError] = useState(null);
+  const { t } = useI18n();
+  const rules = makeRules(t);
   const {
     register,
     handleSubmit,
@@ -34,10 +37,10 @@ const ResetPassword = () => {
   if (!token)
     return (
       <>
-        <h1 className="text-3xl font-semibold">Reset link missing</h1>
-        <p className="mt-3 text-soil-600">Open the link from your e-mail again, or request a new code.</p>
+        <h1 className="text-3xl font-semibold">{t('reset.missingTitle')}</h1>
+        <p className="mt-3 text-soil-600">{t('reset.missingBody')}</p>
         <Button to="/forgot-password" className="mt-6">
-          Request a new code
+          {t('reset.requestNew')}
         </Button>
       </>
     );
@@ -46,37 +49,37 @@ const ResetPassword = () => {
     return (
       <>
         <CheckCircle2 className="h-10 w-10 text-field-600" aria-hidden />
-        <h1 className="mt-4 text-3xl font-semibold">Password updated</h1>
-        <p className="mt-3 text-soil-600">You have been signed out on all devices. Sign in with your new password.</p>
+        <h1 className="mt-4 text-3xl font-semibold">{t('reset.doneTitle')}</h1>
+        <p className="mt-3 text-soil-600">{t('reset.doneBody')}</p>
         <Button to="/login" className="mt-6">
-          Sign in
+          {t('auth.signIn')}
         </Button>
       </>
     );
 
   return (
     <>
-      <h1 className="text-3xl font-semibold">Set a new password</h1>
-      <p className="mt-2 text-soil-500">Use at least 8 characters, including a letter and a number.</p>
+      <h1 className="text-3xl font-semibold">{t('auth.setNewPassword')}</h1>
+      <p className="mt-2 text-soil-500">{t('reset.body')}</p>
       <form onSubmit={handleSubmit(submit)} className="mt-8 space-y-5" noValidate>
-        <Input label="New password" type="password" autoComplete="new-password" error={errors.password?.message} {...register('password', rules.password)} />
+        <Input label={t('reset.newPassword')} type="password" autoComplete="new-password" error={errors.password?.message} {...register('password', rules.password)} />
         <Input
-          label="Confirm new password"
+          label={t('reset.confirmNew')}
           type="password"
           autoComplete="new-password"
           error={errors.confirm?.message}
-          {...register('confirm', { validate: (v) => v === watch('password') || 'Passwords do not match' })}
+          {...register('confirm', { validate: (v) => v === watch('password') || t('validation.mismatch') })}
         />
         {error && (
           <Alert tone="error">
             {error}{' '}
             <Link to="/forgot-password" className="underline">
-              Request a new code
+              {t('reset.requestNew')}
             </Link>
           </Alert>
         )}
         <Button type="submit" size="lg" className="w-full" loading={isSubmitting}>
-          Set new password
+          {t('auth.setNewPassword')}
         </Button>
       </form>
     </>
