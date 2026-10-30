@@ -37,6 +37,15 @@
   h3 {
     @apply font-display tracking-tight text-soil;
   }
+  /* Indian scripts: negative tracking breaks conjuncts and tight leading clips vowel signs
+     above/below the line, so relax both whenever the site is not in English. */
+  html:not([lang='en']) :is(h1, h2, h3, .font-display) {
+    letter-spacing: normal !important;
+    line-height: 1.3 !important;
+  }
+  html:not([lang='en']) .uppercase {
+    letter-spacing: 0.02em !important;
+  }
   :focus-visible {
     outline: 2px solid rgb(var(--accent));
     outline-offset: 2px;
