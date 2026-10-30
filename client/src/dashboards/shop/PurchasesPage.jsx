@@ -19,10 +19,12 @@ import useList from '../../hooks/useList';
 import useAsync from '../../hooks/useAsync';
 import { procurementApi, suppliersApi } from '../../services';
 import { useToast } from '../../context/ToastContext';
-import { formatINR, formatKg, formatDateTime } from '../../utils/format';
+import { formatINR, formatKg, formatDateTime, humanize } from '../../utils/format';
 import { rules } from '../../validators';
+import { useI18n } from '../../i18n';
 
 const NewPurchase = ({ onClose, onSaved }) => {
+  const { t } = useI18n();
   const toast = useToast();
   const suppliers = useAsync(() => suppliersApi.list({ limit: 100, sortBy: 'name', sortOrder: 'asc' }).then((r) => r.data), []);
   const {
@@ -39,7 +41,7 @@ const NewPurchase = ({ onClose, onSaved }) => {
   const submit = async (v) => {
     try {
       const po = await procurementApi.createPurchase({ supplierId: v.supplierId, items: v.items, notes: v.notes || null });
-      toast.success(`Purchase ${po.poNumber} recorded. Receive it when the goods arrive to add stock.`);
+      toast.success(t('purchases.recordedToast', '', { number: po.poNumber }));
       onSaved();
       onClose();
     } catch (e) {
@@ -52,55 +54,56 @@ const NewPurchase = ({ onClose, onSaved }) => {
       open
       onClose={onClose}
       size="lg"
-      title="Record a supplier purchase"
-      description="Stock is added only when you mark the purchase received, using the received quantities."
+      title={t('purchases.newTitle')}
+      description={t('purchases.newIntro')}
       footer={
         <>
-          <span className="num mr-auto self-center font-semibold">Total {formatINR(total)}</span>
+          <span className="num mr-auto self-center font-semibold">{t('purchases.totalAmount', '', { amount: formatINR(total) })}</span>
           <Button variant="secondary" onClick={onClose}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button onClick={handleSubmit(submit)} loading={isSubmitting}>
-            Save purchase
+            {t('purchases.savePurchase')}
           </Button>
         </>
       }
     >
       <form className="space-y-4" onSubmit={handleSubmit(submit)} noValidate>
         <Select
-          label="Supplier"
+          label={t('purchases.supplier')}
           required
-          placeholder={suppliers.loading ? 'Loading…' : suppliers.data?.length ? 'Choose a supplier' : 'Add a supplier first'}
+          placeholder={suppliers.loading ? t('common.loading') : suppliers.data?.length ? t('purchases.chooseSupplier') : t('purchases.addSupplierFirst')}
           options={(suppliers.data || []).filter((s) => s.isActive).map((s) => ({ value: s.id, label: s.name }))}
           error={errors.supplierId?.message}
-          {...register('supplierId', rules.required('Supplier'))}
+          {...register('supplierId', rules.required(t('purchases.supplier')))}
         />
         <div className="space-y-3">
           {fields.map((f, i) => (
             <div key={f.id} className="grid grid-cols-[1fr_auto] gap-2 rounded-xl border border-soil-200 p-3 sm:grid-cols-[2fr_1fr_1fr_auto] sm:items-end">
-              <ProductSelect className="col-span-2 sm:col-span-1" error={errors.items?.[i]?.productId?.message} {...register(`items.${i}.productId`, rules.required('Product'))} />
+              <ProductSelect className="col-span-2 sm:col-span-1" error={errors.items?.[i]?.productId?.message} {...register(`items.${i}.productId`, rules.required(t('common.product')))} />
               <label className="block">
-                <span className="field-label">Qty (kg)</span>
-                <input className={`input num ${errors.items?.[i]?.quantityKg ? 'input-error' : ''}`} inputMode="decimal" {...register(`items.${i}.quantityKg`, rules.positive('Quantity'))} />
+                <span className="field-label">{t('purchases.qtyKg')}</span>
+                <input className={`input num ${errors.items?.[i]?.quantityKg ? 'input-error' : ''}`} inputMode="decimal" {...register(`items.${i}.quantityKg`, rules.positive(t('common.quantity')))} />
               </label>
               <label className="block">
-                <span className="field-label">Cost ₹/kg</span>
-                <input className={`input num ${errors.items?.[i]?.unitCost ? 'input-error' : ''}`} inputMode="decimal" {...register(`items.${i}.unitCost`, rules.money('Cost'))} />
+                <span className="field-label">{t('stock.costPerKg')}</span>
+                <input className={`input num ${errors.items?.[i]?.unitCost ? 'input-error' : ''}`} inputMode="decimal" {...register(`items.${i}.unitCost`, rules.money(t('stock.cost')))} />
               </label>
-              <Button variant="ghost" size="icon" icon={Trash2} onClick={() => remove(i)} disabled={fields.length === 1} aria-label="Remove line" />
+              <Button variant="ghost" size="icon" icon={Trash2} onClick={() => remove(i)} disabled={fields.length === 1} aria-label={t('purchases.removeLine')} />
             </div>
           ))}
           <Button variant="secondary" size="sm" icon={Plus} onClick={() => append({ productId: '', quantityKg: '', unitCost: '' })}>
-            Add line
+            {t('purchases.addLine')}
           </Button>
         </div>
-        <Textarea label="Notes" rows={2} {...register('notes')} />
+        <Textarea label={t('common.notes')} rows={2} {...register('notes')} />
       </form>
     </Modal>
   );
 };
 
 const PurchaseDetail = ({ id, onClose, onChanged }) => {
+  const { t } = useI18n();
   const toast = useToast();
   const { data: po, reload } = useAsync(() => procurementApi.purchase(id), [id]);
   const [receiving, setReceiving] = useState(false);
@@ -117,37 +120,37 @@ const PurchaseDetail = ({ id, onClose, onChanged }) => {
       open
       onClose={onClose}
       size="lg"
-      title={`Purchase ${po.poNumber}`}
+      title={t('purchases.detailTitle', '', { number: po.poNumber })}
       description={`${po.supplier.name} · ${formatDateTime(po.orderedAt)}`}
       footer={
         <>
           {po.status === 'ORDERED' && (
             <>
               <Button variant="ghost" icon={Ban} onClick={() => setCancelling(true)}>
-                Cancel purchase
+                {t('purchases.cancelPurchase')}
               </Button>
               <Button icon={PackageCheck} onClick={() => setReceiving(true)}>
-                Mark received
+                {t('purchases.markReceived')}
               </Button>
             </>
           )}
           {po.status !== 'CANCELLED' && due > 0.004 && (
             <Button variant="secondary" icon={Wallet} onClick={() => setPaying(true)}>
-              Pay supplier
+              {t('purchases.paySupplier')}
             </Button>
           )}
         </>
       }
     >
-      <DetailList items={[['Status', <StatusBadge key="s" status={po.status} />], ['Total', formatINR(po.total)], ['Paid', formatINR(po.amountPaid)], ['Received', po.receivedAt ? formatDateTime(po.receivedAt) : '—']]} />
+      <DetailList items={[[t('common.status'), <StatusBadge key="s" status={po.status} />], [t('common.total'), formatINR(po.total)], [t('purchases.paid'), formatINR(po.amountPaid)], [t('purchases.received'), po.receivedAt ? formatDateTime(po.receivedAt) : '—']]} />
       <table className="mt-5 min-w-full text-sm">
         <thead className="text-left text-xs text-soil-500">
           <tr>
-            <th className="py-2">Item</th>
-            <th className="py-2 text-right">Ordered</th>
-            <th className="py-2 text-right">Received</th>
-            <th className="py-2 text-right">Cost</th>
-            <th className="py-2 text-right">Amount</th>
+            <th className="py-2">{t('common.item')}</th>
+            <th className="py-2 text-right">{t('purchases.ordered')}</th>
+            <th className="py-2 text-right">{t('purchases.received')}</th>
+            <th className="py-2 text-right">{t('stock.cost')}</th>
+            <th className="py-2 text-right">{t('common.amount')}</th>
           </tr>
         </thead>
         <tbody className="num divide-y divide-soil-100">
@@ -168,17 +171,17 @@ const PurchaseDetail = ({ id, onClose, onChanged }) => {
       <QuantityConfirmModal
         open={receiving}
         onClose={() => setReceiving(false)}
-        title="Receive purchase"
-        description="Enter what actually arrived. Stock increases by these quantities."
+        title={t('purchases.receiveTitle')}
+        description={t('purchases.receiveIntro')}
         items={po.items.map((i) => ({ ...i, itemName: i.product.name }))}
         field="receivedQuantityKg"
         cap={(i) => Number(i.quantityKg) * 1.1}
         defaultQty={(i) => i.quantityKg}
-        confirmLabel="Add to stock"
+        confirmLabel={t('inventory.addToStock')}
         onConfirm={async (items) => {
           try {
             await procurementApi.receivePurchase(po.id, { items });
-            toast.success('Purchase received and stock updated');
+            toast.success(t('purchases.receivedToast'));
             refresh();
           } catch (e) {
             toast.error(e);
@@ -186,12 +189,12 @@ const PurchaseDetail = ({ id, onClose, onChanged }) => {
           }
         }}
       />
-      <RecordPaymentModal open={paying} onClose={() => setPaying(false)} title="Pay supplier" due={due} payeeName={po.supplier.name} onSubmit={(body) => procurementApi.payPurchase(po.id, body).then(refresh)} />
+      <RecordPaymentModal open={paying} onClose={() => setPaying(false)} title={t('purchases.paySupplier')} due={due} payeeName={po.supplier.name} onSubmit={(body) => procurementApi.payPurchase(po.id, body).then(refresh)} />
       <ConfirmDialog
         open={cancelling}
         onClose={() => setCancelling(false)}
-        title="Cancel this purchase?"
-        confirmLabel="Cancel purchase"
+        title={t('purchases.cancelTitle')}
+        confirmLabel={t('purchases.cancelPurchase')}
         requireReason
         onConfirm={async (reason) => {
           try {
@@ -209,6 +212,7 @@ const PurchaseDetail = ({ id, onClose, onChanged }) => {
 
 /** Shop purchases: supplier purchase orders recorded here, plus a link to KisanVani orders. */
 const PurchasesPage = () => {
+  const { t } = useI18n();
   const [creating, setCreating] = useState(false);
   const [viewing, setViewing] = useState(null);
   const list = useList((p) => procurementApi.purchases(p), { initialFilters: { status: '' } });
@@ -216,15 +220,15 @@ const PurchasesPage = () => {
   return (
     <>
       <PageHeader
-        title="Purchases"
-        description="Stock bought from your own suppliers. Orders placed with farmers and Market Mandis are under My orders."
+        title={t('purchases.title')}
+        description={t('purchases.intro')}
         actions={
           <>
             <Button variant="secondary" icon={ShoppingCart} to="/shop/orders">
-              My KisanVani orders
+              {t('purchases.myOrders')}
             </Button>
             <Button icon={Plus} onClick={() => setCreating(true)}>
-              Record purchase
+              {t('purchases.record')}
             </Button>
           </>
         }
@@ -233,13 +237,13 @@ const PurchasesPage = () => {
         list={list}
         onRowClick={(po) => setViewing(po.id)}
         columns={[
-          { key: 'poNumber', header: 'Purchase', render: (p) => <span className="num whitespace-nowrap font-semibold">{p.poNumber}</span> },
-          { key: 'supplier', header: 'Supplier', render: (p) => p.supplier.name },
-          { key: 'items', header: 'Lines', align: 'right', render: (p) => p._count.items },
-          { key: 'total', header: 'Total', align: 'right', sortable: true, render: (p) => formatINR(p.total) },
-          { key: 'paid', header: 'Paid', align: 'right', render: (p) => formatINR(p.amountPaid) },
-          { key: 'status', header: 'Status', render: (p) => <StatusBadge status={p.status} /> },
-          { key: 'createdAt', header: 'Date', sortable: true, render: (p) => formatDateTime(p.createdAt) },
+          { key: 'poNumber', header: t('purchases.purchase'), render: (p) => <span className="num whitespace-nowrap font-semibold">{p.poNumber}</span> },
+          { key: 'supplier', header: t('purchases.supplier'), render: (p) => p.supplier.name },
+          { key: 'items', header: t('purchases.lines'), align: 'right', render: (p) => p._count.items },
+          { key: 'total', header: t('common.total'), align: 'right', sortable: true, render: (p) => formatINR(p.total) },
+          { key: 'paid', header: t('purchases.paid'), align: 'right', render: (p) => formatINR(p.amountPaid) },
+          { key: 'status', header: t('common.status'), render: (p) => <StatusBadge status={p.status} /> },
+          { key: 'createdAt', header: t('common.date'), sortable: true, render: (p) => formatDateTime(p.createdAt) },
         ]}
         toolbar={
           <>
@@ -247,16 +251,16 @@ const PurchasesPage = () => {
               value={list.filters.status}
               onChange={(status) => list.setFilters({ status })}
               tabs={[
-                { value: '', label: 'All' },
-                { value: 'ORDERED', label: 'Awaiting goods' },
-                { value: 'RECEIVED', label: 'Received' },
-                { value: 'CANCELLED', label: 'Cancelled' },
+                { value: '', label: t('common.all') },
+                { value: 'ORDERED', label: t('purchases.awaiting') },
+                { value: 'RECEIVED', label: t('purchases.received') },
+                { value: 'CANCELLED', label: humanize('CANCELLED') },
               ]}
             />
-            <SearchInput value={list.search} onChange={list.setSearch} placeholder="Purchase no. or supplier" className="sm:w-64" />
+            <SearchInput value={list.search} onChange={list.setSearch} placeholder={t('purchases.searchPlaceholder')} className="sm:w-64" />
           </>
         }
-        empty={<EmptyState icon={PackageOpen} title="No supplier purchases" description="Record what you buy from wholesalers so stock and costs stay accurate." action={<Button onClick={() => setCreating(true)}>Record purchase</Button>} />}
+        empty={<EmptyState icon={PackageOpen} title={t('purchases.emptyTitle')} description={t('purchases.emptyBody')} action={<Button onClick={() => setCreating(true)}>{t('purchases.record')}</Button>} />}
       />
       {creating && <NewPurchase onClose={() => setCreating(false)} onSaved={list.reload} />}
       {viewing && <PurchaseDetail id={viewing} onClose={() => setViewing(null)} onChanged={list.reload} />}

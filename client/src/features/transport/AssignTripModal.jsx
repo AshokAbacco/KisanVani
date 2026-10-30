@@ -5,10 +5,12 @@ import { Input, Select } from '../../components/forms/Field';
 import Alert from '../../components/feedback/Alert';
 import { transportApi } from '../../services';
 import { useToast } from '../../context/ToastContext';
-import { formatKg, humanize } from '../../utils/format';
+import { formatKg, humanize, plural } from '../../utils/format';
+import { useI18n } from '../../i18n';
 
 /** Assigns an available, verified driver + vehicle to an open transport request. */
 const AssignTripModal = ({ open, onClose, request, onAssigned }) => {
+  const { t } = useI18n();
   const toast = useToast();
   const [drivers, setDrivers] = useState(null);
   const [driverId, setDriverId] = useState('');
@@ -45,7 +47,7 @@ const AssignTripModal = ({ open, onClose, request, onAssigned }) => {
     setBusy(true);
     try {
       const trip = await transportApi.assign({ transportRequestId: request.id, driverId, vehicleId, transportCharge: charge, estimatedArrivalAt: eta ? new Date(eta).toISOString() : null });
-      toast.success(`Trip ${trip.tripNumber} assigned to ${trip.driver.name}`);
+      toast.success(t('assignTrip.assignedToast', '', { number: trip.tripNumber, name: trip.driver.name }));
       onAssigned?.(trip);
       onClose();
     } catch (e) {
@@ -59,26 +61,26 @@ const AssignTripModal = ({ open, onClose, request, onAssigned }) => {
     <Modal
       open={open}
       onClose={onClose}
-      title={`Assign vehicle — ${request?.requestNumber || ''}`}
-      description={request ? `${request.commodity}, ${formatKg(request.expectedQuantityKg)}: ${request.pickupAddress} to ${request.dropAddress}` : ''}
+      title={t('assignTrip.title', '', { number: request?.requestNumber || '' })}
+      description={request ? t('assignTrip.subtitle', '', { load: request.commodity, qty: formatKg(request.expectedQuantityKg), from: request.pickupAddress, to: request.dropAddress }) : ''}
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button onClick={submit} disabled={!valid} loading={busy}>
-            Assign trip
+            {t('assignTrip.assign')}
           </Button>
         </>
       }
     >
       {drivers && drivers.length === 0 ? (
-        <Alert tone="warning">No available driver has a verified vehicle large enough for this load. Drivers can also take open loads themselves from their dashboard.</Alert>
+        <Alert tone="warning">{t('assignTrip.noDriver')}</Alert>
       ) : (
         <div className="space-y-4">
           <Select
-            label="Driver"
-            placeholder={drivers ? 'Choose a driver' : 'Loading drivers…'}
+            label={t('roleNames.DRIVER')}
+            placeholder={drivers ? t('assignTrip.chooseDriver') : t('assignTrip.loadingDrivers')}
             value={driverId}
             onChange={(e) => {
               setDriverId(e.target.value);
@@ -86,20 +88,20 @@ const AssignTripModal = ({ open, onClose, request, onAssigned }) => {
             }}
             options={(drivers || []).map((d) => ({
               value: d.id,
-              label: `${d.name} — ${d.mobile}${d.driverProfile?.address?.district ? `, ${d.driverProfile.address.district}` : ''}${d.activeTrips ? ` (${d.activeTrips} active trip${d.activeTrips > 1 ? 's' : ''})` : ''}`,
+              label: `${d.name} — ${d.mobile}${d.driverProfile?.address?.district ? `, ${d.driverProfile.address.district}` : ''}${d.activeTrips ? ` (${plural(d.activeTrips, 'activeTrip')})` : ''}`,
             }))}
           />
           <Select
-            label="Vehicle"
-            placeholder="Choose a vehicle"
+            label={t('dnav.items.vehicle')}
+            placeholder={t('assignTrip.chooseVehicle')}
             value={vehicleId}
             onChange={(e) => setVehicleId(e.target.value)}
             disabled={!driver}
-            options={(driver?.vehicles || []).map((v) => ({ value: v.id, label: `${v.registrationNumber} — ${humanize(v.type)}, ${formatKg(v.capacityKg)} capacity` }))}
+            options={(driver?.vehicles || []).map((v) => ({ value: v.id, label: t('assignTrip.vehicleOption', '', { reg: v.registrationNumber, type: humanize(v.type), qty: formatKg(v.capacityKg) }) }))}
           />
           <div className="grid gap-4 sm:grid-cols-2">
-            <Input label="Transport charge" suffix="₹" inputMode="decimal" value={charge} onChange={(e) => setCharge(e.target.value)} error={charge && !/^\d+(\.\d{1,2})?$/.test(charge) ? 'Enter a valid amount' : undefined} />
-            <Input label="Estimated arrival" type="datetime-local" value={eta} onChange={(e) => setEta(e.target.value)} />
+            <Input label={t('assignTrip.charge')} suffix="₹" inputMode="decimal" value={charge} onChange={(e) => setCharge(e.target.value)} error={charge && !/^\d+(\.\d{1,2})?$/.test(charge) ? t('assignTrip.validAmount') : undefined} />
+            <Input label={t('driverTrip.eta')} type="datetime-local" value={eta} onChange={(e) => setEta(e.target.value)} />
           </div>
         </div>
       )}

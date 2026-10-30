@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react';
 import { CheckCircle2, XCircle, Info, AlertTriangle, X } from 'lucide-react';
 import { errorMessage } from '../utils/errors';
+import { translate } from '../i18n';
 
 const ToastContext = createContext(null);
 
@@ -46,7 +47,7 @@ export const ToastProvider = ({ children }) => {
             <div key={t.id} className={`pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-xl border px-4 py-3 text-sm shadow-lift ${cls}`}>
               <Icon className="mt-0.5 h-5 w-5 shrink-0" aria-hidden />
               <p className="flex-1">{t.message}</p>
-              <button onClick={() => dismiss(t.id)} className="rounded p-0.5 opacity-60 hover:opacity-100" aria-label="Dismiss">
+              <button onClick={() => dismiss(t.id)} className="rounded p-0.5 opacity-60 hover:opacity-100" aria-label={translate('common.dismiss', 'Dismiss')}>
                 <X className="h-4 w-4" />
               </button>
             </div>

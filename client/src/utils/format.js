@@ -1,4 +1,7 @@
 // Indian number formatting (lakh/crore grouping) and timezone-aware dates.
+// Numbers and money always use en-IN digits/grouping; dates, relative times and enum labels follow
+// the active language (see i18n getLang / translate), so they change with the language picker.
+import { getLang, intlLocale, translate } from '../i18n';
 
 const userTimeZone = (() => {
   try {
@@ -39,25 +42,37 @@ export const formatKg = (v, { grams = true } = {}) => {
   return `${num.format(n)} kg`;
 };
 
-export const formatDate = (v, opts = {}) =>
-  v ? new Intl.DateTimeFormat('en-IN', { day: '2-digit', month: 'short', year: 'numeric', timeZone: userTimeZone, ...opts }).format(new Date(v)) : '—';
+/* Intl formatters are cached per language + options. */
+const cache = new Map();
+const dtf = (opts) => {
+  const lang = getLang();
+  const key = `${lang}|${JSON.stringify(opts)}`;
+  if (!cache.has(key)) cache.set(key, new Intl.DateTimeFormat(intlLocale(lang), { timeZone: userTimeZone, ...opts }));
+  return cache.get(key);
+};
+const rtf = () => {
+  const lang = getLang();
+  const key = `${lang}|rtf`;
+  if (!cache.has(key)) cache.set(key, new Intl.RelativeTimeFormat(intlLocale(lang), { numeric: 'auto' }));
+  return cache.get(key);
+};
+
+export const formatDate = (v, opts = {}) => (v ? dtf({ day: '2-digit', month: 'short', year: 'numeric', ...opts }).format(new Date(v)) : '—');
 
 export const formatDateTime = (v) =>
-  v
-    ? new Intl.DateTimeFormat('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true, timeZone: userTimeZone }).format(new Date(v))
-    : '—';
+  v ? dtf({ day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }).format(new Date(v)) : '—';
 
-export const formatTime = (v) => (v ? new Intl.DateTimeFormat('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: userTimeZone }).format(new Date(v)) : '—');
+export const formatTime = (v) => (v ? dtf({ hour: '2-digit', minute: '2-digit', hour12: true }).format(new Date(v)) : '—');
 
-const rtf = new Intl.RelativeTimeFormat('en-IN', { numeric: 'auto' });
 export const timeAgo = (v) => {
-  if (!v) return 'never';
+  if (!v) return translate('common.never', 'never');
   const sec = Math.round((new Date(v).getTime() - Date.now()) / 1000);
   const abs = Math.abs(sec);
-  if (abs < 60) return rtf.format(sec, 'second');
-  if (abs < 3600) return rtf.format(Math.round(sec / 60), 'minute');
-  if (abs < 86400) return rtf.format(Math.round(sec / 3600), 'hour');
-  return rtf.format(Math.round(sec / 86400), 'day');
+  const f = rtf();
+  if (abs < 60) return f.format(sec, 'second');
+  if (abs < 3600) return f.format(Math.round(sec / 60), 'minute');
+  if (abs < 86400) return f.format(Math.round(sec / 3600), 'hour');
+  return f.format(Math.round(sec / 86400), 'day');
 };
 
 /** yyyy-mm-dd for <input type="date"> in the user's timezone */
@@ -76,14 +91,24 @@ export const toDateTimeInput = (v) => {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 };
 
-export const humanize = (s) => (s ? String(s).replace(/_/g, ' ').toLowerCase().replace(/^\w/, (c) => c.toUpperCase()) : '');
+const humanizeEnglish = (s) => String(s).replace(/_/g, ' ').toLowerCase().replace(/^\w/, (c) => c.toUpperCase());
+
+/** Enum code → words in the active language ("IN_TRANSIT" → "In transit"); unknown codes are humanized. */
+export const humanize = (s) => (s ? translate(`enums.${s}`, humanizeEnglish(s)) : '');
 
 const MODE_LABELS = { CASH: 'Cash', UPI: 'UPI', CREDIT: 'Udhar', BANK_TRANSFER: 'Bank transfer' };
 /** Payment mode in the words shopkeepers use. */
-export const modeLabel = (m) => MODE_LABELS[m] || humanize(m);
+export const modeLabel = (m) => (MODE_LABELS[m] ? translate(`paymentMode.${m}`, MODE_LABELS[m]) : humanize(m));
 
-/** "1 customer", "3 customers" */
-export const plural = (n, word, many = `${word}s`) => `${n ?? 0} ${Number(n) === 1 ? word : many}`;
+/**
+ * "1 customer", "3 customers" — in the active language. `word` is a key under `counts`
+ * (bill, order, customer, load, …); unknown words fall back to English pluralisation.
+ */
+export const plural = (n, word, many = `${word}s`) => {
+  const count = n ?? 0;
+  const form = Number(count) === 1 ? 'one' : 'other';
+  return translate(`counts.${word}.${form}`, `{n} ${form === 'one' ? word : many}`, { n: formatNumber(count) });
+};
 
 export const initials = (name = '') =>
   name

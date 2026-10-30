@@ -5,15 +5,17 @@ import Button from '../../components/common/Button';
 import { Input, Textarea } from '../../components/forms/Field';
 import { ordersApi } from '../../services';
 import { useToast } from '../../context/ToastContext';
-import { formatINR, formatKg } from '../../utils/format';
+import { formatINR, formatKg, humanize } from '../../utils/format';
 import { newId } from '../../utils/id';
 import { errorMessage } from '../../utils/errors';
+import { useI18n } from '../../i18n';
 
 /**
  * Places an order on one harvest listing or mandi lot. The idempotency key is created when the dialog opens,
  * so a double tap or a retry after a network blip can never create two orders.
  */
 const PlaceOrderModal = ({ open, onClose, item, source, base }) => {
+  const { t } = useI18n();
   const toast = useToast();
   const navigate = useNavigate();
   const key = useRef(newId());
@@ -41,7 +43,15 @@ const PlaceOrderModal = ({ open, onClose, item, source, base }) => {
   }, [open, item?.id]);
 
   const n = Number(qty);
-  const qtyError = !qty ? 'Enter a quantity' : !/^\d+(\.\d{1,3})?$/.test(qty) ? 'Use numbers only' : n < min ? `Minimum order is ${formatKg(min, { grams: false })}` : n > available ? `Only ${formatKg(available, { grams: false })} available` : null;
+  const qtyError = !qty
+    ? t('placeOrder.enterQty')
+    : !/^\d+(\.\d{1,3})?$/.test(qty)
+      ? t('placeOrder.numbersOnly')
+      : n < min
+        ? t('placeOrder.minIs', '', { qty: formatKg(min, { grams: false }) })
+        : n > available
+          ? t('placeOrder.onlyAvailable', '', { qty: formatKg(available, { grams: false }) })
+          : null;
 
   const submit = async () => {
     setBusy(true);
@@ -55,7 +65,7 @@ const PlaceOrderModal = ({ open, onClose, item, source, base }) => {
         expectedDeliveryAt: date ? new Date(date).toISOString() : null,
         notes: notes || null,
       });
-      toast.success(meta?.duplicate ? `Order ${data.orderNumber} was already placed` : `Order ${data.orderNumber} placed. The seller has been notified.`);
+      toast.success(t(meta?.duplicate ? 'placeOrder.duplicate' : 'placeOrder.placed', '', { number: data.orderNumber }));
       onClose();
       navigate(`${base}/orders/${data.id}`);
     } catch (e) {
@@ -73,15 +83,15 @@ const PlaceOrderModal = ({ open, onClose, item, source, base }) => {
     <Modal
       open={open}
       onClose={onClose}
-      title={`Order ${name}`}
-      description={`From ${seller} at ${formatINR(price)}/kg`}
+      title={t('placeOrder.title', '', { name })}
+      description={t('placeOrder.subtitle', '', { seller, price: formatINR(price) })}
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button onClick={submit} disabled={!!qtyError} loading={busy}>
-            Place order for {qtyError ? '—' : formatINR(n * price)}
+            {t('placeOrder.placeFor', '', { amount: qtyError ? '—' : formatINR(n * price) })}
           </Button>
         </>
       }
@@ -89,22 +99,22 @@ const PlaceOrderModal = ({ open, onClose, item, source, base }) => {
       <div className="space-y-4">
         <div className="grid grid-cols-3 gap-3 rounded-xl bg-leafwhite p-3 text-center text-sm">
           <div>
-            <p className="text-soil-500">Available</p>
+            <p className="text-soil-500">{humanize('AVAILABLE')}</p>
             <p className="num whitespace-nowrap font-semibold">{formatKg(available, { grams: false })}</p>
           </div>
           <div>
-            <p className="text-soil-500">Minimum</p>
+            <p className="text-soil-500">{t('lotForm.minimum')}</p>
             <p className="num whitespace-nowrap font-semibold">{formatKg(min, { grams: false })}</p>
           </div>
           <div>
-            <p className="text-soil-500">Rate</p>
-            <p className="num whitespace-nowrap font-semibold">{formatINR(price)}/kg</p>
+            <p className="text-soil-500">{t('orderDetail.rate')}</p>
+            <p className="num whitespace-nowrap font-semibold">{t('common.perKg', '', { price: formatINR(price) })}</p>
           </div>
         </div>
-        <Input label="Quantity" suffix="kg" inputMode="decimal" value={qty} onChange={(e) => setQty(e.target.value)} error={qty !== '' ? qtyError : undefined} required />
-        <Textarea label="Deliver to" rows={2} value={address} onChange={(e) => setAddress(e.target.value)} hint="Leave blank to use the address on your profile" />
-        <Input label="Needed by" type="datetime-local" value={date} onChange={(e) => setDate(e.target.value)} />
-        <Textarea label="Note to seller" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
+        <Input label={t('common.quantity')} suffix="kg" inputMode="decimal" value={qty} onChange={(e) => setQty(e.target.value)} error={qty !== '' ? qtyError : undefined} required />
+        <Textarea label={t('orderDetail.deliverTo')} rows={2} value={address} onChange={(e) => setAddress(e.target.value)} hint={t('placeOrder.addressHint')} />
+        <Input label={t('placeOrder.neededBy')} type="datetime-local" value={date} onChange={(e) => setDate(e.target.value)} />
+        <Textarea label={t('placeOrder.noteToSeller')} rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
         {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800">{error}</p>}
       </div>
     </Modal>

@@ -14,18 +14,13 @@ import useList from '../../hooks/useList';
 import { inventoryApi } from '../../services';
 import { useToast } from '../../context/ToastContext';
 import { formatKg, formatDateTime, humanize } from '../../utils/format';
+import { useI18n } from '../../i18n';
 
-const TXN_LABEL = {
-  OPENING: 'Opening stock',
-  SALE: 'Sale',
-  SALE_CANCELLED: 'Bill cancelled',
-  PURCHASE_RECEIPT: 'Supplier purchase',
-  ORDER_RECEIPT: 'KisanVani order received',
-  ADJUSTMENT: 'Correction',
-  WASTAGE: 'Wastage',
-};
+/** Stock movement types in shop words (inventory.txn.<TYPE>); unknown types fall back to humanize(). */
+const TXN_TYPES = ['OPENING', 'SALE', 'SALE_CANCELLED', 'PURCHASE_RECEIPT', 'ORDER_RECEIPT', 'ADJUSTMENT', 'WASTAGE'];
 
 const AdjustModal = ({ item, onClose, onDone }) => {
+  const { t } = useI18n();
   const toast = useToast();
   const [type, setType] = useState('WASTAGE');
   const [direction, setDirection] = useState('OUT');
@@ -38,7 +33,7 @@ const AdjustModal = ({ item, onClose, onDone }) => {
     setBusy(true);
     try {
       await inventoryApi.adjust(item.id, { type, direction: type === 'WASTAGE' ? 'OUT' : direction, quantityKg: qty, note });
-      toast.success('Stock updated');
+      toast.success(t('inventory.stockUpdated'));
       onDone();
       onClose();
     } catch (e) {
@@ -52,43 +47,43 @@ const AdjustModal = ({ item, onClose, onDone }) => {
     <Modal
       open
       onClose={onClose}
-      title={`Adjust ${item.product.name}`}
-      description={`Currently ${formatKg(item.quantityKg)} in stock. Every adjustment is recorded with your note.`}
+      title={t('inventory.adjustTitle', '', { name: item.product.name })}
+      description={t('inventory.adjustIntro', '', { qty: formatKg(item.quantityKg) })}
       size="sm"
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button onClick={submit} disabled={!valid} loading={busy}>
-            Save adjustment
+            {t('inventory.saveAdjustment')}
           </Button>
         </>
       }
     >
       <div className="space-y-4">
         <Select
-          label="Reason"
+          label={t('components.confirm.reason')}
           value={type}
           onChange={(e) => setType(e.target.value)}
           options={[
-            { value: 'WASTAGE', label: 'Wastage (spoiled, damaged)' },
-            { value: 'ADJUSTMENT', label: 'Correction after counting' },
+            { value: 'WASTAGE', label: t('inventory.wastageOption') },
+            { value: 'ADJUSTMENT', label: t('inventory.correctionOption') },
           ]}
         />
         {type === 'ADJUSTMENT' && (
           <Select
-            label="Direction"
+            label={t('inventory.direction')}
             value={direction}
             onChange={(e) => setDirection(e.target.value)}
             options={[
-              { value: 'IN', label: 'Add to stock' },
-              { value: 'OUT', label: 'Remove from stock' },
+              { value: 'IN', label: t('inventory.addToStock') },
+              { value: 'OUT', label: t('inventory.removeFromStock') },
             ]}
           />
         )}
-        <Input label="Quantity" suffix="kg" inputMode="decimal" value={qty} onChange={(e) => setQty(e.target.value)} />
-        <Textarea label="Note" rows={2} value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. 2 kg tomatoes crushed in transport" />
+        <Input label={t('common.quantity')} suffix="kg" inputMode="decimal" value={qty} onChange={(e) => setQty(e.target.value)} />
+        <Textarea label={t('common.note')} rows={2} value={note} onChange={(e) => setNote(e.target.value)} placeholder={t('inventory.notePlaceholder')} />
       </div>
     </Modal>
   );
@@ -96,6 +91,7 @@ const AdjustModal = ({ item, onClose, onDone }) => {
 
 /** Stock levels and the full stock ledger. */
 const InventoryPage = () => {
+  const { t } = useI18n();
   const [params] = useSearchParams();
   const [tab, setTab] = useState('levels');
   const [adjusting, setAdjusting] = useState(null);
@@ -104,30 +100,30 @@ const InventoryPage = () => {
 
   return (
     <>
-      <PageHeader title="Inventory" description="What is in stock now, and every movement that got it there." />
+      <PageHeader title={t('inventory.title')} description={t('inventory.intro')} />
       <Tabs
         className="mb-4"
         value={tab}
         onChange={setTab}
         tabs={[
-          { value: 'levels', label: 'Stock levels' },
-          { value: 'ledger', label: 'Stock ledger' },
+          { value: 'levels', label: t('inventory.levels') },
+          { value: 'ledger', label: t('inventory.ledger') },
         ]}
       />
       {tab === 'levels' ? (
         <DataTable
           list={levels}
           columns={[
-            { key: 'name', header: 'Product', sortable: true, render: (i) => `${i.product.emoji || ''} ${i.product.name}` },
-            { key: 'quantityKg', header: 'In stock', align: 'right', sortable: true, render: (i) => <span className="font-semibold">{formatKg(i.quantityKg)}</span> },
-            { key: 'threshold', header: 'Warn below', align: 'right', render: (i) => formatKg(i.lowStockThresholdKg) },
-            { key: 'state', header: 'Status', render: (i) => (Number(i.quantityKg) <= 0 ? <StatusBadge tone="red">Out of stock</StatusBadge> : i.isLowStock ? <StatusBadge tone="amber">Low</StatusBadge> : <StatusBadge tone="green">OK</StatusBadge>) },
+            { key: 'name', header: t('common.product'), sortable: true, render: (i) => `${i.product.emoji || ''} ${i.product.name}` },
+            { key: 'quantityKg', header: t('stock.inStock'), align: 'right', sortable: true, render: (i) => <span className="font-semibold">{formatKg(i.quantityKg)}</span> },
+            { key: 'threshold', header: t('stock.warnBelow'), align: 'right', render: (i) => formatKg(i.lowStockThresholdKg) },
+            { key: 'state', header: t('common.status'), render: (i) => (Number(i.quantityKg) <= 0 ? <StatusBadge tone="red">{t('pos.outOfStock')}</StatusBadge> : i.isLowStock ? <StatusBadge tone="amber">{t('inventory.low')}</StatusBadge> : <StatusBadge tone="green">{t('inventory.ok')}</StatusBadge>) },
             {
               key: 'adjust',
               header: '',
               render: (i) => (
                 <Button size="sm" variant="ghost" icon={SlidersHorizontal} onClick={() => setAdjusting(i)}>
-                  Adjust
+                  {t('inventory.adjust')}
                 </Button>
               ),
             },
@@ -138,43 +134,43 @@ const InventoryPage = () => {
                 value={levels.filters.lowStock}
                 onChange={(lowStock) => levels.setFilters({ lowStock })}
                 tabs={[
-                  { value: '', label: 'All items' },
-                  { value: 'true', label: 'Low stock' },
+                  { value: '', label: t('inventory.allItems') },
+                  { value: 'true', label: t('inventory.lowStock') },
                 ]}
               />
-              <SearchInput value={levels.search} onChange={levels.setSearch} placeholder="Search products" className="sm:w-60" />
+              <SearchInput value={levels.search} onChange={levels.setSearch} placeholder={t('common.searchProducts')} className="sm:w-60" />
             </>
           }
-          empty={<EmptyState icon={Boxes} title={levels.filters.lowStock ? 'Nothing is running low' : 'No stock yet'} description="Stock is added through purchases, KisanVani orders and the stock master." />}
+          empty={<EmptyState icon={Boxes} title={t(levels.filters.lowStock ? 'inventory.nothingLow' : 'inventory.noStock')} description={t('inventory.emptyBody')} />}
         />
       ) : (
         <DataTable
           list={ledger}
           columns={[
-            { key: 'createdAt', header: 'When', render: (t) => <span className="whitespace-nowrap text-soil-500">{formatDateTime(t.createdAt)}</span> },
-            { key: 'product', header: 'Product', render: (t) => `${t.inventoryItem.product.emoji || ''} ${t.inventoryItem.product.name}` },
-            { key: 'type', header: 'Movement', render: (t) => TXN_LABEL[t.type] || humanize(t.type) },
+            { key: 'createdAt', header: t('inventory.when'), render: (tx) => <span className="whitespace-nowrap text-soil-500">{formatDateTime(tx.createdAt)}</span> },
+            { key: 'product', header: t('common.product'), render: (tx) => `${tx.inventoryItem.product.emoji || ''} ${tx.inventoryItem.product.name}` },
+            { key: 'type', header: t('inventory.movement'), render: (tx) => (TXN_TYPES.includes(tx.type) ? t(`inventory.txn.${tx.type}`) : humanize(tx.type)) },
             {
               key: 'change',
-              header: 'Change',
+              header: t('inventory.change'),
               align: 'right',
-              render: (t) => <span className={Number(t.quantityChangeKg) < 0 ? 'text-chilli-600' : 'text-field-700'}>{`${Number(t.quantityChangeKg) > 0 ? '+' : '−'}${formatKg(Math.abs(Number(t.quantityChangeKg)))}`}</span>,
+              render: (tx) => <span className={Number(tx.quantityChangeKg) < 0 ? 'text-chilli-600' : 'text-field-700'}>{`${Number(tx.quantityChangeKg) > 0 ? '+' : '−'}${formatKg(Math.abs(Number(tx.quantityChangeKg)))}`}</span>,
             },
-            { key: 'balance', header: 'Balance', align: 'right', render: (t) => formatKg(t.balanceAfterKg) },
-            { key: 'note', header: 'Note', render: (t) => <span className="text-soil-500">{t.note || '—'}</span> },
-            { key: 'by', header: 'By', render: (t) => t.createdBy?.name || '—' },
+            { key: 'balance', header: t('inventory.balance'), align: 'right', render: (tx) => formatKg(tx.balanceAfterKg) },
+            { key: 'note', header: t('common.note'), render: (tx) => <span className="text-soil-500">{tx.note || '—'}</span> },
+            { key: 'by', header: t('inventory.by'), render: (tx) => tx.createdBy?.name || '—' },
           ]}
           toolbar={
             <Tabs
               value={ledger.filters.type}
               onChange={(type) => ledger.setFilters({ type })}
               tabs={[
-                { value: '', label: 'All' },
-                { value: 'SALE', label: 'Sales' },
-                { value: 'PURCHASE_RECEIPT', label: 'Purchases' },
-                { value: 'ORDER_RECEIPT', label: 'Orders' },
-                { value: 'WASTAGE', label: 'Wastage' },
-                { value: 'ADJUSTMENT', label: 'Corrections' },
+                { value: '', label: t('common.all') },
+                { value: 'SALE', label: t('inventory.filterSales') },
+                { value: 'PURCHASE_RECEIPT', label: t('inventory.filterPurchases') },
+                { value: 'ORDER_RECEIPT', label: t('inventory.filterOrders') },
+                { value: 'WASTAGE', label: t('inventory.txn.WASTAGE') },
+                { value: 'ADJUSTMENT', label: t('inventory.filterCorrections') },
               ]}
             />
           }

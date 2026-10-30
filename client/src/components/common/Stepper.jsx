@@ -1,8 +1,10 @@
 import { Check } from 'lucide-react';
 import { humanize } from '../../utils/format';
+import { useI18n } from '../../i18n';
 
 /** Horizontal progress through a fixed sequence of statuses. Off-path statuses (cancelled etc.) show as a note. */
 const Stepper = ({ steps, current, offPath }) => {
+  useI18n(); // humanize() labels follow the active language
   const idx = steps.indexOf(current);
   return (
     <div>

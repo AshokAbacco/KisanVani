@@ -4,6 +4,8 @@ import { useSettings } from '../../context/SettingsContext';
 import { DROP_ICON, INDIA_CENTER, PICKUP_ICON, truckIcon } from './mapSetup';
 import { formatDateTime, timeAgo } from '../../utils/format';
 import { hasCoords } from '../../utils/maps';
+import { useI18n } from '../../i18n';
+import MapZoom from './MapZoom';
 
 const FitBounds = ({ points }) => {
   const map = useMap();
@@ -21,6 +23,7 @@ const FitBounds = ({ points }) => {
  * The truck marker is grey when the last fix is stale; nothing is drawn when no fix exists.
  */
 const TripMap = ({ pickup, drop, path = [], current, isStale, height = 360, follow = false }) => {
+  const { t } = useI18n();
   const settings = useSettings();
   const pts = useMemo(() => {
     const list = [];
@@ -34,12 +37,13 @@ const TripMap = ({ pickup, drop, path = [], current, isStale, height = 360, foll
 
   return (
     <div style={{ height }} className="relative overflow-hidden rounded-xl border border-soil-200">
-      <MapContainer center={pts[0] || INDIA_CENTER} zoom={pts.length ? 11 : 5} scrollWheelZoom={false} className="h-full w-full">
+      <MapContainer center={pts[0] || INDIA_CENTER} zoom={pts.length ? 11 : 5} scrollWheelZoom={false} className="h-full w-full" zoomControl={false}>
+        <MapZoom />
         <TileLayer url={settings['map.tileUrl']} attribution={settings['map.attribution']} />
         {pickup && hasCoords(pickup.lat, pickup.lng) && (
           <Marker position={[Number(pickup.lat), Number(pickup.lng)]} icon={PICKUP_ICON}>
             <Popup>
-              <strong>Pickup</strong>
+              <strong>{t('components.tripMap.pickup')}</strong>
               <br />
               {pickup.label}
             </Popup>
@@ -48,7 +52,7 @@ const TripMap = ({ pickup, drop, path = [], current, isStale, height = 360, foll
         {drop && hasCoords(drop.lat, drop.lng) && (
           <Marker position={[Number(drop.lat), Number(drop.lng)]} icon={DROP_ICON}>
             <Popup>
-              <strong>Destination</strong>
+              <strong>{t('components.tripMap.destination')}</strong>
               <br />
               {drop.label}
             </Popup>
@@ -58,7 +62,7 @@ const TripMap = ({ pickup, drop, path = [], current, isStale, height = 360, foll
         {current && hasCoords(current.lat, current.lng) && (
           <Marker position={[Number(current.lat), Number(current.lng)]} icon={truckIcon(isStale)}>
             <Popup>
-              <strong>{isStale ? 'Last known position' : 'Live position'}</strong>
+              <strong>{t(isStale ? 'components.tripMap.lastKnown' : 'components.tripMap.livePosition')}</strong>
               <br />
               {formatDateTime(current.at)} ({timeAgo(current.at)})
             </Popup>
@@ -68,7 +72,7 @@ const TripMap = ({ pickup, drop, path = [], current, isStale, height = 360, foll
       </MapContainer>
       {!pts.length && (
         <div className="pointer-events-none absolute inset-0 grid place-items-center bg-white/70 text-center text-sm text-soil-500">
-          <p className="px-6">No coordinates for this trip yet. Addresses are shown below the map.</p>
+          <p className="px-6">{t('components.tripMap.noCoords')}</p>
         </div>
       )}
     </div>

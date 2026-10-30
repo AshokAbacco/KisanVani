@@ -21,31 +21,34 @@ import { formatINR, formatKg, formatDateTime, humanize, modeLabel } from '../../
 import { ORDER_STEPS, ORDER_TYPE_LABELS, TRIP_ACTIVE } from '../../constants/status';
 import { roleLabel } from '../../constants/roles';
 import { placeUrl } from '../../utils/maps';
+import { useI18n } from '../../i18n';
 
+/* Status actions; button labels come from orderDetail.actions.<id>. */
 const SELLER_ACTIONS = {
   PLACED: [
-    { to: 'ACCEPTED', label: 'Accept order', icon: CheckCircle2 },
-    { to: 'REJECTED', label: 'Reject', icon: XCircle, variant: 'secondary', reason: true },
+    { to: 'ACCEPTED', id: 'accept', icon: CheckCircle2 },
+    { to: 'REJECTED', id: 'reject', icon: XCircle, variant: 'secondary', reason: true },
   ],
   ACCEPTED: [
-    { to: 'PREPARING', label: 'Start preparing', icon: ChefHat },
-    { to: 'CANCELLED', label: 'Cancel order', icon: Ban, variant: 'secondary', reason: true },
+    { to: 'PREPARING', id: 'startPreparing', icon: ChefHat },
+    { to: 'CANCELLED', id: 'cancel', icon: Ban, variant: 'secondary', reason: true },
   ],
   PREPARING: [
-    { to: 'READY', label: 'Mark ready for pickup', icon: PackageOpen },
-    { to: 'CANCELLED', label: 'Cancel order', icon: Ban, variant: 'secondary', reason: true },
+    { to: 'READY', id: 'markReady', icon: PackageOpen },
+    { to: 'CANCELLED', id: 'cancel', icon: Ban, variant: 'secondary', reason: true },
   ],
-  READY: [{ to: 'DISPATCHED', label: 'Mark dispatched', icon: Truck }],
-  DISPATCHED: [{ to: 'DELIVERED', label: 'Mark delivered', icon: PackageCheck, quantities: true }],
+  READY: [{ to: 'DISPATCHED', id: 'markDispatched', icon: Truck }],
+  DISPATCHED: [{ to: 'DELIVERED', id: 'markDelivered', icon: PackageCheck, quantities: true }],
 };
 const BUYER_ACTIONS = {
-  PLACED: [{ to: 'CANCELLED', label: 'Cancel order', icon: Ban, variant: 'secondary', reason: true }],
-  ACCEPTED: [{ to: 'CANCELLED', label: 'Cancel order', icon: Ban, variant: 'secondary', reason: true }],
+  PLACED: [{ to: 'CANCELLED', id: 'cancel', icon: Ban, variant: 'secondary', reason: true }],
+  ACCEPTED: [{ to: 'CANCELLED', id: 'cancel', icon: Ban, variant: 'secondary', reason: true }],
 };
 
 const partyName = (p) => p.shopProfile?.shopName || p.mandiProfile?.mandiName || p.farmerProfile?.farmName || p.name;
 
 const OrderDetailPage = ({ base }) => {
+  const { t } = useI18n();
   const { id } = useParams();
   const { user } = useAuth();
   const toast = useToast();
@@ -66,14 +69,14 @@ const OrderDetailPage = ({ base }) => {
       : side === 'BUYER'
         ? BUYER_ACTIONS[order.status] || []
         : ['PLACED', 'ACCEPTED', 'PREPARING'].includes(order.status)
-          ? [{ to: 'CANCELLED', label: 'Cancel (moderation)', icon: Ban, variant: 'secondary', reason: true }]
+          ? [{ to: 'CANCELLED', id: 'cancelModeration', icon: Ban, variant: 'secondary', reason: true }]
           : [];
 
   const run = async (to, extra = {}) => {
     setBusy(true);
     try {
       await ordersApi.transition(order.id, { status: to, ...extra });
-      toast.success(`Order marked ${humanize(to).toLowerCase()}`);
+      toast.success(t('orderDetail.movedToast', '', { status: humanize(to) }));
       setConfirm(null);
       await reload();
     } catch (e) {
@@ -103,29 +106,29 @@ const OrderDetailPage = ({ base }) => {
   return (
     <>
       <PageHeader
-        back={{ to: `${base}/orders`, label: 'Orders' }}
-        title={`Order ${order.orderNumber}`}
-        description={`${ORDER_TYPE_LABELS[order.type]} · placed ${formatDateTime(order.createdAt)}`}
+        back={{ to: `${base}/orders`, label: t('dnav.items.orders') }}
+        title={t('orderDetail.title', '', { number: order.orderNumber })}
+        description={t('orderDetail.subtitle', '', { type: ORDER_TYPE_LABELS[order.type], at: formatDateTime(order.createdAt) })}
         actions={
           <>
             {actions.map((a) => (
               <Button key={a.to} variant={a.variant || 'primary'} icon={a.icon} onClick={() => onAction(a)} disabled={busy}>
-                {a.label}
+                {t(`orderDetail.actions.${a.id}`)}
               </Button>
             ))}
             {side === 'BUYER' && order.status === 'DELIVERED' && (
               <Button icon={PackageCheck} onClick={() => setQtyModal('receive')}>
-                Confirm receipt
+                {t('orderDetail.confirmReceipt')}
               </Button>
             )}
             {canRequestTransport && (
               <Button variant="secondary" icon={Truck} onClick={() => setTransportOpen(true)}>
-                Request transport
+                {t('orderDetail.requestTransport')}
               </Button>
             )}
             {canPay && (
               <Button variant="secondary" icon={Wallet} onClick={() => setPayOpen(true)}>
-                Record payment
+                {t('orderDetail.recordPayment')}
               </Button>
             )}
           </>
@@ -137,24 +140,24 @@ const OrderDetailPage = ({ base }) => {
           <Stepper steps={ORDER_STEPS} current={order.status} offPath={offPath} />
           {side === 'BUYER' && order.status === 'DELIVERED' && (
             <Alert tone="info" className="mt-4">
-              Check the goods and confirm the kilos you actually received. Your stock and the seller’s settlement are based on this.
+              {t('orderDetail.checkGoods')}
             </Alert>
           )}
         </Section>
 
         <div className="grid gap-6 xl:grid-cols-[1.6fr_1fr]">
           <div className="space-y-6">
-            <Section title="Items" bodyClass="p-0">
+            <Section title={t('common.items')} bodyClass="p-0">
               <div className="overflow-x-auto">
                 <table className="min-w-full text-sm">
                   <thead className="bg-soil-100/60 text-left text-xs text-soil-500">
                     <tr>
-                      <th className="px-4 py-2.5 font-semibold">Item</th>
-                      <th className="px-4 py-2.5 text-right font-semibold">Ordered</th>
-                      <th className="px-4 py-2.5 text-right font-semibold">Delivered</th>
-                      <th className="px-4 py-2.5 text-right font-semibold">Received</th>
-                      <th className="px-4 py-2.5 text-right font-semibold">Rate</th>
-                      <th className="px-4 py-2.5 text-right font-semibold">Amount</th>
+                      <th className="px-4 py-2.5 font-semibold">{t('common.item')}</th>
+                      <th className="px-4 py-2.5 text-right font-semibold">{t('purchases.ordered')}</th>
+                      <th className="px-4 py-2.5 text-right font-semibold">{humanize('DELIVERED')}</th>
+                      <th className="px-4 py-2.5 text-right font-semibold">{t('purchases.received')}</th>
+                      <th className="px-4 py-2.5 text-right font-semibold">{t('orderDetail.rate')}</th>
+                      <th className="px-4 py-2.5 text-right font-semibold">{t('common.amount')}</th>
                     </tr>
                   </thead>
                   <tbody className="num divide-y divide-soil-200">
@@ -167,7 +170,7 @@ const OrderDetailPage = ({ base }) => {
                         <td className="px-4 py-3 text-right">{formatKg(i.quantityKg, { grams: false })}</td>
                         <td className="px-4 py-3 text-right">{i.deliveredQuantityKg != null ? formatKg(i.deliveredQuantityKg, { grams: false }) : '—'}</td>
                         <td className="px-4 py-3 text-right">{i.receivedQuantityKg != null ? formatKg(i.receivedQuantityKg, { grams: false }) : '—'}</td>
-                        <td className="px-4 py-3 text-right">{formatINR(i.unitPrice)}/kg</td>
+                        <td className="px-4 py-3 text-right">{t('common.perKg', '', { price: formatINR(i.unitPrice) })}</td>
                         <td className="px-4 py-3 text-right font-semibold">{formatINR(i.lineTotal)}</td>
                       </tr>
                     ))}
@@ -175,7 +178,7 @@ const OrderDetailPage = ({ base }) => {
                   <tfoot>
                     <tr className="border-t border-soil-200">
                       <td colSpan={5} className="px-4 py-3 text-right font-semibold">
-                        Order value
+                        {t('orderDetail.orderValue')}
                       </td>
                       <td className="num px-4 py-3 text-right font-display text-lg font-semibold">{formatINR(order.total)}</td>
                     </tr>
@@ -185,24 +188,24 @@ const OrderDetailPage = ({ base }) => {
             </Section>
 
             {order.trips.length > 0 && (
-              <Section title="Transport">
+              <Section title={t('dnav.items.transport')}>
                 <ul className="divide-y divide-soil-200">
-                  {order.trips.map((t) => (
-                    <li key={t.id} className="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
+                  {order.trips.map((trip) => (
+                    <li key={trip.id} className="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
                       <div>
                         <p className="font-semibold">
-                          {t.tripNumber} <StatusBadge status={t.status} className="ml-1" />
+                          {trip.tripNumber} <StatusBadge status={trip.status} className="ml-1" />
                         </p>
                         <p className="text-sm text-soil-500">
-                          {t.driver.name} · {t.vehicle.registrationNumber} ({humanize(t.vehicle.type)})
+                          {trip.driver.name} · {trip.vehicle.registrationNumber} ({humanize(trip.vehicle.type)})
                         </p>
                       </div>
                       <div className="flex gap-2">
-                        <Button size="sm" variant="ghost" icon={Phone} href={`tel:${t.driver.mobile}`}>
-                          Call driver
+                        <Button size="sm" variant="ghost" icon={Phone} href={`tel:${trip.driver.mobile}`}>
+                          {t('orderDetail.callDriver')}
                         </Button>
-                        <Button size="sm" variant={TRIP_ACTIVE.includes(t.status) ? 'primary' : 'secondary'} icon={Navigation} to={`${base}/transport/trips/${t.id}`}>
-                          {TRIP_ACTIVE.includes(t.status) ? 'Track live' : 'View trip'}
+                        <Button size="sm" variant={TRIP_ACTIVE.includes(trip.status) ? 'primary' : 'secondary'} icon={Navigation} to={`${base}/transport/trips/${trip.id}`}>
+                          {t(TRIP_ACTIVE.includes(trip.status) ? 'orderDetail.trackLive' : 'orderDetail.viewTrip')}
                         </Button>
                       </div>
                     </li>
@@ -210,13 +213,16 @@ const OrderDetailPage = ({ base }) => {
                 </ul>
               </Section>
             )}
-            {activeRequest && !order.trips.some((t) => TRIP_ACTIVE.includes(t.status)) && (
+            {activeRequest && !order.trips.some((trip) => TRIP_ACTIVE.includes(trip.status)) && (
               <Alert tone="info">
-                Transport request {activeRequest.requestNumber} is waiting for a driver. <Link className="underline" to={`${base}/transport`}>View transport</Link>
+                {t('orderDetail.requestWaiting', '', { number: activeRequest.requestNumber })}{' '}
+                <Link className="underline" to={`${base}/transport`}>
+                  {t('orderDetail.viewTransport')}
+                </Link>
               </Alert>
             )}
 
-            <Section title="History">
+            <Section title={t('dnav.tabs.history')}>
               <Timeline
                 items={order.history.map((h) => ({
                   id: h.id,
@@ -229,40 +235,40 @@ const OrderDetailPage = ({ base }) => {
           </div>
 
           <div className="space-y-6">
-            <Section title="Parties">
+            <Section title={t('orderDetail.parties')}>
               <DetailList
                 cols={1}
                 items={[
-                  ['Seller', `${partyName(order.seller)} — ${roleLabel(order.seller.role)}`],
-                  ['Seller contact', <a key="s" className="link" href={`tel:${order.seller.mobile}`}>{order.seller.mobile}</a>],
-                  ['Buyer', `${partyName(order.buyer)} — ${roleLabel(order.buyer.role)}`],
-                  ['Buyer contact', <a key="b" className="link" href={`tel:${order.buyer.mobile}`}>{order.buyer.mobile}</a>],
-                  ['Deliver to', order.deliveryAddress],
+                  [t('orderDetail.seller'), `${partyName(order.seller)} — ${roleLabel(order.seller.role)}`],
+                  [t('orderDetail.sellerContact'), <a key="s" className="link" href={`tel:${order.seller.mobile}`}>{order.seller.mobile}</a>],
+                  [t('orderDetail.buyer'), `${partyName(order.buyer)} — ${roleLabel(order.buyer.role)}`],
+                  [t('orderDetail.buyerContact'), <a key="b" className="link" href={`tel:${order.buyer.mobile}`}>{order.buyer.mobile}</a>],
+                  [t('orderDetail.deliverTo'), order.deliveryAddress],
                   pickupSource && [
-                    'Pickup from',
+                    t('orderDetail.pickupFrom'),
                     <a key="p" className="link inline-flex items-center gap-1" target="_blank" rel="noreferrer" href={placeUrl(pickupSource.latitude, pickupSource.longitude, [pickupSource.marketYardName, pickupSource.location, pickupSource.village, pickupSource.district].filter(Boolean).join(', '))}>
                       <MapPin className="h-3.5 w-3.5" aria-hidden />
-                      {[pickupSource.marketYardName, pickupSource.location, pickupSource.village, pickupSource.district].filter(Boolean).join(', ') || 'Open map'}
+                      {[pickupSource.marketYardName, pickupSource.location, pickupSource.village, pickupSource.district].filter(Boolean).join(', ') || t('orderDetail.openMap')}
                     </a>,
                   ],
-                  firstItem?.mandiLot?.loadingInfo && ['Loading / gate', firstItem.mandiLot.loadingInfo],
-                  order.expectedDeliveryAt && ['Wanted by', formatDateTime(order.expectedDeliveryAt)],
-                  order.notes && ['Notes', order.notes],
+                  firstItem?.mandiLot?.loadingInfo && [t('orderDetail.loadingGate'), firstItem.mandiLot.loadingInfo],
+                  order.expectedDeliveryAt && [t('orderDetail.wantedBy'), formatDateTime(order.expectedDeliveryAt)],
+                  order.notes && [t('common.notes'), order.notes],
                 ]}
               />
             </Section>
 
-            <Section title="Money">
+            <Section title={t('orderDetail.money')}>
               <DetailList
                 cols={1}
                 items={[
-                  ['Order value', formatINR(order.total)],
-                  settlement && ['Settlement', `${settlement.settlementNumber} · ${humanize(settlement.status)}`],
-                  settlement && ['Received value (gross)', formatINR(settlement.grossAmount)],
-                  settlement && Number(settlement.commissionAmount) > 0 && ['Commission / fees', `− ${formatINR(settlement.commissionAmount)}`],
-                  settlement && ['Net payable to seller', formatINR(settlement.netAmount)],
-                  ['Paid so far', formatINR(order.amountPaid)],
-                  ['Balance due', <span key="d" className="font-semibold">{formatINR(due)}</span>],
+                  [t('orderDetail.orderValue'), formatINR(order.total)],
+                  settlement && [t('orderDetail.settlement'), `${settlement.settlementNumber} · ${humanize(settlement.status)}`],
+                  settlement && [t('orderDetail.grossValue'), formatINR(settlement.grossAmount)],
+                  settlement && Number(settlement.commissionAmount) > 0 && [t('orderDetail.commissionFees'), `− ${formatINR(settlement.commissionAmount)}`],
+                  settlement && [t('orderDetail.netPayable'), formatINR(settlement.netAmount)],
+                  [t('orderDetail.paidSoFar'), formatINR(order.amountPaid)],
+                  [t('orderDetail.balanceDue'), <span key="d" className="font-semibold">{formatINR(due)}</span>],
                 ]}
               />
               {order.payments.length > 0 && (
@@ -286,15 +292,9 @@ const OrderDetailPage = ({ base }) => {
       <ConfirmDialog
         open={!!confirm}
         onClose={() => setConfirm(null)}
-        title={confirm?.label}
-        message={
-          confirm?.to === 'ACCEPTED'
-            ? 'The buyer will be told you are fulfilling this order.'
-            : confirm?.to === 'DISPATCHED'
-              ? 'Use this when the goods leave without a KisanVani trip. With a trip, dispatch is recorded automatically at pickup.'
-              : 'The other party is notified with your reason, and any reserved quantity goes back on sale.'
-        }
-        confirmLabel={confirm?.label}
+        title={confirm && t(`orderDetail.actions.${confirm.id}`)}
+        message={confirm && t(confirm.to === 'ACCEPTED' ? 'orderDetail.acceptMessage' : confirm.to === 'DISPATCHED' ? 'orderDetail.dispatchMessage' : 'orderDetail.reasonMessage')}
+        confirmLabel={confirm && t(`orderDetail.actions.${confirm.id}`)}
         tone={confirm?.reason ? 'danger' : 'primary'}
         requireReason={confirm?.reason}
         busy={busy}
@@ -304,29 +304,29 @@ const OrderDetailPage = ({ base }) => {
       <QuantityConfirmModal
         open={qtyModal === 'deliver'}
         onClose={() => setQtyModal(null)}
-        title="Mark delivered"
-        description="Enter the quantity handed over for each item."
+        title={t('orderDetail.actions.markDelivered')}
+        description={t('orderDetail.deliverIntro')}
         items={order.items}
         field="deliveredQuantityKg"
         cap={(i) => i.quantityKg}
         defaultQty={(i) => i.quantityKg}
-        confirmLabel="Mark delivered"
+        confirmLabel={t('orderDetail.actions.markDelivered')}
         onConfirm={(items) => run('DELIVERED', { items })}
       />
       <QuantityConfirmModal
         open={qtyModal === 'receive'}
         onClose={() => setQtyModal(null)}
-        title="Confirm receipt"
-        description={user.role === 'SHOPKEEPER' ? 'These kilos are added to your stock and the seller’s settlement is created.' : 'The seller’s settlement is created from these kilos.'}
+        title={t('orderDetail.confirmReceipt')}
+        description={t(user.role === 'SHOPKEEPER' ? 'orderDetail.receiveIntroShop' : 'orderDetail.receiveIntro')}
         items={order.items}
         field="receivedQuantityKg"
         cap={(i) => i.deliveredQuantityKg ?? i.quantityKg}
         defaultQty={(i) => i.deliveredQuantityKg ?? i.quantityKg}
-        confirmLabel="Confirm receipt"
+        confirmLabel={t('orderDetail.confirmReceipt')}
         onConfirm={async (items) => {
           try {
             await ordersApi.receive(order.id, { items });
-            toast.success('Receipt confirmed. Stock and settlement updated.');
+            toast.success(t('orderDetail.receivedToast'));
             await reload();
           } catch (e) {
             toast.error(e);

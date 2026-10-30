@@ -36,7 +36,7 @@ const Login = () => {
   const [show, setShow] = useState(false);
   const [error, setError] = useState(null);
   const { login, expired } = useAuth();
-  const { t, setLang } = useI18n();
+  const { t } = useI18n();
   const navigate = useNavigate();
   const location = useLocation();
   const {
@@ -51,7 +51,7 @@ const Login = () => {
     setError(null);
     try {
       const user = await login({ identifier: v.identifier, password: v.password, role });
-      if (user.preferredLanguage) setLang(user.preferredLanguage);
+      // Language is reconciled with the profile by <LanguageSync> (a choice made on the website wins).
       const from = location.state?.from;
       // Only return to a page inside this user's own dashboard.
       navigate(from && from.startsWith(roleBase(user.role)) ? from : roleBase(user.role), { replace: true });

@@ -15,19 +15,15 @@ import useAsync from '../../hooks/useAsync';
 import { vehiclesApi } from '../../services';
 import { useToast } from '../../context/ToastContext';
 import { formatKg, formatDate, humanize } from '../../utils/format';
+import { useI18n } from '../../i18n';
 
-const DOC_TYPES = [
-  { value: 'REGISTRATION', label: 'Registration certificate (RC)' },
-  { value: 'INSURANCE', label: 'Insurance' },
-  { value: 'FITNESS', label: 'Fitness certificate' },
-  { value: 'PERMIT', label: 'Permit' },
-  { value: 'POLLUTION', label: 'Pollution (PUC)' },
-  { value: 'OTHER', label: 'Other' },
-];
+/** Vehicle document types; labels come from vehicles.docTypes.<TYPE>. */
+const DOC_TYPES = ['REGISTRATION', 'INSURANCE', 'FITNESS', 'PERMIT', 'POLLUTION', 'OTHER'];
 
 const expiryTone = (d) => (!d ? '' : new Date(d) < new Date() ? 'text-red-600 font-semibold' : new Date(d) < new Date(Date.now() + 30 * 86400000) ? 'text-turmeric-700 font-semibold' : '');
 
 const VehicleDetailPage = () => {
+  const { t } = useI18n();
   const { id } = useParams();
   const toast = useToast();
   const { data: v, loading, error, reload, setData } = useAsync(() => vehiclesApi.get(id), [id]);
@@ -43,7 +39,7 @@ const VehicleDetailPage = () => {
     try {
       setData(await vehiclesApi.addDocument(v.id, { type: doc.type, documentNumber: doc.documentNumber || undefined, expiryDate: doc.expiryDate || undefined }, files[0]));
       setDoc({ type: 'REGISTRATION', documentNumber: '', expiryDate: '' });
-      toast.success('Document uploaded');
+      toast.success(t('vehicles.docUploaded'));
     } catch (e) {
       toast.error(e);
     } finally {
@@ -62,67 +58,67 @@ const VehicleDetailPage = () => {
   return (
     <>
       <PageHeader
-        back={{ to: '/driver/vehicles', label: 'Vehicles' }}
+        back={{ to: '/driver/vehicles', label: t('dnav.tabs.vehicles') }}
         title={v.registrationNumber}
         description={<span className="inline-flex items-center gap-2">{humanize(v.type)} <StatusBadge status={v.verificationStatus} /></span>}
         actions={
           <Button variant="secondary" icon={Pencil} onClick={() => setEditing(true)}>
-            Edit details
+            {t('vehicles.editDetails')}
           </Button>
         }
       />
       {v.verificationStatus === 'REJECTED' && (
-        <Alert tone="error" className="mb-6" title="Verification rejected">
-          {v.verificationNote} Update the details or documents and an admin will review again.
+        <Alert tone="error" className="mb-6" title={t('vehicles.rejectedTitle')}>
+          {v.verificationNote} {t('vehicles.rejectedBody')}
         </Alert>
       )}
       {v.verificationStatus === 'PENDING' && (
         <Alert tone="info" className="mb-6">
-          Waiting for admin verification. Uploading your RC and insurance speeds this up.
+          {t('vehicles.pendingBody')}
         </Alert>
       )}
       <div className="grid gap-6 xl:grid-cols-2">
-        <Section title="Vehicle">
+        <Section title={t('dnav.items.vehicle')}>
           <DetailList
             items={[
-              ['Make and model', [v.make, v.model].filter(Boolean).join(' ') || '—'],
-              ['Capacity', formatKg(v.capacityKg)],
-              ['Owner', `${v.ownerName}${v.ownerMobile ? `, ${v.ownerMobile}` : ''}`],
-              ['Insurance', <span key="i" className={expiryTone(v.insuranceExpiry)}>{v.insurancePolicyNo || '—'} until {formatDate(v.insuranceExpiry)}</span>],
-              ['Fitness certificate', <span key="f" className={expiryTone(v.fitnessExpiry)}>{formatDate(v.fitnessExpiry)}</span>],
-              ['Permit', <span key="p" className={expiryTone(v.permitExpiry)}>{v.permitNumber || '—'} until {formatDate(v.permitExpiry)}</span>],
-              ['Trips', v._count.trips],
+              [t('vehicles.makeModel'), [v.make, v.model].filter(Boolean).join(' ') || '—'],
+              [t('vehicles.capacity'), formatKg(v.capacityKg)],
+              [t('vehicles.owner'), `${v.ownerName}${v.ownerMobile ? `, ${v.ownerMobile}` : ''}`],
+              [t('vehicles.docTypes.INSURANCE'), <span key="i" className={expiryTone(v.insuranceExpiry)}>{t('vehicles.numberUntil', '', { number: v.insurancePolicyNo || '—', date: formatDate(v.insuranceExpiry) })}</span>],
+              [t('vehicles.docTypes.FITNESS'), <span key="f" className={expiryTone(v.fitnessExpiry)}>{formatDate(v.fitnessExpiry)}</span>],
+              [t('vehicles.docTypes.PERMIT'), <span key="p" className={expiryTone(v.permitExpiry)}>{t('vehicles.numberUntil', '', { number: v.permitNumber || '—', date: formatDate(v.permitExpiry) })}</span>],
+              [t('dnav.tabs.trips'), v._count.trips],
             ]}
           />
         </Section>
-        <Section title="Documents">
+        <Section title={t('dnav.tabs.documents')}>
           <ul className="mb-5 divide-y divide-soil-100">
             {v.documents.map((d) => (
               <li key={d.id} className="flex items-center justify-between gap-3 py-2.5">
                 <a href={d.fileUrl} target="_blank" rel="noreferrer" className="flex min-w-0 items-center gap-2 hover:underline">
                   <FileText className="h-4 w-4 shrink-0 text-soil-400" aria-hidden />
                   <span className="truncate">
-                    {DOC_TYPES.find((t) => t.value === d.type)?.label}
+                    {DOC_TYPES.includes(d.type) ? t(`vehicles.docTypes.${d.type}`) : humanize(d.type)}
                     {d.documentNumber ? ` — ${d.documentNumber}` : ''}
                   </span>
                 </a>
                 <span className="flex shrink-0 items-center gap-2 text-xs">
-                  {d.expiryDate && <span className={expiryTone(d.expiryDate)}>until {formatDate(d.expiryDate)}</span>}
+                  {d.expiryDate && <span className={expiryTone(d.expiryDate)}>{t('vehicles.until', '', { date: formatDate(d.expiryDate) })}</span>}
                   <StatusBadge status={d.verificationStatus} />
-                  {d.verificationStatus !== 'VERIFIED' && <Button size="icon" variant="ghost" icon={Trash2} onClick={() => remove(d.id)} aria-label="Remove document" />}
+                  {d.verificationStatus !== 'VERIFIED' && <Button size="icon" variant="ghost" icon={Trash2} onClick={() => remove(d.id)} aria-label={t('vehicles.removeDoc')} />}
                 </span>
               </li>
             ))}
-            {!v.documents.length && <li className="py-3 text-sm text-soil-500">No documents uploaded yet.</li>}
+            {!v.documents.length && <li className="py-3 text-sm text-soil-500">{t('vehicles.noDocs')}</li>}
           </ul>
           <div className="space-y-3 rounded-xl bg-leafwhite p-4">
-            <p className="text-sm font-semibold">Upload a document</p>
+            <p className="text-sm font-semibold">{t('vehicles.uploadDoc')}</p>
             <div className="grid gap-3 sm:grid-cols-3">
-              <Select label="Type" value={doc.type} onChange={(e) => setDoc({ ...doc, type: e.target.value })} options={DOC_TYPES} />
-              <Input label="Number" value={doc.documentNumber} onChange={(e) => setDoc({ ...doc, documentNumber: e.target.value })} />
-              <Input label="Valid until" type="date" value={doc.expiryDate} onChange={(e) => setDoc({ ...doc, expiryDate: e.target.value })} />
+              <Select label={t('common.type')} value={doc.type} onChange={(e) => setDoc({ ...doc, type: e.target.value })} options={DOC_TYPES.map((value) => ({ value, label: t(`vehicles.docTypes.${value}`) }))} />
+              <Input label={t('vehicles.number')} value={doc.documentNumber} onChange={(e) => setDoc({ ...doc, documentNumber: e.target.value })} />
+              <Input label={t('vehicles.validUntil')} type="date" value={doc.expiryDate} onChange={(e) => setDoc({ ...doc, expiryDate: e.target.value })} />
             </div>
-            <FileUpload accept="image/jpeg,image/png,image/webp,application/pdf" onFiles={upload} disabled={uploading} label={uploading ? 'Uploading…' : 'Choose photo or PDF'} />
+            <FileUpload accept="image/jpeg,image/png,image/webp,application/pdf" onFiles={upload} disabled={uploading} label={uploading ? t('common.uploading') : t('vehicles.choosePhotoPdf')} />
           </div>
         </Section>
       </div>

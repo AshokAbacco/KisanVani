@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useT } from '../../i18n';
 
 export const LogoMark = ({ className = 'h-9 w-9' }) => (
   <svg viewBox="0 0 64 64" className={className} aria-hidden>
@@ -8,11 +9,14 @@ export const LogoMark = ({ className = 'h-9 w-9' }) => (
   </svg>
 );
 
-const Logo = ({ to = '/', light = false, className = '' }) => (
-  <Link to={to} className={`inline-flex items-center gap-2.5 ${className}`} aria-label="KisanVani home">
+const Logo = ({ to = '/', light = false, className = '' }) => {
+  const t = useT();
+  return (
+  <Link to={to} className={`inline-flex items-center gap-2.5 ${className}`} aria-label={t('components.logoHome', 'KisanVani home')}>
     <LogoMark />
     <span className={`font-display text-xl font-bold tracking-tight ${light ? 'text-white' : 'text-soil'}`}>KisanVani</span>
   </Link>
-);
+  );
+};
 
 export default Logo;

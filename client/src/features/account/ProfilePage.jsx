@@ -15,11 +15,14 @@ import { applyFieldErrors } from '../../utils/errors';
 import { rules } from '../../validators';
 import { roleLabel } from '../../constants/roles';
 import { formatDate, toDateInput } from '../../utils/format';
+import { useI18n } from '../../i18n';
 
 const profileOf = (u) => u.shopProfile || u.farmerProfile || u.mandiProfile || u.driverProfile || {};
 
 /** Profile editor for every role: identity, role-specific business details, address and GPS location. */
-const ProfilePage = ({ title = 'Profile', description = 'How you appear to buyers, sellers and drivers.' }) => {
+/** `copy` is the locale key holding this screen's title (routes.<screen>); the description is shared. */
+const ProfilePage = ({ copy }) => {
+  const { t } = useI18n();
   const { user, setUser } = useAuth();
   const toast = useToast();
   const p = profileOf(user);
@@ -84,7 +87,7 @@ const ProfilePage = ({ title = 'Profile', description = 'How you appear to buyer
     }
     try {
       setUser(await authApi.updateMe(body));
-      toast.success('Profile saved');
+      toast.success(t('profile.saved'));
     } catch (e) {
       if (!applyFieldErrors(e, setError)) toast.error(e);
     }
@@ -95,7 +98,7 @@ const ProfilePage = ({ title = 'Profile', description = 'How you appear to buyer
     if (!file) return;
     try {
       setUser(await authApi.uploadAvatar(file));
-      toast.success('Photo updated');
+      toast.success(t('profile.photoUpdated'));
     } catch (err) {
       toast.error(err);
     }
@@ -106,7 +109,7 @@ const ProfilePage = ({ title = 'Profile', description = 'How you appear to buyer
     try {
       await mandiApi.setCommission(Number(commission));
       setUser(await authApi.me());
-      toast.success('Commission updated. It applies to settlements created from now on.');
+      toast.success(t('profile.commissionUpdated'));
     } catch (e) {
       toast.error(e);
     } finally {
@@ -116,69 +119,69 @@ const ProfilePage = ({ title = 'Profile', description = 'How you appear to buyer
 
   return (
     <>
-      <PageHeader title={title} description={description} />
+      <PageHeader title={copy ? t(`${copy}.title`) : t('common.profile')} description={t('profile.intro')} />
       <div className="grid gap-6 xl:grid-cols-[1fr_340px]">
         <form onSubmit={handleSubmit(submit)} className="space-y-6" noValidate>
-          <Section title="Your details">
+          <Section title={t('profile.yourDetails')}>
             <div className="grid gap-4 sm:grid-cols-2">
-              <Input label="Full name" required error={errors.name?.message} {...register('name', rules.name)} />
-              <Input label="E-mail" type="email" hint="Used for password reset" error={errors.email?.message} {...register('email', rules.email)} />
+              <Input label={t('users.fullName')} required error={errors.name?.message} {...register('name', rules.name)} />
+              <Input label={t('common.email')} type="email" hint={t('profile.emailHint')} error={errors.email?.message} {...register('email', rules.email)} />
             </div>
           </Section>
 
           {user.role === 'SHOPKEEPER' && (
-            <Section title="Shop">
+            <Section title={t('shopGps.shop')}>
               <div className="grid gap-4 sm:grid-cols-2">
-                <Input label="Shop name" required error={errors.shopName?.message} {...register('shopName', rules.required('Shop name'))} />
+                <Input label={t('users.orgName.SHOPKEEPER')} required error={errors.shopName?.message} {...register('shopName', rules.required(t('users.orgName.SHOPKEEPER')))} />
                 <Input label="GSTIN" {...register('gstin')} />
-                <Input label="UPI ID for customer payments" placeholder="shopname@upi" {...register('upiId')} />
-                <Input label="Bill footer" placeholder="Thank you! Visit again." {...register('receiptFooter')} />
+                <Input label={t('profile.upiCustomers')} placeholder="shopname@upi" {...register('upiId')} />
+                <Input label={t('profile.billFooter')} placeholder={t('receipt.thanks')} {...register('receiptFooter')} />
               </div>
             </Section>
           )}
           {user.role === 'FARMER' && (
-            <Section title="Farm">
+            <Section title={t('userDetail.farm')}>
               <div className="grid gap-4 sm:grid-cols-2">
-                <Input label="Farm name" {...register('farmName')} />
-                <Input label="Land" suffix="acres" inputMode="decimal" {...register('landAcres')} />
-                <Input className="sm:col-span-2" label="Main crops" hint="Comma separated" {...register('primaryCrops')} />
-                <Input label="UPI ID for payments" {...register('upiId')} />
+                <Input label={t('users.orgName.FARMER')} {...register('farmName')} />
+                <Input label={t('profile.land')} suffix={t('profile.acres')} inputMode="decimal" {...register('landAcres')} />
+                <Input className="sm:col-span-2" label={t('profile.mainCrops')} hint={t('profile.commaSeparated')} {...register('primaryCrops')} />
+                <Input label={t('profile.upiPayments')} {...register('upiId')} />
                 <div className="grid grid-cols-2 gap-3">
-                  <Input label="Bank account" {...register('bankAccount')} />
+                  <Input label={t('profile.bankAccount')} {...register('bankAccount')} />
                   <Input label="IFSC" {...register('ifsc')} />
                 </div>
               </div>
             </Section>
           )}
           {user.role === 'MANDI_OWNER' && (
-            <Section title="Market Mandi">
+            <Section title={t('roles.MANDI_OWNER')}>
               <div className="grid gap-4 sm:grid-cols-2">
-                <Input label="Mandi / firm name" required error={errors.mandiName?.message} {...register('mandiName', rules.required('Mandi name'))} />
-                <Input label="Market yard" {...register('marketYardName')} />
-                <Input label="APMC licence number" {...register('licenseNumber')} />
-                <Input label="UPI ID" {...register('upiId')} />
+                <Input label={t('profile.mandiFirm')} required error={errors.mandiName?.message} {...register('mandiName', rules.required(t('users.orgName.MANDI_OWNER')))} />
+                <Input label={t('lotForm.marketYard')} {...register('marketYardName')} />
+                <Input label={t('profile.apmcNumber')} {...register('licenseNumber')} />
+                <Input label={t('profile.upiId')} {...register('upiId')} />
               </div>
             </Section>
           )}
           {user.role === 'DRIVER' && (
-            <Section title="Licence">
+            <Section title={t('users.licence')}>
               <div className="grid gap-4 sm:grid-cols-3">
-                <Input label="Licence number" value={user.driverProfile?.licenseNumber || ''} disabled hint="Contact support to change" />
-                <Input label="Valid until" type="date" {...register('licenseExpiry')} />
-                <Input label="Years driving" type="number" min="0" {...register('experienceYrs')} />
+                <Input label={t('profile.licenceNumber')} value={user.driverProfile?.licenseNumber || ''} disabled hint={t('profile.contactSupport')} />
+                <Input label={t('vehicles.validUntil')} type="date" {...register('licenseExpiry')} />
+                <Input label={t('profile.yearsDriving')} type="number" min="0" {...register('experienceYrs')} />
               </div>
             </Section>
           )}
 
           {user.role !== 'ADMIN' && (
-            <Section title="Address and location" description="Buyers see the distance to you; drivers use the pin for navigation.">
+            <Section title={t('profile.addressLocation')} description={t('profile.addressIntro')}>
               <div className="grid gap-4 sm:grid-cols-2">
-                <Textarea className="sm:col-span-2" rows={2} label="Street / landmark" {...register('line1')} />
-                <Input label="Village" {...register('village')} />
-                <Input label="Town / city" {...register('city')} />
-                <Input label="District" {...register('district')} />
-                <Input label="State" {...register('state')} />
-                <Input label="Pincode" inputMode="numeric" error={errors.pincode?.message} {...register('pincode', rules.pincode)} />
+                <Textarea className="sm:col-span-2" rows={2} label={t('profile.street')} {...register('line1')} />
+                <Input label={t('common.village')} {...register('village')} />
+                <Input label={t('profile.city')} {...register('city')} />
+                <Input label={t('common.district')} {...register('district')} />
+                <Input label={t('profile.state')} {...register('state')} />
+                <Input label={t('profile.pincode')} inputMode="numeric" error={errors.pincode?.message} {...register('pincode', rules.pincode)} />
               </div>
               <div className="mt-5">
                 <LocationPicker value={coords} onChange={setCoords} />
@@ -188,7 +191,7 @@ const ProfilePage = ({ title = 'Profile', description = 'How you appear to buyer
 
           <div className="flex justify-end">
             <Button type="submit" loading={isSubmitting} disabled={!isDirty && coords.lat === (p.address?.latitude ?? null) && coords.lng === (p.address?.longitude ?? null)}>
-              Save profile
+              {t('profile.save')}
             </Button>
           </div>
         </form>
@@ -198,9 +201,9 @@ const ProfilePage = ({ title = 'Profile', description = 'How you appear to buyer
             <div className="flex items-center gap-4">
               <div className="relative">
                 <Avatar name={user.name} src={user.avatarUrl} size="h-16 w-16" />
-                <label className="absolute -bottom-1 -right-1 grid h-7 w-7 cursor-pointer place-items-center rounded-full border-2 border-white accent-bg text-white" title="Change photo">
+                <label className="absolute -bottom-1 -right-1 grid h-7 w-7 cursor-pointer place-items-center rounded-full border-2 border-white accent-bg text-white" title={t('profile.changePhoto')}>
                   <Camera className="h-3.5 w-3.5" aria-hidden />
-                  <span className="sr-only">Change photo</span>
+                  <span className="sr-only">{t('profile.changePhoto')}</span>
                   <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={onAvatar} />
                 </label>
               </div>
@@ -213,20 +216,20 @@ const ProfilePage = ({ title = 'Profile', description = 'How you appear to buyer
               <DetailList
                 cols={1}
                 items={[
-                  ['Mobile', user.mobile],
-                  ['Status', <StatusBadge key="s" status={user.status} />],
-                  ['Member since', formatDate(user.createdAt)],
-                  user.shopProfile && ['Shop code', user.shopProfile.shopCode],
+                  [t('common.mobile'), user.mobile],
+                  [t('common.status'), <StatusBadge key="s" status={user.status} />],
+                  [t('profile.memberSince'), formatDate(user.createdAt)],
+                  user.shopProfile && [t('shopGps.shopCode'), user.shopProfile.shopCode],
                 ]}
               />
             </div>
           </Section>
           {user.role === 'MANDI_OWNER' && (
-            <Section title="Commission on farmer purchases" description="Deducted from the farmer’s settlement when your mandi buys their produce.">
+            <Section title={t('profile.commissionTitle')} description={t('profile.commissionIntro')}>
               <div className="flex items-end gap-2">
-                <Input className="flex-1" label="Commission" suffix="%" inputMode="decimal" value={commission} onChange={(e) => setCommission(e.target.value)} error={commission !== '' && !(Number(commission) >= 0 && Number(commission) <= 15) ? 'Between 0 and 15%' : undefined} />
+                <Input className="flex-1" label={t('userDetail.commission')} suffix="%" inputMode="decimal" value={commission} onChange={(e) => setCommission(e.target.value)} error={commission !== '' && !(Number(commission) >= 0 && Number(commission) <= 15) ? t('profile.between0and15') : undefined} />
                 <Button onClick={saveCommission} loading={savingCommission} disabled={commission === '' || !(Number(commission) >= 0 && Number(commission) <= 15)}>
-                  Save
+                  {t('common.save')}
                 </Button>
               </div>
             </Section>

@@ -2,6 +2,7 @@ import { ArrowDown, ArrowUp, ChevronsUpDown } from 'lucide-react';
 import EmptyState from '../common/EmptyState';
 import ErrorState from '../feedback/ErrorState';
 import Pagination from './Pagination';
+import { useI18n } from '../../i18n';
 
 /**
  * Server-driven table.
@@ -9,6 +10,7 @@ import Pagination from './Pagination';
  * Pass the object returned by useList() as `list`, or `rows` for static data.
  */
 const DataTable = ({ columns, list, rows, rowKey = 'id', onRowClick, empty, toolbar, footer, dense = false }) => {
+  const { t } = useI18n();
   const items = list ? list.items : rows || [];
   const loading = list?.loading && !items.length;
   const pad = dense ? 'px-3 py-2' : 'px-4 py-3';
@@ -69,7 +71,7 @@ const DataTable = ({ columns, list, rows, rowKey = 'id', onRowClick, empty, tool
                   ))}
             </tbody>
           </table>
-          {!loading && !items.length && (empty || <EmptyState compact title="No records found" description="Try a different search or filter." />)}
+          {!loading && !items.length && (empty || <EmptyState compact title={t('components.table.emptyTitle')} description={t('components.table.emptyBody')} />)}
         </div>
       )}
       {list && <Pagination meta={list.meta} page={list.page} onPage={list.setPage} />}

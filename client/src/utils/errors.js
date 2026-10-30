@@ -1,12 +1,15 @@
+import { translate } from '../i18n';
+
 /** Extracts a human-readable message from an API/axios error. */
-export const errorMessage = (err, fallback = 'Something went wrong. Please try again.') => {
-  if (!err) return fallback;
-  if (err.code === 'ERR_NETWORK') return 'Cannot reach the KisanVani server. Check your connection and that the API is running.';
+export const errorMessage = (err, fallback) => {
+  const generic = fallback ?? translate('errors.generic', 'Something went wrong. Please try again.');
+  if (!err) return generic;
+  if (err.code === 'ERR_NETWORK') return translate('errors.network', 'Cannot reach the KisanVani server. Check your connection and that the API is running.');
   const apiErr = err.response?.data?.error;
   if (apiErr?.details?.length && apiErr.code === 'VALIDATION_ERROR') {
     return apiErr.details.map((d) => (d.path ? `${d.path}: ${d.message}` : d.message)).join('; ');
   }
-  return apiErr?.message || err.message || fallback;
+  return apiErr?.message || err.message || generic;
 };
 
 /** Maps server validation details onto react-hook-form fields. Returns true when any field matched. */

@@ -9,34 +9,37 @@ import EmptyState from '../../components/common/EmptyState';
 import Button from '../../components/common/Button';
 import useList from '../../hooks/useList';
 import { transportApi } from '../../services';
-import { formatINR, formatKg, formatDateTime } from '../../utils/format';
+import { formatINR, formatKg, formatDateTime, humanize } from '../../utils/format';
+import { useI18n } from '../../i18n';
 
+/* Title and description come from myTrips.presets.<preset> in the locale files. */
 const PRESETS = {
-  all: { title: 'My trips', description: 'Every trip assigned to you.', status: '' },
-  pickups: { title: 'Pickup confirmation', description: 'Trips you have accepted and still need to load. Open one to confirm the loaded weight.', status: 'ASSIGNED,ACCEPTED' },
-  deliveries: { title: 'Delivery confirmation', description: 'Loads on board. Open a trip to record the delivered weight and proof.', status: 'PICKED_UP,IN_TRANSIT' },
-  history: { title: 'Trip history', description: 'Finished trips, including rejected, failed and cancelled ones.', status: 'DELIVERED,REJECTED,FAILED,CANCELLED' },
+  all: { status: '' },
+  pickups: { status: 'ASSIGNED,ACCEPTED' },
+  deliveries: { status: 'PICKED_UP,IN_TRANSIT' },
+  history: { status: 'DELIVERED,REJECTED,FAILED,CANCELLED' },
 };
 
 const MyTripsPage = ({ preset = 'all' }) => {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const p = PRESETS[preset];
   const list = useList((q) => transportApi.trips(q), { initialFilters: { status: p.status } });
 
   return (
     <>
-      <PageHeader title={p.title} description={p.description} />
+      <PageHeader title={t(`myTrips.presets.${preset}.title`)} description={t(`myTrips.presets.${preset}.description`)} />
       <DataTable
         list={list}
-        onRowClick={(t) => navigate(`/driver/trips/${t.id}`)}
+        onRowClick={(trip) => navigate(`/driver/trips/${trip.id}`)}
         columns={[
-          { key: 'tripNumber', header: 'Trip', render: (t) => <span className="num whitespace-nowrap font-semibold">{t.tripNumber}</span> },
-          { key: 'commodity', header: 'Load', render: (t) => `${t.commodity} (${formatKg(t.expectedQuantityKg)})` },
-          { key: 'route', header: 'Route', render: (t) => <span className="text-soil-600">{t.pickupAddress} to {t.dropAddress}</span> },
-          { key: 'vehicle', header: 'Vehicle', render: (t) => <span className="num">{t.vehicle.registrationNumber}</span> },
-          { key: 'transportCharge', header: 'Charge', align: 'right', render: (t) => formatINR(t.transportCharge) },
-          { key: 'status', header: 'Status', sortable: true, render: (t) => <StatusBadge status={t.status} /> },
-          { key: 'createdAt', header: 'Created', sortable: true, render: (t) => <span className="whitespace-nowrap text-soil-500">{formatDateTime(t.createdAt)}</span> },
+          { key: 'tripNumber', header: t('trips.trip'), render: (trip) => <span className="num whitespace-nowrap font-semibold">{trip.tripNumber}</span> },
+          { key: 'commodity', header: t('trips.load'), render: (trip) => `${trip.commodity} (${formatKg(trip.expectedQuantityKg)})` },
+          { key: 'route', header: t('trips.route'), render: (trip) => <span className="text-soil-600">{t('common.fromTo', '', { from: trip.pickupAddress, to: trip.dropAddress })}</span> },
+          { key: 'vehicle', header: t('dnav.items.vehicle'), render: (trip) => <span className="num">{trip.vehicle.registrationNumber}</span> },
+          { key: 'transportCharge', header: t('trips.charge'), align: 'right', render: (trip) => formatINR(trip.transportCharge) },
+          { key: 'status', header: t('common.status'), sortable: true, render: (trip) => <StatusBadge status={trip.status} /> },
+          { key: 'createdAt', header: t('trips.created'), sortable: true, render: (trip) => <span className="whitespace-nowrap text-soil-500">{formatDateTime(trip.createdAt)}</span> },
         ]}
         toolbar={
           <>
@@ -45,19 +48,19 @@ const MyTripsPage = ({ preset = 'all' }) => {
                 value={list.filters.status}
                 onChange={(status) => list.setFilters({ status })}
                 tabs={[
-                  { value: '', label: 'All' },
-                  { value: PRESETS.pickups.status, label: 'To pick up' },
-                  { value: PRESETS.deliveries.status, label: 'On the road' },
-                  { value: 'DELIVERED', label: 'Delivered' },
+                  { value: '', label: t('common.all') },
+                  { value: PRESETS.pickups.status, label: t('myTrips.toPickUp') },
+                  { value: PRESETS.deliveries.status, label: t('myTrips.onTheRoad') },
+                  { value: 'DELIVERED', label: humanize('DELIVERED') },
                 ]}
               />
             ) : (
               <span />
             )}
-            <SearchInput value={list.search} onChange={list.setSearch} placeholder="Trip, load or vehicle" className="sm:w-60" />
+            <SearchInput value={list.search} onChange={list.setSearch} placeholder={t('myTrips.searchPlaceholder')} className="sm:w-60" />
           </>
         }
-        empty={<EmptyState icon={Route} title="No trips here" description="Take an open load or wait for an assignment." action={<Button to="/driver/assignments">See open loads</Button>} />}
+        empty={<EmptyState icon={Route} title={t('myTrips.emptyTitle')} description={t('myTrips.emptyBody')} action={<Button to="/driver/assignments">{t('driverDash.seeOpenLoads')}</Button>} />}
       />
     </>
   );

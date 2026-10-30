@@ -9,6 +9,8 @@ import Section from '../../components/common/Section';
 import Button from '../../components/common/Button';
 import StatusBadge from '../../components/common/StatusBadge';
 import { timeAgo } from '../../utils/format';
+import { useI18n } from '../../i18n';
+import MapZoom from '../../components/maps/MapZoom';
 
 const Fit = ({ pts }) => {
   const map = useMap();
@@ -26,6 +28,7 @@ const Fit = ({ pts }) => {
  * are drawn at their pickup point and labelled as such; stale positions are grey.
  */
 const ActiveTripsMap = ({ base, height = 360 }) => {
+  const { t: tr } = useI18n();
   const settings = useSettings();
   const [trips, setTrips] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -49,17 +52,18 @@ const ActiveTripsMap = ({ base, height = 360 }) => {
 
   return (
     <Section
-      title="Active trips on the map"
-      description={`${trips.length} active · ${trips.filter((t) => t.lastLat != null && !t.isStale).length} sharing live location`}
+      title={tr('activeMap.title')}
+      description={tr('activeMap.summary', '', { active: trips.length, live: trips.filter((t) => t.lastLat != null && !t.isStale).length })}
       actions={
         <Button size="sm" variant="ghost" icon={RefreshCw} onClick={load} loading={loading}>
-          Refresh
+          {tr('common.refresh')}
         </Button>
       }
       bodyClass="p-3"
     >
       <div style={{ height }} className="overflow-hidden rounded-xl">
-        <MapContainer center={INDIA_CENTER} zoom={5} scrollWheelZoom={false} className="h-full w-full">
+        <MapContainer center={INDIA_CENTER} zoom={5} scrollWheelZoom={false} className="h-full w-full" zoomControl={false}>
+        <MapZoom />
           <TileLayer url={settings['map.tileUrl']} attribution={settings['map.attribution']} />
           {placed.map(({ t, pos, live }) => (
             <Marker key={t.id} position={pos} icon={live ? truckIcon(t.isStale) : PICKUP_ICON}>
@@ -68,9 +72,9 @@ const ActiveTripsMap = ({ base, height = 360 }) => {
                 <br />
                 {t.driver.name}, {t.vehicle.registrationNumber}
                 <br />
-                {live ? `${t.isStale ? 'Last seen' : 'Updated'} ${timeAgo(t.lastLocationAt)}` : 'No GPS yet — shown at pickup'}
+                {live ? tr(t.isStale ? 'activeMap.lastSeen' : 'activeMap.updated', '', { ago: timeAgo(t.lastLocationAt) }) : tr('activeMap.noGps')}
                 <br />
-                <Link to={`${base}/transport/trips/${t.id}`}>Open trip</Link>
+                <Link to={`${base}/transport/trips/${t.id}`}>{tr('liveTracking.openTrip')}</Link>
               </Popup>
             </Marker>
           ))}

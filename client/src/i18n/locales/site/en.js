@@ -1,6 +1,7 @@
 // Public website, navbar, footer and auth screens — English (source).
 // Every other locales/site/<code>.js mirrors these keys exactly.
 // Arrays are rendered in order; keep the same number of items in every language.
+// src/i18n/locales/site/en.js is the source of truth for all other locales.
 const en = {
   meta: {
     title: 'KisanVani — From Farm to Market',

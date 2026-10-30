@@ -18,16 +18,13 @@ import { useToast } from '../../context/ToastContext';
 import { rules } from '../../validators';
 import { applyFieldErrors } from '../../utils/errors';
 import { formatKg } from '../../utils/format';
+import { useI18n } from '../../i18n';
 
-const LOT_TYPES = [
-  { value: 'LOOSE', label: 'Loose' },
-  { value: 'BAGGED', label: 'Bags' },
-  { value: 'CRATED', label: 'Crates' },
-  { value: 'BOXED', label: 'Boxes' },
-];
+const LOT_TYPES = ['LOOSE', 'BAGGED', 'CRATED', 'BOXED'];
 
 /** Create or edit a wholesale mandi lot. */
 const LotFormPage = () => {
+  const { t } = useI18n();
   const { id } = useParams();
   const editing = !!id;
   const navigate = useNavigate();
@@ -97,17 +94,17 @@ const LotFormPage = () => {
     try {
       if (editing) {
         setLot(await mandiApi.update(id, body));
-        toast.success('Lot updated');
+        toast.success(t('lotForm.updated'));
       } else {
         const created = await mandiApi.create({ ...body, productId: v.productId, publish });
         if (pending.length) {
           try {
             await mandiApi.addImages(created.id, pending.map((p) => p.file));
           } catch (e) {
-            toast.error(`Lot saved, but photos failed: ${e.response?.data?.error?.message || e.message}`);
+            toast.error(t('lotForm.photosFailed', '', { error: e.response?.data?.error?.message || e.message }));
           }
         }
-        toast.success(`Lot ${created.lotCode} ${publish ? 'is now available to shops' : 'saved as draft'}`);
+        toast.success(t(publish ? 'lotForm.publishedToast' : 'lotForm.draftToast', '', { code: created.lotCode }));
         navigate('/mandi/lots');
       }
     } catch (e) {
@@ -137,60 +134,68 @@ const LotFormPage = () => {
   return (
     <>
       <PageHeader
-        back={{ to: '/mandi/lots', label: 'Mandi lots' }}
-        title={editing ? `Lot ${lot.lotCode}` : 'Create new mandi lot'}
-        description={editing ? <span className="inline-flex items-center gap-2">{lot.commodityName} <StatusBadge status={lot.status} /></span> : 'Describe the lot as a buyer would want to see it at the yard.'}
+        back={{ to: '/mandi/lots', label: t('dnav.tabs.mandiLots') }}
+        title={editing ? t('lotForm.lotTitle', '', { code: lot.lotCode }) : t('lotForm.newTitle')}
+        description={
+          editing ? (
+            <span className="inline-flex items-center gap-2">
+              {lot.commodityName} <StatusBadge status={lot.status} />
+            </span>
+          ) : (
+            t('lotForm.intro')
+          )
+        }
       />
-      {locked && <Alert tone="info" className="mb-6">This lot is closed and can no longer be edited.</Alert>}
+      {locked && <Alert tone="info" className="mb-6">{t('lotForm.locked')}</Alert>}
       <form noValidate className="grid gap-6 xl:grid-cols-[1.4fr_1fr]" onSubmit={handleSubmit((v) => submit(v, false))}>
         <div className="space-y-6">
-          <Section title="Commodity">
+          <Section title={t('lots.commodity')}>
             <div className="grid gap-4 sm:grid-cols-2">
-              {editing ? <Input label="Commodity" value={`${lot.product.emoji || ''} ${lot.commodityName}`} disabled /> : <ProductSelect label="Commodity" required error={errors.productId?.message} {...register('productId', rules.required('Commodity'))} />}
-              <Input label="Variety" disabled={locked} {...register('variety')} />
-              <Input label="Grade" disabled={locked} {...register('grade')} />
+              {editing ? <Input label={t('lots.commodity')} value={`${lot.product.emoji || ''} ${lot.commodityName}`} disabled /> : <ProductSelect label={t('lots.commodity')} required error={errors.productId?.message} {...register('productId', rules.required(t('lots.commodity')))} />}
+              <Input label={t('listingForm.variety')} disabled={locked} {...register('variety')} />
+              <Input label={t('listingForm.grade')} disabled={locked} {...register('grade')} />
               <div className="grid grid-cols-2 gap-3">
-                <Select label="Lot type" options={LOT_TYPES} disabled={locked} {...register('lotType')} />
-                {lotType !== 'LOOSE' && <Input label="Bag / crate size" suffix="kg" inputMode="decimal" disabled={locked} error={errors.unitSizeKg?.message} {...register('unitSizeKg', rules.positive('Size'))} />}
+                <Select label={t('lotForm.lotType')} options={LOT_TYPES.map((value) => ({ value, label: t(`lotForm.types.${value}`) }))} disabled={locked} {...register('lotType')} />
+                {lotType !== 'LOOSE' && <Input label={t('lotForm.unitSize')} suffix="kg" inputMode="decimal" disabled={locked} error={errors.unitSizeKg?.message} {...register('unitSizeKg', rules.positive(t('lotForm.size')))} />}
               </div>
-              <Textarea className="sm:col-span-2" label="Quality and grading notes" rows={2} disabled={locked} {...register('qualityNotes')} />
+              <Textarea className="sm:col-span-2" label={t('lotForm.qualityNotes')} rows={2} disabled={locked} {...register('qualityNotes')} />
             </div>
           </Section>
-          <Section title="Weight and price">
+          <Section title={t('lotForm.weightPrice')}>
             <div className="grid gap-4 sm:grid-cols-3">
               <Input
-                label="Total available weight"
+                label={t('lotForm.totalWeight')}
                 required
                 suffix="kg"
                 inputMode="decimal"
                 disabled={locked}
-                hint={reserved > 0 ? `${formatKg(reserved, { grams: false })} already reserved` : undefined}
+                hint={reserved > 0 ? t('lotForm.alreadyReserved', '', { qty: formatKg(reserved, { grams: false }) }) : undefined}
                 error={errors.totalWeightKg?.message}
-                {...register('totalWeightKg', { ...rules.positive('Weight'), validate: (v) => (rules.positive('Weight').validate(v) === true ? Number(v) >= reserved || `At least ${reserved} kg (reserved)` : rules.positive('Weight').validate(v)) })}
+                {...register('totalWeightKg', { ...rules.positive(t('pos.weight')), validate: (v) => (rules.positive(t('pos.weight')).validate(v) === true ? Number(v) >= reserved || t('lotForm.atLeastReserved', '', { n: reserved }) : rules.positive(t('pos.weight')).validate(v)) })}
               />
-              <Input label="Price" required suffix="₹/kg" inputMode="decimal" disabled={locked} error={errors.pricePerKg?.message} {...register('pricePerKg', rules.money('Price'))} />
+              <Input label={t('common.price')} required suffix="₹/kg" inputMode="decimal" disabled={locked} error={errors.pricePerKg?.message} {...register('pricePerKg', rules.money(t('common.price')))} />
               <Input
-                label="Minimum wholesale order"
+                label={t('lotForm.minOrder')}
                 required
                 suffix="kg"
                 inputMode="decimal"
                 disabled={locked}
                 error={errors.minOrderKg?.message}
-                {...register('minOrderKg', { ...rules.positive('Minimum'), validate: (v) => (rules.positive('Minimum').validate(v) === true ? !total || Number(v) <= total || 'Cannot exceed the total' : rules.positive('Minimum').validate(v)) })}
+                {...register('minOrderKg', { ...rules.positive(t('lotForm.minimum')), validate: (v) => (rules.positive(t('lotForm.minimum')).validate(v) === true ? !total || Number(v) <= total || t('listingForm.notOverTotal') : rules.positive(t('lotForm.minimum')).validate(v)) })}
               />
             </div>
           </Section>
-          <Section title="Yard and loading">
+          <Section title={t('lotForm.yardLoading')}>
             <div className="grid gap-4 sm:grid-cols-2">
-              <Input label="Market yard name" required disabled={locked} error={errors.marketYardName?.message} {...register('marketYardName', rules.required('Market yard'))} />
-              <Input label="Shed / location in yard" disabled={locked} {...register('location')} />
-              <Input label="District" disabled={locked} {...register('district')} />
-              <Input label="Loading / gate information" placeholder="e.g. Gate 3, loading 6 am – 2 pm" disabled={locked} {...register('loadingInfo')} />
+              <Input label={t('lotForm.yardName')} required disabled={locked} error={errors.marketYardName?.message} {...register('marketYardName', rules.required(t('lotForm.marketYard')))} />
+              <Input label={t('lotForm.shed')} disabled={locked} {...register('location')} />
+              <Input label={t('common.district')} disabled={locked} {...register('district')} />
+              <Input label={t('lotForm.loadingInfo')} placeholder={t('lotForm.loadingPlaceholder')} disabled={locked} {...register('loadingInfo')} />
             </div>
           </Section>
         </div>
         <div className="space-y-6">
-          <Section title="Photos" description="Up to 5">
+          <Section title={t('listingForm.photos')} description={t('lotForm.upTo5')}>
             <div className="mb-3 grid grid-cols-3 gap-2">
               {images.map((src) => (
                 <div key={src} className="relative">
@@ -199,7 +204,7 @@ const LotFormPage = () => {
                     <button
                       type="button"
                       className="absolute right-1 top-1 rounded-full bg-white/90 p-1 shadow"
-                      aria-label="Remove photo"
+                      aria-label={t('listingForm.removePhoto')}
                       onClick={async () => {
                         if (!editing) return setPending((p) => p.filter((x) => x.url !== src));
                         try {
@@ -216,24 +221,24 @@ const LotFormPage = () => {
                 </div>
               ))}
             </div>
-            {!locked && images.length < 5 && <FileUpload multiple onFiles={onPhotos} disabled={uploading} label={uploading ? 'Uploading…' : 'Add photos'} />}
+            {!locked && images.length < 5 && <FileUpload multiple onFiles={onPhotos} disabled={uploading} label={uploading ? t('common.uploading') : t('listingForm.addPhotos')} />}
           </Section>
-          <Section title="Yard location">
+          <Section title={t('lotForm.yardLocation')}>
             <LocationPicker value={coords} onChange={locked ? () => {} : setCoords} height={240} />
           </Section>
           {!locked && (
             <div className="flex justify-end gap-2">
               {editing ? (
                 <Button type="submit" loading={isSubmitting}>
-                  Save changes
+                  {t('common.saveChanges')}
                 </Button>
               ) : (
                 <>
                   <Button type="submit" variant="secondary" loading={isSubmitting}>
-                    Save draft
+                    {t('listingForm.saveDraft')}
                   </Button>
                   <Button onClick={handleSubmit((v) => submit(v, true))} loading={isSubmitting}>
-                    Publish lot
+                    {t('lotForm.publishLot')}
                   </Button>
                 </>
               )}

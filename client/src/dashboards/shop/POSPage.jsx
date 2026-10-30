@@ -15,13 +15,10 @@ import { formatINR, formatKg } from '../../utils/format';
 import { newId } from '../../utils/id';
 import { errorMessage } from '../../utils/errors';
 import { useDebounce } from '../../hooks/useDebounce';
+import { useI18n } from '../../i18n';
+import { modeLabel } from '../../utils/format';
 
-const CATEGORIES = [
-  { value: '', label: 'All' },
-  { value: 'VEGETABLE', label: 'Vegetables' },
-  { value: 'FRUIT', label: 'Fruits' },
-  { value: 'LEAFY_GREEN', label: 'Leafy greens' },
-];
+const CATEGORIES = ['', 'VEGETABLE', 'FRUIT', 'LEAFY_GREEN'];
 const QUICK = [
   { kg: 0.25, label: '250 g' },
   { kg: 0.5, label: '500 g' },
@@ -30,13 +27,14 @@ const QUICK = [
   { kg: 5, label: '5 kg' },
 ];
 const MODES = [
-  { value: 'CASH', label: 'Cash', icon: Banknote },
-  { value: 'UPI', label: 'UPI / QR', icon: QrCode },
-  { value: 'CREDIT', label: 'Udhar', icon: HandCoins },
+  { value: 'CASH', icon: Banknote },
+  { value: 'UPI', icon: QrCode },
+  { value: 'CREDIT', icon: HandCoins },
 ];
 
 /** Retail billing with weight entry, quick weights, optional serial scale and 80 mm memo printing. */
 const POSPage = () => {
+  const { t } = useI18n();
   const toast = useToast();
   const [config, setConfig] = useState(null);
   const [items, setItems] = useState([]);
@@ -99,7 +97,7 @@ const POSPage = () => {
   const addActive = () => {
     if (!active || weightKg <= 0) return;
     if (weightKg > remaining + 1e-9) {
-      toast.warning(`Only ${formatKg(remaining)} of ${active.product.name} in stock`);
+      toast.warning(t('pos.onlyOfInStock', '', { qty: formatKg(remaining), name: active.product.name }));
       return;
     }
     dispatch({ type: 'add', item: active, quantityKg: weightKg });
@@ -110,14 +108,14 @@ const POSPage = () => {
   const setLineQty = (line, kg) => {
     const q = Math.max(0, Math.round(kg * 1000) / 1000);
     if (q === 0) return dispatch({ type: 'remove', id: line.inventoryItemId });
-    if (q > line.available) return toast.warning(`Only ${formatKg(line.available)} in stock`);
+    if (q > line.available) return toast.warning(t('pos.onlyInStock', '', { qty: formatKg(line.available) }));
     return dispatch({ type: 'setQty', id: line.inventoryItemId, quantityKg: q });
   };
 
   const maxDiscount = (totals.subtotal * Number(config?.maxDiscountPercent || 0)) / 100;
-  const discountError = Number(bill.discount || 0) > maxDiscount + 0.001 ? `Max ${config?.maxDiscountPercent}% (${formatINR(maxDiscount)})` : null;
+  const discountError = Number(bill.discount || 0) > maxDiscount + 0.001 ? t('pos.maxDiscount', '', { pct: config?.maxDiscountPercent, amount: formatINR(maxDiscount) }) : null;
   const creditNeedsCustomer = bill.paymentMode === 'CREDIT' && (!bill.customerName.trim() || !/^[6-9]\d{9}$/.test(bill.customerMobile.replace(/\D/g, '').slice(-10)));
-  const mobileError = bill.customerMobile && !/^(\+?91)?[6-9]\d{9}$/.test(bill.customerMobile.replace(/[\s-]/g, '')) ? 'Enter a 10-digit mobile' : null;
+  const mobileError = bill.customerMobile && !/^(\+?91)?[6-9]\d{9}$/.test(bill.customerMobile.replace(/[\s-]/g, '')) ? t('pos.mobile10') : null;
   const canSave = bill.lines.length > 0 && !discountError && !creditNeedsCustomer && !mobileError && totals.total > 0 && !saving;
 
   const save = async (print) => {
@@ -140,7 +138,7 @@ const POSPage = () => {
       if (printWin) printWin.location.href = `/shop/invoices/${invoice.id}/print?auto=1`;
       dispatch({ type: 'reset' });
       billKey.current = newId();
-      toast.success(`Bill ${invoice.invoiceNumber} saved — ${formatINR(invoice.total)}`);
+      toast.success(t('pos.billSavedToast', '', { number: invoice.invoiceNumber, amount: formatINR(invoice.total) }));
       loadStock();
     } catch (e) {
       printWin?.close();
@@ -150,17 +148,17 @@ const POSPage = () => {
     }
   };
 
-  if (!config && loading) return <PageLoader label="Opening the counter…" />;
+  if (!config && loading) return <PageLoader label={t('pos.opening')} />;
 
   return (
     <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_420px]">
       {/* Products */}
-      <section aria-label="Products" className="min-w-0">
+      <section aria-label={t('pos.products')} className="min-w-0">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-2xl font-semibold">Billing</h1>
+          <h1 className="text-2xl font-semibold">{t('pos.title')}</h1>
           <div className="flex min-w-0 flex-wrap items-center gap-2">
-            <Tabs tabs={CATEGORIES} value={category} onChange={setCategory} />
-            <SearchInput value={search} onChange={setSearch} placeholder="Search tomato, tamatar…" className="w-full sm:w-56" autoFocus />
+            <Tabs tabs={CATEGORIES.map((value) => ({ value, label: value ? t(`categoryType.${value}`) : t('common.all') }))} value={category} onChange={setCategory} />
+            <SearchInput value={search} onChange={setSearch} placeholder={t('pos.searchPlaceholder')} className="w-full sm:w-56" autoFocus />
           </div>
         </div>
 
@@ -175,14 +173,14 @@ const POSPage = () => {
                 <div className="min-w-0">
                   <p className="truncate text-lg font-semibold">{active.product.name}</p>
                   <p className="num text-sm text-soil-500">
-                    {formatINR(active.sellingPricePerKg)}/kg · {formatKg(remaining)} left
+                    {t('pos.priceLeft', '', { price: formatINR(active.sellingPricePerKg), qty: formatKg(remaining) })}
                   </p>
                 </div>
               </div>
               <div className="flex flex-1 flex-col gap-3">
                 <div className="flex items-center gap-2">
                   <label className="relative flex-1">
-                    <span className="sr-only">Weight</span>
+                    <span className="sr-only">{t('pos.weight')}</span>
                     <input
                       ref={weightInput}
                       className="input num h-14 text-right font-display text-3xl font-semibold"
@@ -193,7 +191,7 @@ const POSPage = () => {
                       onKeyDown={(e) => e.key === 'Enter' && addActive()}
                     />
                   </label>
-                  <div className="flex rounded-lg bg-soil-100 p-1" role="radiogroup" aria-label="Unit">
+                  <div className="flex rounded-lg bg-soil-100 p-1" role="radiogroup" aria-label={t('pos.unit')}>
                     {['kg', 'g'].map((u) => (
                       <button key={u} role="radio" aria-checked={unit === u} onClick={() => setUnit(u)} className={`h-11 w-12 rounded-md text-base font-semibold ${unit === u ? 'bg-white shadow-sm' : 'text-soil-500'}`}>
                         {u}
@@ -216,7 +214,7 @@ const POSPage = () => {
                   ))}
                   {scale.available && (
                     <Button size="sm" variant={scale.connected ? 'subtle' : 'secondary'} icon={Usb} onClick={scale.connected ? scale.disconnect : scale.connect}>
-                      {scale.connected ? `Scale: ${scale.reading ? formatKg(scale.reading.kg) : 'waiting'}` : 'Connect scale'}
+                      {scale.connected ? t('pos.scaleReading', '', { reading: scale.reading ? formatKg(scale.reading.kg) : t('pos.scaleWaiting') }) : t('pos.connectScale')}
                     </Button>
                   )}
                 </div>
@@ -224,23 +222,23 @@ const POSPage = () => {
               </div>
               <div className="flex gap-2 lg:flex-col">
                 <Button size="lg" onClick={addActive} disabled={weightKg <= 0} className="flex-1">
-                  Add {weightKg > 0 ? formatINR(Math.round(weightKg * Number(active.sellingPricePerKg) * 100) / 100) : ''}
+                  {t('pos.add', '', { amount: weightKg > 0 ? formatINR(Math.round(weightKg * Number(active.sellingPricePerKg) * 100) / 100) : '' })}
                 </Button>
                 <Button size="lg" variant="ghost" onClick={() => setActive(null)}>
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
               </div>
             </div>
           ) : (
             <p className="flex items-center gap-2 text-soil-500">
-              <Scale className="h-5 w-5" aria-hidden /> Tap a product, then enter its weight or use a quick weight.
+              <Scale className="h-5 w-5" aria-hidden /> {t('pos.hint')}
             </p>
           )}
         </div>
 
         {items.length === 0 && !loading ? (
           <div className="panel">
-            <EmptyState title="No products to sell" description="Add products and selling rates in the stock & rates master first." action={<Button to="/shop/stock">Open stock & rates master</Button>} />
+            <EmptyState title={t('pos.noProducts')} description={t('pos.noProductsBody')} action={<Button to="/shop/stock">{t('pos.openStock')}</Button>} />
           </div>
         ) : (
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5">
@@ -260,7 +258,7 @@ const POSPage = () => {
                     <span className="mt-2 font-semibold leading-tight">{it.product.name}</span>
                     {it.product.localName && <span className="text-xs text-soil-500">{it.product.localName}</span>}
                     <span className="num mt-auto pt-2 font-display text-lg font-semibold">{formatINR(it.sellingPricePerKg)}/kg</span>
-                    <span className={`num text-xs ${out ? 'text-red-600' : it.isLowStock ? 'text-turmeric-700' : 'text-soil-500'}`}>{out ? 'Out of stock' : `${formatKg(left)} in stock`}</span>
+                    <span className={`num text-xs ${out ? 'text-red-600' : it.isLowStock ? 'text-turmeric-700' : 'text-soil-500'}`}>{out ? t('pos.outOfStock') : t('pos.inStock', '', { qty: formatKg(left) })}</span>
                   </button>
                 </li>
               );
@@ -270,26 +268,26 @@ const POSPage = () => {
       </section>
 
       {/* Bill */}
-      <aside aria-label="Current bill" className="panel flex flex-col xl:sticky xl:top-20 xl:max-h-[calc(100vh-6rem)]">
+      <aside aria-label={t('pos.currentBill')} className="panel flex flex-col xl:sticky xl:top-20 xl:max-h-[calc(100vh-6rem)]">
         <div className="flex items-center justify-between border-b border-soil-200 px-4 py-3">
-          <h2 className="text-lg font-semibold">Current bill</h2>
+          <h2 className="text-lg font-semibold">{t('pos.currentBill')}</h2>
           {bill.lines.length > 0 && (
             <Button size="sm" variant="ghost" icon={RotateCcw} onClick={() => dispatch({ type: 'reset' })}>
-              Clear
+              {t('common.clear')}
             </Button>
           )}
         </div>
 
         {saved && (
           <div className="border-b border-soil-200 p-4">
-            <Alert tone="success" title={`Bill ${saved.invoiceNumber} saved`}>
-              <span className="num">{formatINR(saved.total)}</span> paid by {saved.paymentMode === 'CREDIT' ? 'udhar' : saved.paymentMode.toLowerCase()}.
+            <Alert tone="success" title={t('pos.billSaved', '', { number: saved.invoiceNumber })}>
+              <span className="num">{formatINR(saved.total)}</span> {t('pos.paidBy', '', { mode: modeLabel(saved.paymentMode) })}
               <div className="mt-2 flex gap-2">
                 <Button size="sm" icon={Printer} href={`/shop/invoices/${saved.id}/print?auto=1`}>
-                  Print memo
+                  {t('pos.printMemo')}
                 </Button>
                 <Button size="sm" variant="ghost" onClick={() => setSaved(null)}>
-                  Dismiss
+                  {t('common.dismiss')}
                 </Button>
               </div>
             </Alert>
@@ -298,7 +296,7 @@ const POSPage = () => {
 
         <div className="flex-1 overflow-y-auto">
           {bill.lines.length === 0 ? (
-            <p className="px-4 py-10 text-center text-soil-500">No items yet.</p>
+            <p className="px-4 py-10 text-center text-soil-500">{t('pos.noItems')}</p>
           ) : (
             <ul className="divide-y divide-soil-100">
               {bill.lines.map((l) => (
@@ -311,13 +309,13 @@ const POSPage = () => {
                     <p className="num text-xs text-soil-500">{formatINR(l.unitPrice)}/kg</p>
                   </div>
                   <div className="flex items-center gap-1">
-                    <button className="rounded-md p-1 hover:bg-soil-100" onClick={() => setLineQty(l, l.quantityKg - (l.quantityKg > 1 ? 0.5 : 0.25))} aria-label={`Less ${l.name}`}>
+                    <button className="rounded-md p-1 hover:bg-soil-100" onClick={() => setLineQty(l, l.quantityKg - (l.quantityKg > 1 ? 0.5 : 0.25))} aria-label={t('pos.less', '', { name: l.name })}>
                       <Minus className="h-4 w-4" />
                     </button>
                     <input
                       className="input num h-8 w-20 px-2 text-right text-sm"
                       inputMode="decimal"
-                      aria-label={`${l.name} kg`}
+                      aria-label={t('pos.lineKg', '', { name: l.name })}
                       value={l.quantityKg}
                       onChange={(e) => {
                         const v = e.target.value.replace(/[^\d.]/g, '');
@@ -325,12 +323,12 @@ const POSPage = () => {
                       }}
                       onBlur={(e) => setLineQty(l, Number(e.target.value || 0))}
                     />
-                    <button className="rounded-md p-1 hover:bg-soil-100" onClick={() => setLineQty(l, Number(l.quantityKg) + (l.quantityKg >= 1 ? 0.5 : 0.25))} aria-label={`More ${l.name}`}>
+                    <button className="rounded-md p-1 hover:bg-soil-100" onClick={() => setLineQty(l, Number(l.quantityKg) + (l.quantityKg >= 1 ? 0.5 : 0.25))} aria-label={t('pos.more', '', { name: l.name })}>
                       <Plus className="h-4 w-4" />
                     </button>
                   </div>
                   <p className="num w-20 text-right font-semibold">{formatINR(lineTotalPaise(l) / 100)}</p>
-                  <button className="rounded-md p-1 text-soil-400 hover:bg-red-50 hover:text-red-600" onClick={() => dispatch({ type: 'remove', id: l.inventoryItemId })} aria-label={`Remove ${l.name}`}>
+                  <button className="rounded-md p-1 text-soil-400 hover:bg-red-50 hover:text-red-600" onClick={() => dispatch({ type: 'remove', id: l.inventoryItemId })} aria-label={t('pos.remove', '', { name: l.name })}>
                     <Trash2 className="h-4 w-4" />
                   </button>
                 </li>
@@ -341,11 +339,11 @@ const POSPage = () => {
 
         <div className="space-y-3 border-t border-soil-200 p-4">
           <div className="grid grid-cols-2 gap-2">
-            <input className="input" placeholder="Customer name" value={bill.customerName} onChange={(e) => dispatch({ type: 'field', field: 'customerName', value: e.target.value })} aria-label="Customer name" />
-            <input className={`input ${mobileError ? 'input-error' : ''}`} placeholder="Mobile" inputMode="tel" value={bill.customerMobile} onChange={(e) => dispatch({ type: 'field', field: 'customerMobile', value: e.target.value })} aria-label="Customer mobile" />
+            <input className="input" placeholder={t('pos.customerName')} value={bill.customerName} onChange={(e) => dispatch({ type: 'field', field: 'customerName', value: e.target.value })} aria-label={t('pos.customerName')} />
+            <input className={`input ${mobileError ? 'input-error' : ''}`} placeholder={t('pos.mobile')} inputMode="tel" value={bill.customerMobile} onChange={(e) => dispatch({ type: 'field', field: 'customerMobile', value: e.target.value })} aria-label={t('pos.customerMobile')} />
           </div>
           {mobileError && <p className="text-xs text-red-600">{mobileError}</p>}
-          <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Payment mode">
+          <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label={t('pos.paymentMode')}>
             {MODES.map((m) => (
               <button
                 key={m.value}
@@ -354,44 +352,44 @@ const POSPage = () => {
                 onClick={() => dispatch({ type: 'field', field: 'paymentMode', value: m.value })}
                 className={`flex items-center justify-center gap-1.5 rounded-lg border py-2 text-sm font-semibold ${bill.paymentMode === m.value ? 'border-field-600 bg-field-50 text-field-800' : 'border-soil-200 text-soil-600 hover:bg-soil-100'}`}
               >
-                <m.icon className="h-4 w-4" aria-hidden /> {m.label}
+                <m.icon className="h-4 w-4" aria-hidden /> {m.value === 'UPI' ? t('pos.upiQr') : modeLabel(m.value)}
               </button>
             ))}
           </div>
           {bill.paymentMode === 'UPI' && (
             <div className="flex items-center gap-2">
-              <input className="input" placeholder="UPI reference (optional)" value={bill.paymentReference} onChange={(e) => dispatch({ type: 'field', field: 'paymentReference', value: e.target.value })} aria-label="UPI reference" />
-              {config?.shop?.upiId && <span className="whitespace-nowrap text-xs text-soil-500">Pay to {config.shop.upiId}</span>}
+              <input className="input" placeholder={t('pos.upiRefOptional')} value={bill.paymentReference} onChange={(e) => dispatch({ type: 'field', field: 'paymentReference', value: e.target.value })} aria-label={t('pos.upiRef')} />
+              {config?.shop?.upiId && <span className="whitespace-nowrap text-xs text-soil-500">{t('pos.payTo', '', { upi: config.shop.upiId })}</span>}
             </div>
           )}
           {bill.paymentMode === 'CREDIT' && (
             <div>
               <label className="flex items-center justify-between gap-2 text-sm">
-                <span className="text-soil-600">Paid now</span>
+                <span className="text-soil-600">{t('pos.paidNow')}</span>
                 <input className="input num h-9 w-32 text-right" inputMode="decimal" placeholder="0" value={bill.amountPaid} onChange={(e) => dispatch({ type: 'field', field: 'amountPaid', value: e.target.value.replace(/[^\d.]/g, '') })} />
               </label>
-              {creditNeedsCustomer && <p className="mt-1 text-xs text-turmeric-700">Udhar needs the customer’s name and mobile number.</p>}
+              {creditNeedsCustomer && <p className="mt-1 text-xs text-turmeric-700">{t('pos.udharNeeds')}</p>}
             </div>
           )}
           <dl className="num space-y-1 text-sm">
             <div className="flex justify-between">
-              <dt className="text-soil-500">Subtotal ({totals.items} items)</dt>
+              <dt className="text-soil-500">{t('pos.subtotal', '', { n: totals.items })}</dt>
               <dd>{formatINR(totals.subtotal)}</dd>
             </div>
             <div className="flex items-center justify-between">
-              <dt className="text-soil-500">Discount</dt>
+              <dt className="text-soil-500">{t('pos.discount')}</dt>
               <dd>
-                <input className={`input h-8 w-24 px-2 text-right ${discountError ? 'input-error' : ''}`} inputMode="decimal" placeholder="0" value={bill.discount} onChange={(e) => dispatch({ type: 'field', field: 'discount', value: e.target.value.replace(/[^\d.]/g, '') })} aria-label="Discount in rupees" />
+                <input className={`input h-8 w-24 px-2 text-right ${discountError ? 'input-error' : ''}`} inputMode="decimal" placeholder="0" value={bill.discount} onChange={(e) => dispatch({ type: 'field', field: 'discount', value: e.target.value.replace(/[^\d.]/g, '') })} aria-label={t('pos.discountRupees')} />
               </dd>
             </div>
             {discountError && <p className="text-right text-xs text-red-600">{discountError}</p>}
             <div className="flex items-baseline justify-between border-t border-soil-200 pt-2">
-              <dt className="font-semibold">Total</dt>
+              <dt className="font-semibold">{t('pos.total')}</dt>
               <dd className="font-display text-3xl font-bold">{formatINR(totals.total)}</dd>
             </div>
             {bill.paymentMode === 'CREDIT' && (
               <div className="flex justify-between text-turmeric-700">
-                <dt>To khata</dt>
+                <dt>{t('pos.toKhata')}</dt>
                 <dd>{formatINR(Math.max(0, totals.total - Number(bill.amountPaid || 0)))}</dd>
               </div>
             )}
@@ -399,14 +397,18 @@ const POSPage = () => {
           {error && <Alert tone="error">{error}</Alert>}
           <div className="grid grid-cols-2 gap-2">
             <Button size="lg" variant="secondary" onClick={() => save(false)} disabled={!canSave} loading={saving}>
-              Save bill
+              {t('pos.saveBill')}
             </Button>
             <Button size="lg" icon={saving ? undefined : CheckCircle2} onClick={() => save(true)} disabled={!canSave} loading={saving}>
-              Save & print
+              {t('pos.savePrint')}
             </Button>
           </div>
           <p className="text-center text-xs text-soil-500">
-            Prices come from your <Link to="/shop/stock" className="underline">rate master</Link> and are checked again when saving.
+            {t('pos.pricesBefore')}
+            <Link to="/shop/stock" className="underline">
+              {t('pos.rateMaster')}
+            </Link>
+            {t('pos.pricesAfter')}
           </p>
         </div>
       </aside>

@@ -17,8 +17,10 @@ import { VEHICLE_TYPES } from '../../constants/status';
 import { formatKg, formatDate, humanize } from '../../utils/format';
 import { rules } from '../../validators';
 import { applyFieldErrors } from '../../utils/errors';
+import { useI18n } from '../../i18n';
 
 export const VehicleForm = ({ vehicle, onClose, onSaved }) => {
+  const { t } = useI18n();
   const toast = useToast();
   const { user } = useAuth();
   const d = (v) => (v ? String(v).slice(0, 10) : '');
@@ -49,7 +51,7 @@ export const VehicleForm = ({ vehicle, onClose, onSaved }) => {
     };
     try {
       const saved = vehicle ? await vehiclesApi.update(vehicle.id, body) : await vehiclesApi.create(body);
-      toast.success(vehicle ? (saved.verificationStatus === 'PENDING' && vehicle.verificationStatus === 'VERIFIED' ? 'Saved. Changed details need re-verification.' : 'Vehicle updated') : 'Vehicle registered. An admin will verify it.');
+      toast.success(t(vehicle ? (saved.verificationStatus === 'PENDING' && vehicle.verificationStatus === 'VERIFIED' ? 'vehicles.needsReverify' : 'vehicles.updated') : 'vehicles.registered'));
       onSaved(saved);
       onClose();
     } catch (e) {
@@ -60,49 +62,50 @@ export const VehicleForm = ({ vehicle, onClose, onSaved }) => {
     <Modal
       open
       onClose={onClose}
-      title={vehicle ? `Edit ${vehicle.registrationNumber}` : 'Register a vehicle'}
+      title={vehicle ? t('stock.editTitle', '', { name: vehicle.registrationNumber }) : t('vehicles.registerTitle')}
       size="lg"
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button onClick={handleSubmit(submit)} loading={isSubmitting}>
-            Save
+            {t('common.save')}
           </Button>
         </>
       }
     >
       <form className="grid gap-4 sm:grid-cols-2" onSubmit={handleSubmit(submit)} noValidate>
-        <Input label="Registration number" required placeholder="KA 05 AB 1234" error={errors.registrationNumber?.message} {...register('registrationNumber', { required: 'Registration number is required' })} />
-        <Select label="Vehicle type" options={VEHICLE_TYPES} {...register('type')} />
-        <Input label="Make" placeholder="e.g. Tata" {...register('make')} />
-        <Input label="Model" placeholder="e.g. Ace Gold" {...register('model')} />
-        <Input label="Capacity" required suffix="kg" inputMode="decimal" error={errors.capacityKg?.message} {...register('capacityKg', rules.positive('Capacity'))} />
-        <Input label="Owner name" required error={errors.ownerName?.message} {...register('ownerName', rules.name)} />
-        <Input label="Owner mobile" inputMode="tel" error={errors.ownerMobile?.message} {...register('ownerMobile', rules.optionalMobile)} />
-        <Input label="Insurance policy no." {...register('insurancePolicyNo')} />
-        <Input label="Insurance valid until" type="date" {...register('insuranceExpiry')} />
-        <Input label="Fitness certificate valid until" type="date" hint="Where applicable" {...register('fitnessExpiry')} />
-        <Input label="Permit number" hint="Where applicable" {...register('permitNumber')} />
-        <Input label="Permit valid until" type="date" {...register('permitExpiry')} />
+        <Input label={t('vehicles.regNumber')} required placeholder="KA 05 AB 1234" error={errors.registrationNumber?.message} {...register('registrationNumber', rules.required(t('vehicles.regNumber')))} />
+        <Select label={t('vehicles.vehicleType')} options={VEHICLE_TYPES} {...register('type')} />
+        <Input label={t('vehicles.make')} placeholder={t('vehicles.makePlaceholder')} {...register('make')} />
+        <Input label={t('vehicles.model')} placeholder={t('vehicles.modelPlaceholder')} {...register('model')} />
+        <Input label={t('vehicles.capacity')} required suffix="kg" inputMode="decimal" error={errors.capacityKg?.message} {...register('capacityKg', rules.positive(t('vehicles.capacity')))} />
+        <Input label={t('vehicles.ownerName')} required error={errors.ownerName?.message} {...register('ownerName', rules.name)} />
+        <Input label={t('vehicles.ownerMobile')} inputMode="tel" error={errors.ownerMobile?.message} {...register('ownerMobile', rules.optionalMobile)} />
+        <Input label={t('vehicles.policyNo')} {...register('insurancePolicyNo')} />
+        <Input label={t('vehicles.insuranceUntil')} type="date" {...register('insuranceExpiry')} />
+        <Input label={t('vehicles.fitnessUntil')} type="date" hint={t('vehicles.whereApplicable')} {...register('fitnessExpiry')} />
+        <Input label={t('vehicles.permitNumber')} hint={t('vehicles.whereApplicable')} {...register('permitNumber')} />
+        <Input label={t('vehicles.permitUntil')} type="date" {...register('permitExpiry')} />
       </form>
     </Modal>
   );
 };
 
 const VehiclesPage = ({ documentsFocus = false }) => {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const [adding, setAdding] = useState(false);
   const list = useList((p) => vehiclesApi.list(p));
   return (
     <>
       <PageHeader
-        title={documentsFocus ? 'Vehicle documents' : 'Vehicle details'}
-        description={documentsFocus ? 'Open a vehicle to upload its RC, insurance, fitness certificate and permit.' : 'Vehicles must be verified by an admin before they can take trips.'}
+        title={t(documentsFocus ? 'vehicles.docsTitle' : 'dnav.tabs.vehicleDetails')}
+        description={t(documentsFocus ? 'vehicles.docsIntro' : 'vehicles.intro')}
         actions={
           <Button icon={Plus} onClick={() => setAdding(true)}>
-            Register vehicle
+            {t('vehicles.register')}
           </Button>
         }
       />
@@ -110,15 +113,15 @@ const VehiclesPage = ({ documentsFocus = false }) => {
         list={list}
         onRowClick={(v) => navigate(`/driver/vehicles/${v.id}`)}
         columns={[
-          { key: 'registrationNumber', header: 'Registration', render: (v) => <span className="num whitespace-nowrap font-semibold">{v.registrationNumber}</span> },
-          { key: 'type', header: 'Type', render: (v) => `${humanize(v.type)}${v.make ? ` — ${v.make} ${v.model || ''}` : ''}` },
-          { key: 'capacityKg', header: 'Capacity', align: 'right', render: (v) => formatKg(v.capacityKg) },
-          { key: 'docs', header: 'Documents', align: 'right', render: (v) => v.documents.length },
-          { key: 'insuranceExpiry', header: 'Insurance until', render: (v) => <span className={v.insuranceExpiry && new Date(v.insuranceExpiry) < new Date() ? 'font-semibold text-red-600' : ''}>{formatDate(v.insuranceExpiry)}</span> },
-          { key: 'verificationStatus', header: 'Verification', render: (v) => <StatusBadge status={v.verificationStatus} /> },
-          { key: 'trips', header: 'Trips', align: 'right', render: (v) => v._count.trips },
+          { key: 'registrationNumber', header: t('vehicles.registration'), render: (v) => <span className="num whitespace-nowrap font-semibold">{v.registrationNumber}</span> },
+          { key: 'type', header: t('common.type'), render: (v) => `${humanize(v.type)}${v.make ? ` — ${v.make} ${v.model || ''}` : ''}` },
+          { key: 'capacityKg', header: t('vehicles.capacity'), align: 'right', render: (v) => formatKg(v.capacityKg) },
+          { key: 'docs', header: t('dnav.tabs.documents'), align: 'right', render: (v) => v.documents.length },
+          { key: 'insuranceExpiry', header: t('vehicles.insuranceUntilShort'), render: (v) => <span className={v.insuranceExpiry && new Date(v.insuranceExpiry) < new Date() ? 'font-semibold text-red-600' : ''}>{formatDate(v.insuranceExpiry)}</span> },
+          { key: 'verificationStatus', header: t('vehicles.verification'), render: (v) => <StatusBadge status={v.verificationStatus} /> },
+          { key: 'trips', header: t('dnav.tabs.trips'), align: 'right', render: (v) => v._count.trips },
         ]}
-        empty={<EmptyState icon={Car} title="No vehicles yet" description="Register your tractor, tempo or truck to start taking loads." action={<Button onClick={() => setAdding(true)}>Register vehicle</Button>} />}
+        empty={<EmptyState icon={Car} title={t('vehicles.emptyTitle')} description={t('vehicles.emptyBody')} action={<Button onClick={() => setAdding(true)}>{t('vehicles.register')}</Button>} />}
       />
       {adding && <VehicleForm onClose={() => setAdding(false)} onSaved={(v) => navigate(`/driver/vehicles/${v.id}`)} />}
     </>

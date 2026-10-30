@@ -18,9 +18,11 @@ import { useToast } from '../../context/ToastContext';
 import { rules } from '../../validators';
 import { applyFieldErrors } from '../../utils/errors';
 import { toDateTimeInput, formatKg } from '../../utils/format';
+import { useI18n } from '../../i18n';
 
 /** Create or edit a harvest listing, including photos and the farm's GPS position. */
 const ListingFormPage = () => {
+  const { t } = useI18n();
   const { id } = useParams();
   const editing = !!id;
   const navigate = useNavigate();
@@ -96,17 +98,17 @@ const ListingFormPage = () => {
       if (editing) {
         const updated = await farmerApi.update(id, body);
         setListing(updated);
-        toast.success('Listing updated');
+        toast.success(t('listingForm.updated'));
       } else {
         const created = await farmerApi.create({ ...body, productId: v.productId, publish });
         if (pendingFiles.length) {
           try {
             await uploadImages(created.id, pendingFiles.map((p) => p.file));
           } catch (e) {
-            toast.error(`Listing saved, but photos failed: ${e.response?.data?.error?.message || e.message}`);
+            toast.error(t('listingForm.photosFailed', '', { error: e.response?.data?.error?.message || e.message }));
           }
         }
-        toast.success(publish ? 'Harvest published. Buyers can order it now.' : 'Saved as draft');
+        toast.success(t(publish ? 'listingForm.published' : 'listingForm.savedDraft'));
         navigate('/farmer/listings');
       }
     } catch (e) {
@@ -118,7 +120,7 @@ const ListingFormPage = () => {
     if (editing) {
       try {
         setListing(await uploadImages(id, files));
-        toast.success('Photos added');
+        toast.success(t('listingForm.photosAdded'));
       } catch (e) {
         toast.error(e);
       }
@@ -141,55 +143,63 @@ const ListingFormPage = () => {
   return (
     <>
       <PageHeader
-        back={{ to: '/farmer/listings', label: 'Harvest listings' }}
-        title={editing ? `Edit ${listing.cropName}` : 'Post new harvest'}
-        description={editing ? <span className="inline-flex items-center gap-2">Status <StatusBadge status={listing.status} /></span> : 'Fill in what you have to sell. You can save a draft and publish later.'}
+        back={{ to: '/farmer/listings', label: t('listings.title') }}
+        title={editing ? t('stock.editTitle', '', { name: listing.cropName }) : t('dnav.tabs.postNewHarvest')}
+        description={
+          editing ? (
+            <span className="inline-flex items-center gap-2">
+              {t('common.status')} <StatusBadge status={listing.status} />
+            </span>
+          ) : (
+            t('listingForm.intro')
+          )
+        }
       />
-      {locked && <Alert tone="info" className="mb-6">This listing is completed and can no longer be edited.</Alert>}
+      {locked && <Alert tone="info" className="mb-6">{t('listingForm.locked')}</Alert>}
       <form noValidate className="grid gap-6 xl:grid-cols-[1.4fr_1fr]" onSubmit={handleSubmit((v) => submit(v, false))}>
         <div className="space-y-6">
-          <Section title="Crop">
+          <Section title={t('crops.crop')}>
             <div className="grid gap-4 sm:grid-cols-2">
               {editing ? (
-                <Input label="Crop" value={`${listing.product.emoji || ''} ${listing.cropName}`} disabled hint="The crop cannot be changed after posting" />
+                <Input label={t('crops.crop')} value={`${listing.product.emoji || ''} ${listing.cropName}`} disabled hint={t('listingForm.cropFixed')} />
               ) : (
-                <ProductSelect label="Crop" required error={errors.productId?.message} {...register('productId', rules.required('Crop'))} />
+                <ProductSelect label={t('crops.crop')} required error={errors.productId?.message} {...register('productId', rules.required(t('crops.crop')))} />
               )}
-              <Input label="Harvest date and time" type="datetime-local" required error={errors.harvestAt?.message} disabled={locked} {...register('harvestAt', rules.required('Harvest date'))} />
-              <Input label="Variety" placeholder="e.g. Arka Rakshak" disabled={locked} {...register('variety')} />
-              <Input label="Grade" placeholder="e.g. A, Premium" disabled={locked} {...register('grade')} />
-              <Textarea className="sm:col-span-2" label="Description" rows={3} disabled={locked} {...register('description')} />
-              <Input className="sm:col-span-2" label="Freshness notes" placeholder="e.g. Picked this morning, kept in shade" disabled={locked} {...register('freshnessNotes')} />
+              <Input label={t('listingForm.harvestDateTime')} type="datetime-local" required error={errors.harvestAt?.message} disabled={locked} {...register('harvestAt', rules.required(t('listingForm.harvestDate')))} />
+              <Input label={t('listingForm.variety')} placeholder={t('listingForm.varietyPlaceholder')} disabled={locked} {...register('variety')} />
+              <Input label={t('listingForm.grade')} placeholder={t('listingForm.gradePlaceholder')} disabled={locked} {...register('grade')} />
+              <Textarea className="sm:col-span-2" label={t('listingForm.description')} rows={3} disabled={locked} {...register('description')} />
+              <Input className="sm:col-span-2" label={t('listingForm.freshness')} placeholder={t('listingForm.freshnessPlaceholder')} disabled={locked} {...register('freshnessNotes')} />
             </div>
           </Section>
-          <Section title="Quantity and price">
+          <Section title={t('listingForm.qtyPrice')}>
             <div className="grid gap-4 sm:grid-cols-3">
               <Input
-                label="Total quantity"
+                label={t('listingForm.totalQty')}
                 required
                 suffix="kg"
                 inputMode="decimal"
                 disabled={locked}
-                hint={editing && ordered > 0 ? `${formatKg(ordered, { grams: false })} already ordered` : undefined}
+                hint={editing && ordered > 0 ? t('listingForm.alreadyOrdered', '', { qty: formatKg(ordered, { grams: false }) }) : undefined}
                 error={errors.totalQuantityKg?.message}
-                {...register('totalQuantityKg', { ...rules.positive('Quantity'), validate: (v) => (rules.positive('Quantity').validate(v) === true ? Number(v) >= ordered || `At least ${ordered} kg (already ordered)` : rules.positive('Quantity').validate(v)) })}
+                {...register('totalQuantityKg', { ...rules.positive(t('common.quantity')), validate: (v) => (rules.positive(t('common.quantity')).validate(v) === true ? Number(v) >= ordered || t('listingForm.atLeastOrdered', '', { n: ordered }) : rules.positive(t('common.quantity')).validate(v)) })}
               />
-              <Input label="Price" required suffix="₹/kg" inputMode="decimal" disabled={locked} error={errors.pricePerKg?.message} {...register('pricePerKg', rules.money('Price'))} />
+              <Input label={t('common.price')} required suffix="₹/kg" inputMode="decimal" disabled={locked} error={errors.pricePerKg?.message} {...register('pricePerKg', rules.money(t('common.price')))} />
               <Input
-                label="Minimum order"
+                label={t('listingForm.minOrder')}
                 required
                 suffix="kg"
                 inputMode="decimal"
                 disabled={locked}
                 error={errors.minOrderKg?.message}
-                {...register('minOrderKg', { ...rules.positive('Minimum order'), validate: (v) => (rules.positive('Minimum order').validate(v) === true ? !total || Number(v) <= total || 'Cannot exceed the total' : rules.positive('Minimum order').validate(v)) })}
+                {...register('minOrderKg', { ...rules.positive(t('listingForm.minOrder')), validate: (v) => (rules.positive(t('listingForm.minOrder')).validate(v) === true ? !total || Number(v) <= total || t('listingForm.notOverTotal') : rules.positive(t('listingForm.minOrder')).validate(v)) })}
               />
             </div>
-            {editing && <p className="mt-3 text-sm text-soil-500">Changing the price affects new orders only. Existing orders keep the price they were placed at.</p>}
+            {editing && <p className="mt-3 text-sm text-soil-500">{t('listingForm.priceNote')}</p>}
           </Section>
         </div>
         <div className="space-y-6">
-          <Section title="Photos" description="Up to 5. Clear photos get more orders.">
+          <Section title={t('listingForm.photos')} description={t('listingForm.photosIntro')}>
             <div className="mb-3 grid grid-cols-3 gap-2">
               {(editing ? listing.images : pendingFiles.map((p) => p.url)).map((src) => (
                 <div key={src} className="relative">
@@ -199,7 +209,7 @@ const ListingFormPage = () => {
                       type="button"
                       onClick={() => (editing ? removePhoto(src) : setPendingFiles((f) => f.filter((x) => x.url !== src)))}
                       className="absolute right-1 top-1 rounded-full bg-white/90 p-1 shadow"
-                      aria-label="Remove photo"
+                      aria-label={t('listingForm.removePhoto')}
                     >
                       <X className="h-3.5 w-3.5" />
                     </button>
@@ -207,12 +217,12 @@ const ListingFormPage = () => {
                 </div>
               ))}
             </div>
-            {!locked && (editing ? listing.images.length : pendingFiles.length) < 5 && <FileUpload multiple onFiles={onPhotos} disabled={uploading} label={uploading ? 'Uploading…' : 'Add photos'} />}
+            {!locked && (editing ? listing.images.length : pendingFiles.length) < 5 && <FileUpload multiple onFiles={onPhotos} disabled={uploading} label={uploading ? t('common.uploading') : t('listingForm.addPhotos')} />}
           </Section>
-          <Section title="Farm location">
+          <Section title={t('listingForm.farmLocation')}>
             <div className="mb-4 grid grid-cols-2 gap-3">
-              <Input label="Village" disabled={locked} {...register('village')} />
-              <Input label="District" disabled={locked} {...register('district')} />
+              <Input label={t('common.village')} disabled={locked} {...register('village')} />
+              <Input label={t('common.district')} disabled={locked} {...register('district')} />
             </div>
             <LocationPicker value={coords} onChange={locked ? () => {} : setCoords} height={220} />
           </Section>
@@ -220,15 +230,15 @@ const ListingFormPage = () => {
             <div className="flex flex-wrap justify-end gap-2">
               {editing ? (
                 <Button type="submit" loading={isSubmitting}>
-                  Save changes
+                  {t('common.saveChanges')}
                 </Button>
               ) : (
                 <>
                   <Button type="submit" variant="secondary" loading={isSubmitting}>
-                    Save draft
+                    {t('listingForm.saveDraft')}
                   </Button>
                   <Button onClick={handleSubmit((v) => submit(v, true))} loading={isSubmitting}>
-                    Publish harvest
+                    {t('listingForm.publishHarvest')}
                   </Button>
                 </>
               )}

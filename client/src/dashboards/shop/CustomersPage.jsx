@@ -15,8 +15,10 @@ import { useToast } from '../../context/ToastContext';
 import { formatINR, formatDate } from '../../utils/format';
 import { rules } from '../../validators';
 import { applyFieldErrors } from '../../utils/errors';
+import { useI18n } from '../../i18n';
 
 export const CustomerForm = ({ customer, onClose, onSaved }) => {
+  const { t } = useI18n();
   const toast = useToast();
   const {
     register,
@@ -29,7 +31,7 @@ export const CustomerForm = ({ customer, onClose, onSaved }) => {
     try {
       const body = { name: v.name, mobile: v.mobile, address: v.address || null, creditLimit: v.creditLimit, notes: v.notes || null };
       const saved = customer ? await customersApi.update(customer.id, body) : await customersApi.create(body);
-      toast.success(customer ? 'Customer updated' : 'Customer added');
+      toast.success(t(customer ? 'customers.updated' : 'customers.added'));
       onSaved(saved);
       onClose();
     } catch (e) {
@@ -41,31 +43,32 @@ export const CustomerForm = ({ customer, onClose, onSaved }) => {
     <Modal
       open
       onClose={onClose}
-      title={customer ? 'Edit customer' : 'Add customer'}
+      title={t(customer ? 'customers.edit' : 'customers.add')}
       size="sm"
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button onClick={handleSubmit(submit)} loading={isSubmitting}>
-            Save
+            {t('common.save')}
           </Button>
         </>
       }
     >
       <form className="space-y-4" onSubmit={handleSubmit(submit)} noValidate>
-        <Input label="Name" required error={errors.name?.message} {...register('name', rules.name)} />
-        <Input label="Mobile" required inputMode="tel" error={errors.mobile?.message} {...register('mobile', rules.mobile)} />
-        <Input label="Udhar limit" suffix="₹" inputMode="decimal" hint="Credit bills beyond this are refused" error={errors.creditLimit?.message} {...register('creditLimit', rules.money('Limit', { allowZero: true }))} />
-        <Textarea label="Address" rows={2} {...register('address')} />
-        <Textarea label="Notes" rows={2} {...register('notes')} />
+        <Input label={t('common.name')} required error={errors.name?.message} {...register('name', rules.name)} />
+        <Input label={t('common.mobile')} required inputMode="tel" error={errors.mobile?.message} {...register('mobile', rules.mobile)} />
+        <Input label={t('customers.udharLimit')} suffix="₹" inputMode="decimal" hint={t('customers.limitHint')} error={errors.creditLimit?.message} {...register('creditLimit', rules.money(t('customers.limit'), { allowZero: true }))} />
+        <Textarea label={t('common.address')} rows={2} {...register('address')} />
+        <Textarea label={t('common.notes')} rows={2} {...register('notes')} />
       </form>
     </Modal>
   );
 };
 
 const CustomersPage = () => {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const [adding, setAdding] = useState(false);
   const list = useList((p) => customersApi.list(p), { sortBy: 'name', sortOrder: 'asc' });
@@ -73,11 +76,11 @@ const CustomersPage = () => {
   return (
     <>
       <PageHeader
-        title="Customers"
-        description="Regular customers and their khata. Customers are also added automatically when you enter a mobile number on a bill."
+        title={t('customers.title')}
+        description={t('customers.intro')}
         actions={
           <Button icon={Plus} onClick={() => setAdding(true)}>
-            Add customer
+            {t('customers.add')}
           </Button>
         }
       />
@@ -85,15 +88,15 @@ const CustomersPage = () => {
         list={list}
         onRowClick={(c) => navigate(`/shop/customers/${c.id}`)}
         columns={[
-          { key: 'name', header: 'Name', sortable: true, render: (c) => <span className="font-medium">{c.name}</span> },
-          { key: 'mobile', header: 'Mobile', render: (c) => <span className="num">{c.mobile}</span> },
-          { key: 'bills', header: 'Bills', align: 'right', render: (c) => c._count.invoices },
-          { key: 'creditBalance', header: 'Udhar due', align: 'right', sortable: true, render: (c) => <span className={Number(c.creditBalance) > 0 ? 'font-semibold text-chilli-600' : ''}>{formatINR(c.creditBalance)}</span> },
-          { key: 'creditLimit', header: 'Limit', align: 'right', render: (c) => formatINR(c.creditLimit, { whole: true }) },
-          { key: 'createdAt', header: 'Since', sortable: true, render: (c) => formatDate(c.createdAt) },
+          { key: 'name', header: t('common.name'), sortable: true, render: (c) => <span className="font-medium">{c.name}</span> },
+          { key: 'mobile', header: t('common.mobile'), render: (c) => <span className="num">{c.mobile}</span> },
+          { key: 'bills', header: t('customers.bills'), align: 'right', render: (c) => c._count.invoices },
+          { key: 'creditBalance', header: t('customers.udharDue'), align: 'right', sortable: true, render: (c) => <span className={Number(c.creditBalance) > 0 ? 'font-semibold text-chilli-600' : ''}>{formatINR(c.creditBalance)}</span> },
+          { key: 'creditLimit', header: t('customers.limit'), align: 'right', render: (c) => formatINR(c.creditLimit, { whole: true }) },
+          { key: 'createdAt', header: t('customers.since'), sortable: true, render: (c) => formatDate(c.createdAt) },
         ]}
-        toolbar={<SearchInput value={list.search} onChange={list.setSearch} placeholder="Name or mobile" className="sm:w-72" />}
-        empty={<EmptyState icon={BookUser} title="No customers yet" description="Add a customer, or enter a mobile number on a bill." />}
+        toolbar={<SearchInput value={list.search} onChange={list.setSearch} placeholder={t('common.nameOrMobile')} className="sm:w-72" />}
+        empty={<EmptyState icon={BookUser} title={t('customers.emptyTitle')} description={t('customers.emptyBody')} />}
       />
       {adding && <CustomerForm onClose={() => setAdding(false)} onSaved={list.reload} />}
     </>

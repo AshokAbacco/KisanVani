@@ -8,18 +8,23 @@ import useAsync from '../../hooks/useAsync';
 import { settingsApi } from '../../services';
 import { useToast } from '../../context/ToastContext';
 import { formatDateTime } from '../../utils/format';
+import { useI18n } from '../../i18n';
 
 const ROLES_EDITABLE = ['SHOPKEEPER', 'FARMER', 'MANDI_OWNER', 'DRIVER'];
+/* Group titles come from platformSettings.groups.<id>. */
 const GROUPS = [
-  ['Platform', ['platform.name', 'platform.supportEmail', 'platform.supportPhone']],
-  ['Accounts', ['auth.approvalRequiredRoles']],
-  ['Billing', ['billing.maxDiscountPercent', 'billing.weighingScale']],
-  ['Orders', ['orders.platformFeePercent']],
-  ['Tracking and maps', ['tracking.locationIntervalSec', 'tracking.staleAfterSec', 'map.tileUrl', 'map.attribution']],
+  ['platform', ['platform.name', 'platform.supportEmail', 'platform.supportPhone']],
+  ['accounts', ['auth.approvalRequiredRoles']],
+  ['billing', ['billing.maxDiscountPercent', 'billing.weighingScale']],
+  ['orders', ['orders.platformFeePercent']],
+  ['tracking', ['tracking.locationIntervalSec', 'tracking.staleAfterSec', 'map.tileUrl', 'map.attribution']],
 ];
+/** Setting keys contain dots, which the translator reads as nesting — so look them up with underscores. */
+const descKey = (key) => `platformSettings.desc.${key.replace(/\./g, '_')}`;
 
 /** Renders an editor suited to each setting's value type. */
 const SettingEditor = ({ setting, onSave }) => {
+  const { t } = useI18n();
   const [value, setValue] = useState(setting.value);
   const [busy, setBusy] = useState(false);
   useEffect(() => setValue(setting.value), [setting.value]);
@@ -32,7 +37,7 @@ const SettingEditor = ({ setting, onSave }) => {
         {ROLES_EDITABLE.map((r) => (
           <label key={r} className="flex items-center gap-2 text-sm">
             <input type="checkbox" className="h-4 w-4 accent-slateblue-600" checked={value.includes(r)} onChange={(e) => setValue(e.target.checked ? [...value, r] : value.filter((x) => x !== r))} />
-            {r.replace('_', ' ').toLowerCase()}
+            {t(`roleNames.${r}`)}
           </label>
         ))}
       </div>
@@ -41,10 +46,10 @@ const SettingEditor = ({ setting, onSave }) => {
     control = (
       <div className="flex flex-wrap items-center gap-4 text-sm">
         <label className="flex items-center gap-2">
-          <input type="checkbox" className="h-4 w-4" checked={value.enabled} onChange={(e) => setValue({ ...value, enabled: e.target.checked })} /> Allow shops to connect a serial weighing scale
+          <input type="checkbox" className="h-4 w-4" checked={value.enabled} onChange={(e) => setValue({ ...value, enabled: e.target.checked })} /> {t('platformSettings.allowScale')}
         </label>
         <label className="flex items-center gap-2">
-          Baud rate
+          {t('platformSettings.baudRate')}
           <select className="input h-9 w-28 py-1" value={value.baudRate} onChange={(e) => setValue({ ...value, baudRate: Number(e.target.value) })}>
             {[1200, 2400, 4800, 9600, 19200, 38400].map((b) => (
               <option key={b} value={b}>
@@ -64,10 +69,10 @@ const SettingEditor = ({ setting, onSave }) => {
   return (
     <div className="grid gap-2 py-4 md:grid-cols-[1fr_1.4fr_auto] md:items-center">
       <div>
-        <p className="font-medium">{setting.description}</p>
+        <p className="font-medium">{t(descKey(setting.key), setting.description)}</p>
         <p className="text-xs text-soil-400">
           {setting.key}
-          {setting.updatedBy ? ` — changed by ${setting.updatedBy} ${formatDateTime(setting.updatedAt)}` : ''}
+          {setting.updatedBy ? ` — ${t('platformSettings.changedBy', '', { name: setting.updatedBy, at: formatDateTime(setting.updatedAt) })}` : ''}
         </p>
       </div>
       <div>{control}</div>
@@ -81,19 +86,20 @@ const SettingEditor = ({ setting, onSave }) => {
           setBusy(false);
         }}
       >
-        Save
+        {t('common.save')}
       </Button>
     </div>
   );
 };
 
 const PlatformSettingsPage = () => {
+  const { t } = useI18n();
   const toast = useToast();
   const { data, loading, error, reload } = useAsync(() => settingsApi.list(), []);
   const save = async (key, value) => {
     try {
       await settingsApi.update(key, value);
-      toast.success('Setting saved.');
+      toast.success(t('platformSettings.saved'));
       reload();
     } catch (e) {
       toast.error(e);
@@ -104,10 +110,10 @@ const PlatformSettingsPage = () => {
   const byKey = Object.fromEntries(data.map((s) => [s.key, s]));
   return (
     <>
-      <PageHeader title="Platform settings" description="Changes apply across KisanVani within 30 seconds." />
+      <PageHeader title={t('dnav.tabs.platformSettings')} description={t('platformSettings.intro')} />
       <div className="space-y-6">
-        {GROUPS.map(([title, keys]) => (
-          <Section key={title} title={title} bodyClass="divide-y divide-soil-100 px-5">
+        {GROUPS.map(([group, keys]) => (
+          <Section key={group} title={t(`platformSettings.groups.${group}`)} bodyClass="divide-y divide-soil-100 px-5">
             {keys.filter((k) => byKey[k]).map((k) => (
               <SettingEditor key={k} setting={byKey[k]} onSave={save} />
             ))}

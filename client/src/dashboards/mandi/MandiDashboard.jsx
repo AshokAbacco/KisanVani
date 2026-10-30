@@ -12,8 +12,10 @@ import { mandiApi } from '../../services';
 import { useAuth } from '../../context/AuthContext';
 import { formatINR, formatKg, timeAgo } from '../../utils/format';
 import { ORDER_TYPE_LABELS } from '../../constants/status';
+import { useI18n } from '../../i18n';
 
 const MandiDashboard = () => {
+  const { t } = useI18n();
   const { user } = useAuth();
   const { data, loading, error, reload } = useAsync(() => mandiApi.dashboard(), []);
   const c = data?.cards;
@@ -22,15 +24,15 @@ const MandiDashboard = () => {
   return (
     <>
       <PageHeader
-        title={user.mandiProfile?.mandiName || 'Market Mandi'}
-        description={user.mandiProfile?.marketYardName || 'Wholesale trading desk'}
+        title={user.mandiProfile?.mandiName || t('roles.MANDI_OWNER')}
+        description={user.mandiProfile?.marketYardName || t('mandiDash.desk')}
         actions={
           <>
             <Button to="/mandi/procurement" variant="secondary" icon={Sprout}>
-              Buy from farmers
+              {t('dnav.tabs.buyFromFarmers')}
             </Button>
             <Button to="/mandi/lots/new" icon={PlusCircle}>
-              Create new lot
+              {t('lots.createNew')}
             </Button>
           </>
         }
@@ -40,17 +42,17 @@ const MandiDashboard = () => {
       ) : (
         <div className="space-y-6">
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-            <StatCard label="Available mandi lots" value={c?.availableLots} icon={Boxes} loading={loading} to="/mandi/lots" />
-            <StatCard label="Wholesale orders" value={c?.wholesaleOrders} hint={c?.pendingOrders ? `${c.pendingOrders} new` : 'None waiting'} icon={ClipboardList} tone={c?.pendingOrders ? 'amber' : 'green'} loading={loading} to="/mandi/incoming" />
-            <StatCard label="Wholesale volume" value={formatKg(c?.totalWholesaleVolumeKg, { grams: false })} icon={Weight} tone="blue" loading={loading} />
-            <StatCard label="Trade value" value={formatINR(c?.tradeValue, { whole: true })} icon={IndianRupee} loading={loading} to="/mandi/reports" />
-            <StatCard label="Commission earned" value={formatINR(c?.commissionEarned, { whole: true })} hint={commissionPct ? `At ${commissionPct}% on farmer purchases` : 'Not configured'} icon={Percent} tone="amber" loading={loading} to="/mandi/profile" />
+            <StatCard label={t('mandiDash.availableLots')} value={c?.availableLots} icon={Boxes} loading={loading} to="/mandi/lots" />
+            <StatCard label={t('mandiDash.wholesaleOrders')} value={c?.wholesaleOrders} hint={c?.pendingOrders ? t('mandiDash.newCount', '', { n: c.pendingOrders }) : t('farmerDash.noneWaiting')} icon={ClipboardList} tone={c?.pendingOrders ? 'amber' : 'green'} loading={loading} to="/mandi/incoming" />
+            <StatCard label={t('mandiDash.volume')} value={formatKg(c?.totalWholesaleVolumeKg, { grams: false })} icon={Weight} tone="blue" loading={loading} />
+            <StatCard label={t('mandiDash.tradeValue')} value={formatINR(c?.tradeValue, { whole: true })} icon={IndianRupee} loading={loading} to="/mandi/reports" />
+            <StatCard label={t('mandiDash.commissionEarned')} value={formatINR(c?.commissionEarned, { whole: true })} hint={commissionPct ? t('mandiDash.commissionAt', '', { pct: commissionPct }) : t('mandiDash.notConfigured')} icon={Percent} tone="amber" loading={loading} to="/mandi/profile" />
           </div>
           <div className="grid gap-6 xl:grid-cols-[1.3fr_1fr]">
-            <Section title="Trade, last 14 days">
-              <TrendChart data={data?.dailyTrade || []} series={[{ key: 'value', label: 'Order value' }]} height={250} />
+            <Section title={t('mandiDash.trade14')}>
+              <TrendChart data={data?.dailyTrade || []} series={[{ key: 'value', label: t('mandiDash.orderValue') }]} height={250} />
             </Section>
-            <Section title="Latest orders" actions={<Link to="/mandi/orders" className="link text-sm">All orders</Link>} bodyClass="p-0">
+            <Section title={t('mandiDash.latestOrders')} actions={<Link to="/mandi/orders" className="link text-sm">{t('dnav.tabs.allOrders')}</Link>} bodyClass="p-0">
               <ul className="divide-y divide-soil-100">
                 {(data?.recentOrders || []).map((o) => {
                   const selling = o.seller.name === user.name && o.type !== 'MANDI_FROM_FARMER';
@@ -58,7 +60,7 @@ const MandiDashboard = () => {
                     <li key={o.id}>
                       <Link to={`/mandi/orders/${o.id}`} className="flex items-center justify-between gap-3 px-5 py-3 hover:bg-leafwhite">
                         <div className="min-w-0">
-                          <p className="truncate font-semibold">{o.type === 'MANDI_FROM_FARMER' ? `From ${o.seller.name}` : `To ${o.buyer.name}`}</p>
+                          <p className="truncate font-semibold">{o.type === 'MANDI_FROM_FARMER' ? t('mandiDash.fromName', '', { name: o.seller.name }) : t('mandiDash.toName', '', { name: o.buyer.name })}</p>
                           <p className="truncate text-xs text-soil-500">
                             {ORDER_TYPE_LABELS[o.type]} — {o.items.map((i) => `${i.itemName.split(' (')[0]} ${formatKg(i.quantityKg)}`).join(', ')} — {timeAgo(o.createdAt)}
                           </p>
@@ -71,7 +73,7 @@ const MandiDashboard = () => {
                     </li>
                   );
                 })}
-                {!loading && !data?.recentOrders?.length && <li className="px-5 py-10 text-center text-sm text-soil-500">No orders yet. Publish a lot so shops can buy from you.</li>}
+                {!loading && !data?.recentOrders?.length && <li className="px-5 py-10 text-center text-sm text-soil-500">{t('mandiDash.noOrders')}</li>}
               </ul>
             </Section>
           </div>

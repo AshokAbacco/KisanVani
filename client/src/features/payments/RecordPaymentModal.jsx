@@ -3,13 +3,15 @@ import { useForm } from 'react-hook-form';
 import Modal from '../../components/modals/Modal';
 import Button from '../../components/common/Button';
 import { Input, Select } from '../../components/forms/Field';
-import { formatINR } from '../../utils/format';
+import { formatINR, modeLabel } from '../../utils/format';
 import { rules } from '../../validators';
 import { useToast } from '../../context/ToastContext';
 import { applyFieldErrors } from '../../utils/errors';
+import { useI18n } from '../../i18n';
 
 /** Records a cash / UPI / bank payment, capped at the amount due (the server enforces the same cap). */
-const RecordPaymentModal = ({ open, onClose, title = 'Record payment', due, payeeName, onSubmit, modes = ['UPI', 'CASH', 'BANK_TRANSFER'] }) => {
+const RecordPaymentModal = ({ open, onClose, title, due, payeeName, onSubmit, modes = ['UPI', 'CASH', 'BANK_TRANSFER'] }) => {
+  const { t } = useI18n();
   const toast = useToast();
   const {
     register,
@@ -26,7 +28,7 @@ const RecordPaymentModal = ({ open, onClose, title = 'Record payment', due, paye
   const submit = async (v) => {
     try {
       await onSubmit({ amount: v.amount, mode: v.mode, reference: v.reference || null });
-      toast.success(`Payment of ${formatINR(v.amount)} recorded`);
+      toast.success(t('recordPayment.recordedToast', '', { amount: formatINR(v.amount) }));
       onClose();
     } catch (e) {
       if (!applyFieldErrors(e, setError)) toast.error(e);
@@ -37,34 +39,34 @@ const RecordPaymentModal = ({ open, onClose, title = 'Record payment', due, paye
     <Modal
       open={open}
       onClose={onClose}
-      title={title}
-      description={payeeName ? `To ${payeeName}. Balance due ${formatINR(due)}.` : `Balance due ${formatINR(due)}.`}
+      title={title ?? t('orderDetail.recordPayment')}
+      description={payeeName ? t('recordPayment.toBalance', '', { name: payeeName, amount: formatINR(due) }) : t('recordPayment.balance', '', { amount: formatINR(due) })}
       size="sm"
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button onClick={handleSubmit(submit)} loading={isSubmitting}>
-            Record payment
+            {t('orderDetail.recordPayment')}
           </Button>
         </>
       }
     >
       <form className="space-y-4" onSubmit={handleSubmit(submit)} noValidate>
         <Input
-          label="Amount"
+          label={t('common.amount')}
           suffix="₹"
           inputMode="decimal"
           error={errors.amount?.message}
-          {...register('amount', { ...rules.money('Amount'), validate: (v) => (rules.money('Amount').validate(v) === true ? (Number(v) <= Number(due) + 0.001 || `Cannot exceed ${formatINR(due)}`) : rules.money('Amount').validate(v)) })}
+          {...register('amount', { ...rules.money(t('common.amount')), validate: (v) => (rules.money(t('common.amount')).validate(v) === true ? Number(v) <= Number(due) + 0.001 || t('recordPayment.cannotExceed', '', { amount: formatINR(due) }) : rules.money(t('common.amount')).validate(v)) })}
         />
         <Select
-          label="Mode"
-          options={modes.map((m) => ({ value: m, label: { UPI: 'UPI / QR', CASH: 'Cash', BANK_TRANSFER: 'Bank transfer' }[m] }))}
+          label={t('payments.mode')}
+          options={modes.map((m) => ({ value: m, label: m === 'UPI' ? t('pos.upiQr') : modeLabel(m) }))}
           {...register('mode')}
         />
-        <Input label="Reference" hint="UPI transaction id, cheque or NEFT reference" {...register('reference')} />
+        <Input label={t('common.reference')} hint={t('recordPayment.referenceHint')} {...register('reference')} />
       </form>
     </Modal>
   );

@@ -9,35 +9,39 @@ import EmptyState from '../../components/common/EmptyState';
 import Button from '../../components/common/Button';
 import useList from '../../hooks/useList';
 import { ordersApi, reportsApi } from '../../services';
-import { formatINR, formatDateTime, formatKg } from '../../utils/format';
+import { formatINR, formatDateTime, formatKg, humanize } from '../../utils/format';
 import { ORDER_TYPE_LABELS } from '../../constants/status';
 import { roleLabel } from '../../constants/roles';
 import { useAuth } from '../../context/AuthContext';
 import { ClipboardList, Download } from 'lucide-react';
+import { useI18n } from '../../i18n';
 
+/* Filter groups; labels come from orders.tabs.<id>. */
 const STATUS_TABS = [
-  { value: '', label: 'All' },
-  { value: 'PLACED', label: 'New' },
-  { value: 'ACCEPTED,PREPARING,READY', label: 'In progress' },
-  { value: 'DISPATCHED,DELIVERED', label: 'On the way' },
-  { value: 'RECEIVED', label: 'Completed' },
-  { value: 'REJECTED,CANCELLED', label: 'Closed' },
+  ['all', ''],
+  ['new', 'PLACED'],
+  ['inProgress', 'ACCEPTED,PREPARING,READY'],
+  ['onTheWay', 'DISPATCHED,DELIVERED'],
+  ['completed', 'RECEIVED'],
+  ['closed', 'REJECTED,CANCELLED'],
 ];
 
 /**
  * Order list shared by every role. `as` limits to buyer/seller side, `type` to one order type.
+ * `copy` is the locale key holding this screen's title/description (routes.<screen>).
  */
-const OrdersPage = ({ title = 'Orders', description, as, type, base, emptyAction, initialStatus = '' }) => {
+const OrdersPage = ({ copy, as, type, base, emptyAction, initialStatus = '' }) => {
+  const { t } = useI18n();
   const { user } = useAuth();
   const navigate = useNavigate();
   const list = useList((p) => ordersApi.list(p), { initialFilters: { as, type, status: initialStatus, from: '', to: '' } });
 
-  const counterparty = (o) => (o.buyer.id === user.id ? { label: 'Seller', p: o.seller } : { label: 'Buyer', p: o.buyer });
+  const counterparty = (o) => (o.buyer.id === user.id ? { p: o.seller } : { p: o.buyer });
 
   const columns = [
     {
       key: 'orderNumber',
-      header: 'Order',
+      header: t('enums.ORDER'),
       sortable: false,
       render: (o) => (
         <div>
@@ -48,11 +52,11 @@ const OrdersPage = ({ title = 'Orders', description, as, type, base, emptyAction
     },
     {
       key: 'party',
-      header: user.role === 'ADMIN' ? 'Buyer → Seller' : 'With',
+      header: t(user.role === 'ADMIN' ? 'orders.buyerSeller' : 'orders.with'),
       render: (o) =>
         user.role === 'ADMIN' ? (
           <span>
-            {o.buyer.name} <span className="text-soil-400">from</span> {o.seller.name}
+            {o.buyer.name} <span className="text-soil-400">{t('orders.from')}</span> {o.seller.name}
           </span>
         ) : (
           <div>
@@ -63,7 +67,7 @@ const OrdersPage = ({ title = 'Orders', description, as, type, base, emptyAction
     },
     {
       key: 'items',
-      header: 'Items',
+      header: t('common.items'),
       render: (o) => (
         <span className="text-soil-600">
           {o.items
@@ -72,19 +76,19 @@ const OrdersPage = ({ title = 'Orders', description, as, type, base, emptyAction
         </span>
       ),
     },
-    { key: 'total', header: 'Value', align: 'right', sortable: true, render: (o) => formatINR(o.total) },
-    { key: 'status', header: 'Status', sortable: true, render: (o) => <StatusBadge status={o.status} /> },
-    { key: 'createdAt', header: 'Placed', sortable: true, render: (o) => <span className="whitespace-nowrap text-soil-500">{formatDateTime(o.createdAt)}</span> },
+    { key: 'total', header: t('orders.value'), align: 'right', sortable: true, render: (o) => formatINR(o.total) },
+    { key: 'status', header: t('common.status'), sortable: true, render: (o) => <StatusBadge status={o.status} /> },
+    { key: 'createdAt', header: humanize('PLACED'), sortable: true, render: (o) => <span className="whitespace-nowrap text-soil-500">{formatDateTime(o.createdAt)}</span> },
   ];
 
   return (
     <>
       <PageHeader
-        title={title}
-        description={description}
+        title={t(`${copy || 'orders'}.title`)}
+        description={copy ? t(`${copy}.description`) : undefined}
         actions={
           <Button variant="secondary" icon={Download} onClick={() => reportsApi.export({ dataset: 'orders', from: list.filters.from || undefined, to: list.filters.to || undefined })}>
-            Export CSV
+            {t('common.export')}
           </Button>
         }
       />
@@ -94,14 +98,14 @@ const OrdersPage = ({ title = 'Orders', description, as, type, base, emptyAction
         onRowClick={(o) => navigate(`${base}/orders/${o.id}`)}
         toolbar={
           <>
-            <Tabs tabs={STATUS_TABS} value={list.filters.status} onChange={(status) => list.setFilters({ status })} />
+            <Tabs tabs={STATUS_TABS.map(([id, value]) => ({ value, label: t(`orders.tabs.${id}`) }))} value={list.filters.status} onChange={(status) => list.setFilters({ status })} />
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <DateRangeFilter value={{ from: list.filters.from, to: list.filters.to }} onChange={(r) => list.setFilters(r)} />
-              <SearchInput value={list.search} onChange={list.setSearch} placeholder="Order no., name or crop" className="sm:w-60" />
+              <SearchInput value={list.search} onChange={list.setSearch} placeholder={t('orders.searchPlaceholder')} className="sm:w-60" />
             </div>
           </>
         }
-        empty={<EmptyState icon={ClipboardList} title="No orders match" description="Orders appear here as soon as they are placed." action={emptyAction} />}
+        empty={<EmptyState icon={ClipboardList} title={t('orders.emptyTitle')} description={t('orders.emptyBody')} action={emptyAction} />}
       />
     </>
   );

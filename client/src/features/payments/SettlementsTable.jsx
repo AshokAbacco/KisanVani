@@ -8,43 +8,45 @@ import EmptyState from '../../components/common/EmptyState';
 import StatCard from '../../components/common/StatCard';
 import useList from '../../hooks/useList';
 import { settlementsApi } from '../../services';
-import { formatINR, formatDate } from '../../utils/format';
+import { formatINR, formatDate, humanize } from '../../utils/format';
 import { useAuth } from '../../context/AuthContext';
+import { useI18n } from '../../i18n';
 
 /** Settlements (one per received order) with running totals. `as` = 'payer' | 'payee' | undefined. */
 const SettlementsTable = ({ as, base, showTotals = true }) => {
+  const { t } = useI18n();
   const { user } = useAuth();
   const list = useList((p) => settlementsApi.list(p), { initialFilters: { as, status: '' } });
-  const t = list.meta?.totals;
+  const totals = list.meta?.totals;
 
   const columns = [
-    { key: 'settlementNumber', header: 'Settlement', render: (s) => <span className="num whitespace-nowrap font-semibold">{s.settlementNumber}</span> },
+    { key: 'settlementNumber', header: t('orderDetail.settlement'), render: (s) => <span className="num whitespace-nowrap font-semibold">{s.settlementNumber}</span> },
     {
       key: 'order',
-      header: 'Order',
+      header: t('enums.ORDER'),
       render: (s) => (
         <Link className="link num" to={`${base}/orders/${s.order.id}`} onClick={(e) => e.stopPropagation()}>
           {s.order.orderNumber}
         </Link>
       ),
     },
-    { key: 'party', header: user.role === 'ADMIN' ? 'Payer → payee' : 'With', render: (s) => (user.role === 'ADMIN' ? `${s.payer.name} → ${s.payee.name}` : s.payerId === user.id ? `To ${s.payee.name}` : `From ${s.payer.name}`) },
-    { key: 'grossAmount', header: 'Gross', align: 'right', render: (s) => formatINR(s.grossAmount) },
-    { key: 'commissionAmount', header: 'Commission', align: 'right', render: (s) => (Number(s.commissionAmount) ? formatINR(s.commissionAmount) : '—') },
-    { key: 'netAmount', header: 'Net', align: 'right', sortable: true, render: (s) => <span className="font-semibold">{formatINR(s.netAmount)}</span> },
-    { key: 'paidAmount', header: 'Paid', align: 'right', render: (s) => formatINR(s.paidAmount) },
-    { key: 'status', header: 'Status', sortable: true, render: (s) => <StatusBadge status={s.status} /> },
-    { key: 'createdAt', header: 'Date', sortable: true, render: (s) => formatDate(s.createdAt) },
+    { key: 'party', header: t(user.role === 'ADMIN' ? 'settlements.payerPayee' : 'orders.with'), render: (s) => (user.role === 'ADMIN' ? `${s.payer.name} → ${s.payee.name}` : s.payerId === user.id ? t('mandiDash.toName', '', { name: s.payee.name }) : t('mandiDash.fromName', '', { name: s.payer.name })) },
+    { key: 'grossAmount', header: t('settlements.gross'), align: 'right', render: (s) => formatINR(s.grossAmount) },
+    { key: 'commissionAmount', header: t('userDetail.commission'), align: 'right', render: (s) => (Number(s.commissionAmount) ? formatINR(s.commissionAmount) : '—') },
+    { key: 'netAmount', header: t('settlements.net'), align: 'right', sortable: true, render: (s) => <span className="font-semibold">{formatINR(s.netAmount)}</span> },
+    { key: 'paidAmount', header: t('purchases.paid'), align: 'right', render: (s) => formatINR(s.paidAmount) },
+    { key: 'status', header: t('common.status'), sortable: true, render: (s) => <StatusBadge status={s.status} /> },
+    { key: 'createdAt', header: t('common.date'), sortable: true, render: (s) => formatDate(s.createdAt) },
   ];
 
   return (
     <div className="space-y-4">
       {showTotals && (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard label="Gross value" value={formatINR(t?.gross)} loading={!t} />
-          <StatCard label="Commission & fees" value={formatINR(t?.commission)} loading={!t} tone="amber" />
-          <StatCard label="Paid" value={formatINR(t?.paid)} loading={!t} tone="green" />
-          <StatCard label="Outstanding" value={formatINR(t?.outstanding)} loading={!t} tone="red" />
+          <StatCard label={t('settlements.grossValue')} value={formatINR(totals?.gross)} loading={!totals} />
+          <StatCard label={t('settlements.commissionFees')} value={formatINR(totals?.commission)} loading={!totals} tone="amber" />
+          <StatCard label={t('purchases.paid')} value={formatINR(totals?.paid)} loading={!totals} tone="green" />
+          <StatCard label={t('settlements.outstanding')} value={formatINR(totals?.outstanding)} loading={!totals} tone="red" />
         </div>
       )}
       <DataTable
@@ -56,16 +58,16 @@ const SettlementsTable = ({ as, base, showTotals = true }) => {
               value={list.filters.status}
               onChange={(status) => list.setFilters({ status })}
               tabs={[
-                { value: '', label: 'All' },
-                { value: 'PENDING', label: 'Pending' },
-                { value: 'PARTIAL', label: 'Part paid' },
-                { value: 'PAID', label: 'Paid' },
+                { value: '', label: t('common.all') },
+                { value: 'PENDING', label: humanize('PENDING') },
+                { value: 'PARTIAL', label: t('settlements.partPaid') },
+                { value: 'PAID', label: humanize('PAID') },
               ]}
             />
-            <SearchInput value={list.search} onChange={list.setSearch} placeholder="Settlement or order no." className="sm:w-60" />
+            <SearchInput value={list.search} onChange={list.setSearch} placeholder={t('settlements.searchPlaceholder')} className="sm:w-60" />
           </>
         }
-        empty={<EmptyState icon={FileText} title="No settlements yet" description="A settlement is created when the buyer confirms receipt of an order." />}
+        empty={<EmptyState icon={FileText} title={t('settlements.emptyTitle')} description={t('settlements.emptyBody')} />}
       />
     </div>
   );

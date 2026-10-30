@@ -24,10 +24,10 @@ const FarmerDashboard = () => {
     <>
       <PageHeader
         title={t('dashboard.greeting', 'Namaste, {name}', { name: user.name.split(' ')[0] })}
-        description={user.farmerProfile?.farmName || 'Your farm at a glance'}
+        description={user.farmerProfile?.farmName || t('farmerDash.atGlance')}
         actions={
           <Button to="/farmer/listings/new" icon={PlusCircle}>
-            Post new harvest
+            {t('dnav.tabs.postNewHarvest')}
           </Button>
         }
       />
@@ -36,14 +36,14 @@ const FarmerDashboard = () => {
       ) : (
         <div className="space-y-6">
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <StatCard label="Active harvest listings" value={c?.activeListings} icon={Package} loading={loading} to="/farmer/listings" />
-            <StatCard label="Orders received" value={c?.ordersReceived} hint={c?.pendingOrders ? `${c.pendingOrders} waiting for you` : 'None waiting'} icon={ClipboardList} tone={c?.pendingOrders ? 'amber' : 'green'} loading={loading} to="/farmer/orders" />
-            <StatCard label="Total harvest value" value={formatINR(c?.totalHarvestValue, { whole: true })} hint={c && `${formatINR(c.availableHarvestValue, { whole: true })} still on sale`} icon={IndianRupee} loading={loading} />
-            <StatCard label="Pending transport requests" value={c?.pendingTransportRequests} icon={Truck} tone="blue" loading={loading} to="/farmer/transport" />
+            <StatCard label={t('farmerDash.activeListings')} value={c?.activeListings} icon={Package} loading={loading} to="/farmer/listings" />
+            <StatCard label={t('farmerDash.ordersReceived')} value={c?.ordersReceived} hint={c?.pendingOrders ? t('farmerDash.waiting', '', { n: c.pendingOrders }) : t('farmerDash.noneWaiting')} icon={ClipboardList} tone={c?.pendingOrders ? 'amber' : 'green'} loading={loading} to="/farmer/orders" />
+            <StatCard label={t('farmerDash.harvestValue')} value={formatINR(c?.totalHarvestValue, { whole: true })} hint={c && t('farmerDash.stillOnSale', '', { amount: formatINR(c.availableHarvestValue, { whole: true }) })} icon={IndianRupee} loading={loading} />
+            <StatCard label={t('farmerDash.pendingTransport')} value={c?.pendingTransportRequests} icon={Truck} tone="blue" loading={loading} to="/farmer/transport" />
           </div>
 
           <div className="grid gap-6 xl:grid-cols-[1.4fr_1fr]">
-            <Section title="Recent orders" actions={<Link className="link text-sm" to="/farmer/orders">All orders</Link>} bodyClass="p-0">
+            <Section title={t('farmerDash.recentOrders')} actions={<Link className="link text-sm" to="/farmer/orders">{t('dnav.tabs.allOrders')}</Link>} bodyClass="p-0">
               <ul className="divide-y divide-soil-100">
                 {(data?.recentOrders || []).map((o) => (
                   <li key={o.id}>
@@ -65,18 +65,22 @@ const FarmerDashboard = () => {
                 ))}
                 {!loading && !data?.recentOrders?.length && (
                   <li className="px-5 py-10 text-center text-sm text-soil-500">
-                    No orders yet. <Link to="/farmer/listings/new" className="link">Post a harvest</Link> so shops and mandis can find it.
+                    {t('farmerDash.noOrdersBefore')}
+                    <Link to="/farmer/listings/new" className="link">
+                      {t('farmerDash.postHarvest')}
+                    </Link>
+                    {t('farmerDash.noOrdersAfter')}
                   </li>
                 )}
               </ul>
             </Section>
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <StatCard label="Total earnings" value={formatINR(c?.totalEarnings, { whole: true })} icon={Wallet} tone="green" loading={loading} to="/farmer/earnings" />
-                <StatCard label="Payments pending" value={formatINR(c?.pendingPayments, { whole: true })} tone="red" loading={loading} to="/farmer/earnings" />
+                <StatCard label={t('farmerDash.totalEarnings')} value={formatINR(c?.totalEarnings, { whole: true })} icon={Wallet} tone="green" loading={loading} to="/farmer/earnings" />
+                <StatCard label={t('farmerDash.paymentsPending')} value={formatINR(c?.pendingPayments, { whole: true })} tone="red" loading={loading} to="/farmer/earnings" />
               </div>
-              <Section title="Earnings by month">
-                <BarsChart data={data?.monthlyEarnings || []} x="month" series={[{ key: 'amount', label: 'Settled' }]} height={220} />
+              <Section title={t('farmerDash.earningsByMonth')}>
+                <BarsChart data={data?.monthlyEarnings || []} x="month" series={[{ key: 'amount', label: t('farmerDash.settled') }]} height={220} />
               </Section>
             </div>
           </div>

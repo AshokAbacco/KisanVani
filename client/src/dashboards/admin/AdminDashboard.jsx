@@ -10,16 +10,18 @@ import { AdminCharts } from '../../features/reports/ReportsPage';
 import ActiveTripsMap from '../../features/tracking/ActiveTripsMap';
 import useAsync from '../../hooks/useAsync';
 import { adminApi } from '../../services';
-import { formatINR, formatNumber, toDateInput } from '../../utils/format';
+import { formatINR, formatNumber, toDateInput, plural } from '../../utils/format';
+import { useI18n } from '../../i18n';
 
 const AdminDashboard = () => {
+  const { t } = useI18n();
   const [range, setRange] = useState({ from: toDateInput(new Date(Date.now() - 29 * 86400000)), to: toDateInput(new Date()) });
   const { data, loading, error, reload } = useAsync(() => adminApi.dashboard({ from: range.from || undefined, to: range.to || undefined }), [range.from, range.to]);
   const c = data?.cards;
 
   return (
     <>
-      <PageHeader title="Platform overview" description="Everything happening on KisanVani." actions={<DateRangeFilter value={range} onChange={setRange} />} />
+      <PageHeader title={t('adminDash.title')} description={t('adminDash.intro')} actions={<DateRangeFilter value={range} onChange={setRange} />} />
       {error ? (
         <ErrorState error={error} onRetry={reload} />
       ) : (
@@ -27,20 +29,20 @@ const AdminDashboard = () => {
           {(c?.pendingApprovals > 0 || c?.pendingVehicles > 0) && (
             <div className="grid gap-3 md:grid-cols-2">
               {c.pendingApprovals > 0 && (
-                <Alert tone="warning" title={`${c.pendingApprovals} account${c.pendingApprovals > 1 ? 's' : ''} waiting for approval`} action={<Button size="sm" to="/admin/users?status=PENDING_APPROVAL" icon={UserCheck}>Review</Button>} />
+                <Alert tone="warning" title={plural(c.pendingApprovals, 'accountWaiting')} action={<Button size="sm" to="/admin/users?status=PENDING_APPROVAL" icon={UserCheck}>{t('assignments.review')}</Button>} />
               )}
-              {c.pendingVehicles > 0 && <Alert tone="warning" title={`${c.pendingVehicles} vehicle${c.pendingVehicles > 1 ? 's' : ''} to verify`} action={<Button size="sm" to="/admin/vehicles?verificationStatus=PENDING" icon={ShieldAlert}>Verify</Button>} />}
+              {c.pendingVehicles > 0 && <Alert tone="warning" title={plural(c.pendingVehicles, 'vehicleToVerify')} action={<Button size="sm" to="/admin/vehicles?verificationStatus=PENDING" icon={ShieldAlert}>{t('adminDash.verify')}</Button>} />}
             </div>
           )}
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <StatCard label="Farmers" value={formatNumber(c?.farmers)} icon={Sprout} loading={loading} to="/admin/farmers" />
-            <StatCard label="Shopkeepers" value={formatNumber(c?.shopkeepers)} icon={Store} loading={loading} to="/admin/shopkeepers" />
-            <StatCard label="Market Mandi Owners" value={formatNumber(c?.mandiOwners)} icon={Warehouse} tone="amber" loading={loading} to="/admin/mandi-owners" />
-            <StatCard label="Drivers" value={formatNumber(c?.drivers)} icon={Truck} tone="blue" loading={loading} to="/admin/drivers" />
-            <StatCard label="Registered vehicles" value={formatNumber(c?.vehicles)} hint={c && `${c.verifiedVehicles} verified`} icon={Car} tone="blue" loading={loading} to="/admin/vehicles" />
-            <StatCard label="Total orders" value={formatNumber(c?.orders)} icon={ClipboardList} loading={loading} to="/admin/orders" />
-            <StatCard label="Trade value" value={formatINR(c?.tradeValue, { whole: true })} hint={c && `POS sales ${formatINR(c.posSales, { whole: true })}`} icon={IndianRupee} tone="green" loading={loading} to="/admin/reports" />
-            <StatCard label="Active trips" value={formatNumber(c?.activeTrips)} icon={Route} tone="blue" loading={loading} to="/admin/transport" />
+            <StatCard label={t('dnav.tabs.farmers')} value={formatNumber(c?.farmers)} icon={Sprout} loading={loading} to="/admin/farmers" />
+            <StatCard label={t('dnav.tabs.shopkeepers')} value={formatNumber(c?.shopkeepers)} icon={Store} loading={loading} to="/admin/shopkeepers" />
+            <StatCard label={t('adminDash.mandiOwners')} value={formatNumber(c?.mandiOwners)} icon={Warehouse} tone="amber" loading={loading} to="/admin/mandi-owners" />
+            <StatCard label={t('dnav.tabs.drivers')} value={formatNumber(c?.drivers)} icon={Truck} tone="blue" loading={loading} to="/admin/drivers" />
+            <StatCard label={t('adminDash.registeredVehicles')} value={formatNumber(c?.vehicles)} hint={c && t('adminDash.verifiedCount', '', { n: c.verifiedVehicles })} icon={Car} tone="blue" loading={loading} to="/admin/vehicles" />
+            <StatCard label={t('adminDash.totalOrders')} value={formatNumber(c?.orders)} icon={ClipboardList} loading={loading} to="/admin/orders" />
+            <StatCard label={t('mandiDash.tradeValue')} value={formatINR(c?.tradeValue, { whole: true })} hint={c && t('adminDash.posSales', '', { amount: formatINR(c.posSales, { whole: true }) })} icon={IndianRupee} tone="green" loading={loading} to="/admin/reports" />
+            <StatCard label={t('adminDash.activeTrips')} value={formatNumber(c?.activeTrips)} icon={Route} tone="blue" loading={loading} to="/admin/transport" />
           </div>
           {data?.charts && <AdminCharts d={data.charts} />}
           <ActiveTripsMap base="/admin" />

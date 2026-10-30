@@ -1,23 +1,25 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, LogOut, User, Settings, ChevronDown, Languages } from 'lucide-react';
+import { Menu, X, LogOut, User, Settings, ChevronDown } from 'lucide-react';
 import Logo from '../components/common/Logo';
 import Avatar from '../components/common/Avatar';
 import NotificationBell from '../components/common/NotificationBell';
+import LanguageSwitcher from '../components/common/LanguageSwitcher';
 import ErrorBoundary from '../components/feedback/ErrorBoundary';
 import { useAuth } from '../context/AuthContext';
-import { useI18n, LANGUAGES } from '../i18n';
+import { useI18n } from '../i18n';
 import { NAV, QUICK_NAV, PROFILE_LINKS, findActive } from '../constants/nav';
 import { ROLES } from '../constants/roles';
-import { authApi } from '../services';
 
-const SidebarNav = ({ role, active, onNavigate }) => (
-  <nav className="flex-1 overflow-y-auto px-3 py-4" aria-label="Main">
+const SidebarNav = ({ role, active, onNavigate }) => {
+  const { t } = useI18n();
+  return (
+  <nav className="flex-1 overflow-y-auto px-3 py-4" aria-label={t('layout.mainNav')}>
     <ul className="space-y-1">
       {NAV[role].map((it) => {
         const isActive = active?.item === it;
         return (
-          <li key={it.label}>
+          <li key={it.key}>
             <Link
               to={it.tabs[0].to}
               onClick={onNavigate}
@@ -32,7 +34,8 @@ const SidebarNav = ({ role, active, onNavigate }) => (
       })}
     </ul>
   </nav>
-);
+  );
+};
 
 /** Tab strip for the related screens of the current sidebar item (only on its list screens, not detail pages). */
 const SectionTabs = ({ active, pathname }) => {
@@ -58,6 +61,7 @@ const SectionTabs = ({ active, pathname }) => {
 };
 
 const ProfileMenu = ({ user, base, onLogout }) => {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   useEffect(() => {
@@ -80,10 +84,10 @@ const ProfileMenu = ({ user, base, onLogout }) => {
             <p className="text-xs text-soil-500">{ROLES[user.role].label}</p>
           </div>
           <Link role="menuitem" to={`${base}/profile`} onClick={() => setOpen(false)} className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-leafwhite">
-            <User className="h-4 w-4" aria-hidden /> Profile
+            <User className="h-4 w-4" aria-hidden /> {t('layout.profile')}
           </Link>
           <Link role="menuitem" to={settingsPath} onClick={() => setOpen(false)} className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-leafwhite">
-            <Settings className="h-4 w-4" aria-hidden /> Account settings
+            <Settings className="h-4 w-4" aria-hidden /> {t('layout.accountSettings')}
           </Link>
           {(PROFILE_LINKS[user.role] || []).map((l) => (
             <Link key={l.to} role="menuitem" to={l.to} onClick={() => setOpen(false)} className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-leafwhite">
@@ -91,7 +95,7 @@ const ProfileMenu = ({ user, base, onLogout }) => {
             </Link>
           ))}
           <button role="menuitem" onClick={onLogout} className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-700 hover:bg-red-50">
-            <LogOut className="h-4 w-4" aria-hidden /> Sign out
+            <LogOut className="h-4 w-4" aria-hidden /> {t('layout.signOut')}
           </button>
         </div>
       )}
@@ -99,35 +103,9 @@ const ProfileMenu = ({ user, base, onLogout }) => {
   );
 };
 
-const LanguageSelect = () => {
-  const { lang, setLang } = useI18n();
-  const { setUser } = useAuth();
-  const change = async (code) => {
-    setLang(code);
-    try {
-      setUser(await authApi.updateMe({ preferredLanguage: code }));
-    } catch {
-      /* the local choice still applies */
-    }
-  };
-  return (
-    <label className="hidden items-center gap-1.5 rounded-lg px-2 text-sm text-soil-600 hover:bg-soil-100 sm:flex">
-      <Languages className="h-4 w-4" aria-hidden />
-      <span className="sr-only">Language</span>
-      <select value={lang} onChange={(e) => change(e.target.value)} className="cursor-pointer bg-transparent py-2 pr-1 focus:outline-none">
-        {LANGUAGES.map((l) => (
-          <option key={l.code} value={l.code} disabled={!l.ready}>
-            {l.native}
-            {l.ready ? '' : ' (soon)'}
-          </option>
-        ))}
-      </select>
-    </label>
-  );
-};
-
 /** Shell for all five dashboards. The role accent is applied through the data-role CSS variables. */
 const DashboardLayout = () => {
+  const { t } = useI18n();
   const { user, logout } = useAuth();
   const [drawer, setDrawer] = useState(false);
   const location = useLocation();
@@ -143,7 +121,7 @@ const DashboardLayout = () => {
   };
 
   const active = findActive(role, location.pathname);
-  const quick = QUICK_NAV[role].map((label) => NAV[role].find((it) => it.label === label)).filter(Boolean);
+  const quick = QUICK_NAV[role].map((key) => NAV[role].find((it) => it.key === key)).filter(Boolean);
   const notificationsPath = role === 'ADMIN' ? '/admin/notifications' : `${meta.base}/notifications`;
 
   return (
@@ -167,7 +145,7 @@ const DashboardLayout = () => {
           <aside className="absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col bg-white shadow-lift">
             <div className="flex h-16 items-center justify-between border-b border-soil-200 px-4">
               <Logo to={meta.base} />
-              <button onClick={() => setDrawer(false)} className="rounded-lg p-2 hover:bg-soil-100" aria-label="Close menu">
+              <button onClick={() => setDrawer(false)} className="rounded-lg p-2 hover:bg-soil-100" aria-label={t('layout.closeMenu')}>
                 <X className="h-5 w-5" />
               </button>
             </div>
@@ -179,19 +157,21 @@ const DashboardLayout = () => {
       <div className="lg:pl-64">
         <header className="sticky top-0 z-20 flex h-16 items-center justify-between gap-3 border-b border-soil-200 bg-white/95 px-4 backdrop-blur sm:px-6">
           <div className="flex items-center gap-2">
-            <button onClick={() => setDrawer(true)} className="rounded-lg p-2 hover:bg-soil-100 lg:hidden" aria-label="Open menu">
+            <button onClick={() => setDrawer(true)} className="rounded-lg p-2 hover:bg-soil-100 lg:hidden" aria-label={t('layout.openMenu')}>
               <Menu className="h-5 w-5" />
             </button>
             <span className="hidden text-sm text-soil-500 sm:inline">
               {role === 'SHOPKEEPER' && user.shopProfile?.shopName}
-              {role === 'FARMER' && (user.farmerProfile?.farmName || 'My farm')}
+              {role === 'FARMER' && (user.farmerProfile?.farmName || t('layout.myFarm'))}
               {role === 'MANDI_OWNER' && user.mandiProfile?.mandiName}
-              {role === 'DRIVER' && `Licence ${user.driverProfile?.licenseNumber || ''}`}
-              {role === 'ADMIN' && 'Platform administration'}
+              {role === 'DRIVER' && t('layout.licence', '', { number: user.driverProfile?.licenseNumber || '' })}
+              {role === 'ADMIN' && t('layout.platformAdmin')}
             </span>
           </div>
           <div className="flex items-center gap-1">
-            <LanguageSelect />
+            {/* Same picker as the website navbar: one language for the whole app */}
+            <LanguageSwitcher variant="dashboard" compact className="sm:hidden" />
+            <LanguageSwitcher variant="dashboard" className="hidden sm:block" />
             <NotificationBell allLink={notificationsPath} />
             <ProfileMenu user={user} base={meta.base} onLogout={signOut} />
           </div>
@@ -206,9 +186,9 @@ const DashboardLayout = () => {
       </div>
 
       {/* Mobile quick navigation */}
-      <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-4 border-t border-soil-200 bg-white lg:hidden" aria-label="Quick">
+      <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-4 border-t border-soil-200 bg-white lg:hidden" aria-label={t('layout.quickNav')}>
         {quick.map((it) => (
-          <Link key={it.label} to={it.tabs[0].to} className={`flex flex-col items-center gap-0.5 py-2 text-[11px] ${active?.item === it ? 'accent-text font-semibold' : 'text-soil-500'}`}>
+          <Link key={it.key} to={it.tabs[0].to} className={`flex flex-col items-center gap-0.5 py-2 text-[11px] ${active?.item === it ? 'accent-text font-semibold' : 'text-soil-500'}`}>
             <it.icon className="h-5 w-5" aria-hidden />
             <span className="max-w-full truncate px-1">{it.label}</span>
           </Link>

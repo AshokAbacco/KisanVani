@@ -28,10 +28,11 @@ const DriverDashboard = () => {
     <>
       <PageHeader
         title={t('dashboard.greeting', 'Namaste, {name}', { name: user.name.split(' ')[0] })}
-        description="Your trips, vehicle and earnings."
+        description={t('driverDash.intro')}
         actions={
           <Button to="/driver/assignments" icon={ClipboardList}>
-            Find loads{c?.openLoads ? ` (${c.openLoads})` : ''}
+            {t('driverDash.findLoads')}
+            {c?.openLoads ? ` (${c.openLoads})` : ''}
           </Button>
         }
       />
@@ -40,26 +41,26 @@ const DriverDashboard = () => {
       ) : (
         <div className="space-y-6">
           {!loading && !data?.vehicles?.length && (
-            <Alert tone="warning" title="Register your vehicle to start" action={<Button size="sm" to="/driver/vehicles">Add vehicle</Button>}>
-              You need at least one verified vehicle before you can take trips.
+            <Alert tone="warning" title={t('driverDash.registerTitle')} action={<Button size="sm" to="/driver/vehicles">{t('vehicles.add')}</Button>}>
+              {t('driverDash.registerBody')}
             </Alert>
           )}
-          {!loading && data?.vehicles?.length > 0 && !verified && <Alert tone="info">Your vehicle is waiting for admin verification. You can take trips once it is verified.</Alert>}
+          {!loading && data?.vehicles?.length > 0 && !verified && <Alert tone="info">{t('driverDash.awaitingVerification')}</Alert>}
           {expiring.map((v) => (
-            <Alert key={v.id} tone="warning" action={<Button size="sm" variant="secondary" to={`/driver/vehicles/${v.id}`}>Update documents</Button>}>
-              <AlertTriangle className="sr-only" /> Documents for {v.registrationNumber} expire soon or have expired.
+            <Alert key={v.id} tone="warning" action={<Button size="sm" variant="secondary" to={`/driver/vehicles/${v.id}`}>{t('driverDash.updateDocs')}</Button>}>
+              <AlertTriangle className="sr-only" /> {t('driverDash.docsExpiring', '', { reg: v.registrationNumber })}
             </Alert>
           ))}
 
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <StatCard label="Assigned trips" value={c?.assignedTrips} icon={ClipboardList} tone="amber" loading={loading} to="/driver/pickups" />
-            <StatCard label="Trips in transit" value={c?.inTransit} icon={Truck} tone="blue" loading={loading} to="/driver/deliveries" />
-            <StatCard label="Completed trips" value={c?.completedTrips} icon={CheckCircle2} tone="green" loading={loading} to="/driver/history" />
-            <StatCard label="Total earnings" value={formatINR(c?.totalEarnings, { whole: true })} hint={c && `${formatINR(c.pendingEarnings, { whole: true })} still to be paid`} icon={Wallet} loading={loading} to="/driver/earnings" />
+            <StatCard label={t('driverDash.assignedTrips')} value={c?.assignedTrips} icon={ClipboardList} tone="amber" loading={loading} to="/driver/pickups" />
+            <StatCard label={t('driverDash.inTransit')} value={c?.inTransit} icon={Truck} tone="blue" loading={loading} to="/driver/deliveries" />
+            <StatCard label={t('driverDash.completedTrips')} value={c?.completedTrips} icon={CheckCircle2} tone="green" loading={loading} to="/driver/history" />
+            <StatCard label={t('farmerDash.totalEarnings')} value={formatINR(c?.totalEarnings, { whole: true })} hint={c && t('driverDash.stillToBePaidAmount', '', { amount: formatINR(c.pendingEarnings, { whole: true }) })} icon={Wallet} loading={loading} to="/driver/earnings" />
           </div>
 
           <div className="grid gap-6 xl:grid-cols-[1.3fr_1fr]">
-            <Section title="Current trips" bodyClass="p-0">
+            <Section title={t('driverDash.currentTrips')} bodyClass="p-0">
               <ul className="divide-y divide-soil-100">
                 {(data?.currentTrips || []).map((tr) => (
                   <li key={tr.id}>
@@ -69,7 +70,7 @@ const DriverDashboard = () => {
                           {tr.tripNumber} <span className="font-normal text-soil-500">— {tr.commodity}</span>
                         </p>
                         <p className="truncate text-sm text-soil-500">
-                          {tr.pickupAddress} to {tr.dropAddress}
+                          {t('common.fromTo', '', { from: tr.pickupAddress, to: tr.dropAddress })}
                         </p>
                       </div>
                       <div className="flex shrink-0 items-center gap-2">
@@ -81,16 +82,19 @@ const DriverDashboard = () => {
                 ))}
                 {!loading && !data?.currentTrips?.length && (
                   <li className="px-5 py-10 text-center text-sm text-soil-500">
-                    No active trips. <Link to="/driver/assignments" className="link">See open loads</Link>
+                    {t('driverDash.noActiveTrips')}{' '}
+                    <Link to="/driver/assignments" className="link">
+                      {t('driverDash.seeOpenLoads')}
+                    </Link>
                   </li>
                 )}
               </ul>
             </Section>
             <div className="space-y-6">
-              <Section title="Earnings, last 14 days">
-                <BarsChart data={data?.dailyEarnings || []} x="day" series={[{ key: 'amount', label: 'Earned' }]} height={200} />
+              <Section title={t('driverDash.earnings14')}>
+                <BarsChart data={data?.dailyEarnings || []} x="day" series={[{ key: 'amount', label: t('earnings.earned') }]} height={200} />
               </Section>
-              <Section title="Vehicles" bodyClass="p-0">
+              <Section title={t('dnav.tabs.vehicles')} bodyClass="p-0">
                 <ul className="divide-y divide-soil-100">
                   {(data?.vehicles || []).map((v) => (
                     <li key={v.id}>
@@ -101,7 +105,7 @@ const DriverDashboard = () => {
                           <span className="text-sm text-soil-500">{humanize(v.type)}</span>
                         </span>
                         <span className="flex items-center gap-2 text-xs text-soil-500">
-                          {v.insuranceExpiry && `Ins. ${formatDate(v.insuranceExpiry)}`}
+                          {v.insuranceExpiry && t('driverDash.insShort', '', { date: formatDate(v.insuranceExpiry) })}
                           <StatusBadge status={v.verificationStatus} />
                         </span>
                       </Link>

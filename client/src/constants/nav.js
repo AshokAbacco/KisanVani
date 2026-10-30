@@ -15,214 +15,225 @@ import {
   Car,
   MapPin,
 } from 'lucide-react';
+import { translate } from '../i18n';
 
 /**
  * Sidebar navigation per role: a short, flat list (5–6 items).
  * Each item can carry `tabs` — related screens shown as a tab strip at the top of the page,
  * so every existing screen stays reachable without crowding the sidebar.
  * The first tab's `to` is where the sidebar item links. `end` = exact-match only.
+ * `key` identifies an item/tab; the visible label is translated (dnav.items.<key>, dnav.tabs.<key>).
  */
-export const NAV = {
+const RAW_NAV = {
   ADMIN: [
     {
-      label: 'Dashboard',
+      key: 'dashboard', label: 'Dashboard',
       icon: LayoutDashboard,
       tabs: [
-        { to: '/admin', label: 'Overview', end: true },
-        { to: '/admin/reports', label: 'Reports' },
+        { to: '/admin', key: 'overview', label: 'Overview', end: true },
+        { to: '/admin/reports', key: 'reports', label: 'Reports' },
       ],
     },
     {
-      label: 'Users',
+      key: 'users', label: 'Users',
       icon: Users,
       tabs: [
-        { to: '/admin/users', label: 'All users' },
-        { to: '/admin/farmers', label: 'Farmers' },
-        { to: '/admin/shopkeepers', label: 'Shopkeepers' },
-        { to: '/admin/mandi-owners', label: 'Mandi owners' },
-        { to: '/admin/drivers', label: 'Drivers' },
+        { to: '/admin/users', key: 'allUsers', label: 'All users' },
+        { to: '/admin/farmers', key: 'farmers', label: 'Farmers' },
+        { to: '/admin/shopkeepers', key: 'shopkeepers', label: 'Shopkeepers' },
+        { to: '/admin/mandi-owners', key: 'mandiOwners', label: 'Mandi owners' },
+        { to: '/admin/drivers', key: 'drivers', label: 'Drivers' },
       ],
     },
-    { label: 'Orders', icon: ClipboardList, tabs: [{ to: '/admin/orders', label: 'Orders' }] },
+    { key: 'orders', label: 'Orders', icon: ClipboardList, tabs: [{ to: '/admin/orders', key: 'orders', label: 'Orders' }] },
     {
-      label: 'Transport',
+      key: 'transport', label: 'Transport',
       icon: Truck,
       tabs: [
-        { to: '/admin/transport', label: 'Trips' },
-        { to: '/admin/vehicles', label: 'Vehicles' },
+        { to: '/admin/transport', key: 'trips', label: 'Trips' },
+        { to: '/admin/vehicles', key: 'vehicles', label: 'Vehicles' },
       ],
     },
-    { label: 'Payments', icon: Wallet, tabs: [{ to: '/admin/payments', label: 'Payments' }] },
+    { key: 'payments', label: 'Payments', icon: Wallet, tabs: [{ to: '/admin/payments', key: 'payments', label: 'Payments' }] },
     {
-      label: 'Platform',
+      key: 'platform', label: 'Platform',
       icon: Settings,
       tabs: [
-        { to: '/admin/catalog', label: 'Products & categories' },
-        { to: '/admin/settings', label: 'Platform settings' },
-        { to: '/admin/notifications', label: 'Broadcast' },
+        { to: '/admin/catalog', key: 'productsCategories', label: 'Products & categories' },
+        { to: '/admin/settings', key: 'platformSettings', label: 'Platform settings' },
+        { to: '/admin/notifications', key: 'broadcast', label: 'Broadcast' },
       ],
     },
   ],
   SHOPKEEPER: [
     {
-      label: 'Dashboard',
+      key: 'dashboard', label: 'Dashboard',
       icon: LayoutDashboard,
       tabs: [
-        { to: '/shop', label: 'Overview', end: true },
-        { to: '/shop/reports', label: 'Reports' },
+        { to: '/shop', key: 'overview', label: 'Overview', end: true },
+        { to: '/shop/reports', key: 'reports', label: 'Reports' },
       ],
     },
     {
-      label: 'Billing',
+      key: 'billing', label: 'Billing',
       icon: Scale,
       tabs: [
-        { to: '/shop/pos', label: 'New bill' },
-        { to: '/shop/sales', label: 'Sales history' },
+        { to: '/shop/pos', key: 'newBill', label: 'New bill' },
+        { to: '/shop/sales', key: 'salesHistory', label: 'Sales history' },
       ],
     },
     {
-      label: 'Stock',
+      key: 'stock', label: 'Stock',
       icon: Boxes,
       tabs: [
-        { to: '/shop/stock', label: 'Stock & rates' },
-        { to: '/shop/inventory', label: 'Inventory' },
-        { to: '/shop/purchases', label: 'Purchases' },
-        { to: '/shop/suppliers', label: 'Suppliers' },
+        { to: '/shop/stock', key: 'stockRates', label: 'Stock & rates' },
+        { to: '/shop/inventory', key: 'inventory', label: 'Inventory' },
+        { to: '/shop/purchases', key: 'purchases', label: 'Purchases' },
+        { to: '/shop/suppliers', key: 'suppliers', label: 'Suppliers' },
       ],
     },
     {
-      label: 'Orders',
+      key: 'orders', label: 'Orders',
       icon: ShoppingCart,
       tabs: [
-        { to: '/shop/orders', label: 'My orders' },
-        { to: '/shop/order-farmers', label: 'Buy from farmers' },
-        { to: '/shop/order-mandi', label: 'Buy from mandi' },
-        { to: '/shop/transport', label: 'Deliveries' },
+        { to: '/shop/orders', key: 'myOrders', label: 'My orders' },
+        { to: '/shop/order-farmers', key: 'buyFromFarmers', label: 'Buy from farmers' },
+        { to: '/shop/order-mandi', key: 'buyFromMandi', label: 'Buy from mandi' },
+        { to: '/shop/transport', key: 'deliveries', label: 'Deliveries' },
       ],
     },
     {
-      label: 'Khata',
+      key: 'khata', label: 'Khata',
       icon: HandCoins,
       tabs: [
-        { to: '/shop/credit', label: 'Udhar / Khata' },
-        { to: '/shop/customers', label: 'Customers' },
-        { to: '/shop/payments', label: 'Payments' },
+        { to: '/shop/credit', key: 'udharKhata', label: 'Udhar / Khata' },
+        { to: '/shop/customers', key: 'customers', label: 'Customers' },
+        { to: '/shop/payments', key: 'payments', label: 'Payments' },
       ],
     },
   ],
   FARMER: [
     {
-      label: 'Dashboard',
+      key: 'dashboard', label: 'Dashboard',
       icon: LayoutDashboard,
       tabs: [
-        { to: '/farmer', label: 'Overview', end: true },
-        { to: '/farmer/reports', label: 'Reports' },
+        { to: '/farmer', key: 'overview', label: 'Overview', end: true },
+        { to: '/farmer/reports', key: 'reports', label: 'Reports' },
       ],
     },
     {
-      label: 'My Harvest',
+      key: 'myHarvest', label: 'My Harvest',
       icon: Wheat,
       tabs: [
-        { to: '/farmer/listings', label: 'Listings' },
-        { to: '/farmer/listings/new', label: 'Post new harvest' },
-        { to: '/farmer/crops', label: 'My crops' },
+        { to: '/farmer/listings', key: 'listings', label: 'Listings' },
+        { to: '/farmer/listings/new', key: 'postNewHarvest', label: 'Post new harvest' },
+        { to: '/farmer/crops', key: 'myCrops', label: 'My crops' },
       ],
     },
     {
-      label: 'Orders',
+      key: 'orders', label: 'Orders',
       icon: ClipboardList,
       tabs: [
-        { to: '/farmer/orders', label: 'From shops' },
-        { to: '/farmer/mandi-orders', label: 'From mandis' },
-        { to: '/farmer/sales', label: 'Sales history' },
+        { to: '/farmer/orders', key: 'fromShops', label: 'From shops' },
+        { to: '/farmer/mandi-orders', key: 'fromMandis', label: 'From mandis' },
+        { to: '/farmer/sales', key: 'salesHistory', label: 'Sales history' },
       ],
     },
-    { label: 'Transport', icon: Truck, tabs: [{ to: '/farmer/transport', label: 'Transport' }] },
-    { label: 'Earnings', icon: Wallet, tabs: [{ to: '/farmer/earnings', label: 'Earnings' }] },
+    { key: 'transport', label: 'Transport', icon: Truck, tabs: [{ to: '/farmer/transport', key: 'transport', label: 'Transport' }] },
+    { key: 'earnings', label: 'Earnings', icon: Wallet, tabs: [{ to: '/farmer/earnings', key: 'earnings', label: 'Earnings' }] },
   ],
   MANDI_OWNER: [
     {
-      label: 'Dashboard',
+      key: 'dashboard', label: 'Dashboard',
       icon: LayoutDashboard,
       tabs: [
-        { to: '/mandi', label: 'Overview', end: true },
-        { to: '/mandi/reports', label: 'Reports' },
+        { to: '/mandi', key: 'overview', label: 'Overview', end: true },
+        { to: '/mandi/reports', key: 'reports', label: 'Reports' },
       ],
     },
     {
-      label: 'Lots',
+      key: 'lots', label: 'Lots',
       icon: Boxes,
       tabs: [
-        { to: '/mandi/lots', label: 'Mandi lots' },
-        { to: '/mandi/lots/new', label: 'Create lot' },
-        { to: '/mandi/products', label: 'Wholesale products' },
+        { to: '/mandi/lots', key: 'mandiLots', label: 'Mandi lots' },
+        { to: '/mandi/lots/new', key: 'createLot', label: 'Create lot' },
+        { to: '/mandi/products', key: 'wholesaleProducts', label: 'Wholesale products' },
       ],
     },
     {
-      label: 'Orders',
+      key: 'orders', label: 'Orders',
       icon: ClipboardList,
       tabs: [
-        { to: '/mandi/incoming', label: 'Shop orders' },
-        { to: '/mandi/orders', label: 'All orders' },
-        { to: '/mandi/procurement', label: 'Buy from farmers' },
-        { to: '/mandi/partners', label: 'Partners' },
+        { to: '/mandi/incoming', key: 'shopOrders', label: 'Shop orders' },
+        { to: '/mandi/orders', key: 'allOrders', label: 'All orders' },
+        { to: '/mandi/procurement', key: 'buyFromFarmers', label: 'Buy from farmers' },
+        { to: '/mandi/partners', key: 'partners', label: 'Partners' },
       ],
     },
     {
-      label: 'Transport',
+      key: 'transport', label: 'Transport',
       icon: Truck,
       tabs: [
-        { to: '/mandi/transport', label: 'Transport' },
-        { to: '/mandi/assignments', label: 'Vehicle assignments' },
+        { to: '/mandi/transport', key: 'transport', label: 'Transport' },
+        { to: '/mandi/assignments', key: 'vehicleAssignments', label: 'Vehicle assignments' },
       ],
     },
     {
-      label: 'Payments',
+      key: 'payments', label: 'Payments',
       icon: Wallet,
       tabs: [
-        { to: '/mandi/payments', label: 'Payments' },
-        { to: '/mandi/settlements', label: 'Settlements' },
+        { to: '/mandi/payments', key: 'payments', label: 'Payments' },
+        { to: '/mandi/settlements', key: 'settlements', label: 'Settlements' },
       ],
     },
   ],
   DRIVER: [
-    { label: 'Dashboard', icon: LayoutDashboard, tabs: [{ to: '/driver', label: 'Overview', end: true }] },
+    { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, tabs: [{ to: '/driver', key: 'overview', label: 'Overview', end: true }] },
     {
-      label: 'My Trips',
+      key: 'myTrips', label: 'My Trips',
       icon: Route,
       tabs: [
-        { to: '/driver/trips', label: 'All trips' },
-        { to: '/driver/assignments', label: 'New assignments' },
-        { to: '/driver/pickups', label: 'Pickups' },
-        { to: '/driver/deliveries', label: 'Deliveries' },
-        { to: '/driver/history', label: 'History' },
+        { to: '/driver/trips', key: 'allTrips', label: 'All trips' },
+        { to: '/driver/assignments', key: 'newAssignments', label: 'New assignments' },
+        { to: '/driver/pickups', key: 'pickups', label: 'Pickups' },
+        { to: '/driver/deliveries', key: 'deliveries', label: 'Deliveries' },
+        { to: '/driver/history', key: 'history', label: 'History' },
       ],
     },
-    { label: 'Live Tracking', icon: Navigation, tabs: [{ to: '/driver/tracking', label: 'Live tracking' }] },
+    { key: 'liveTracking', label: 'Live Tracking', icon: Navigation, tabs: [{ to: '/driver/tracking', key: 'liveTracking', label: 'Live tracking' }] },
     {
-      label: 'Vehicle',
+      key: 'vehicle', label: 'Vehicle',
       icon: Car,
       tabs: [
-        { to: '/driver/vehicles', label: 'Vehicle details' },
-        { to: '/driver/documents', label: 'Documents' },
+        { to: '/driver/vehicles', key: 'vehicleDetails', label: 'Vehicle details' },
+        { to: '/driver/documents', key: 'documents', label: 'Documents' },
       ],
     },
-    { label: 'Earnings', icon: Wallet, tabs: [{ to: '/driver/earnings', label: 'Earnings' }] },
+    { key: 'earnings', label: 'Earnings', icon: Wallet, tabs: [{ to: '/driver/earnings', key: 'earnings', label: 'Earnings' }] },
   ],
 };
 
 /** Extra links in the top-right profile menu (besides Profile, Settings, Sign out). */
-export const PROFILE_LINKS = {
-  SHOPKEEPER: [{ to: '/shop/gps', label: 'Shop GPS location', icon: MapPin }],
+const RAW_PROFILE_LINKS = {
+  SHOPKEEPER: [{ to: '/shop/gps', key: 'shopGPSLocation', label: 'Shop GPS location', icon: MapPin }],
 };
 
-/** Mobile bottom bar: four sidebar items per role (by label). */
+/* Labels are getters, so they always come back in the active language (dnav.items.* / dnav.tabs.*). */
+const localized = (ns, { label: english, ...rest }, extra = {}) =>
+  Object.defineProperty({ ...rest, ...extra }, 'label', { enumerable: true, get: () => translate(`dnav.${ns}.${rest.key}`, english) });
+
+export const NAV = Object.fromEntries(
+  Object.entries(RAW_NAV).map(([r, items]) => [r, items.map((it) => localized('items', it, { tabs: it.tabs.map((tb) => localized('tabs', tb)) }))])
+);
+export const PROFILE_LINKS = Object.fromEntries(Object.entries(RAW_PROFILE_LINKS).map(([r, links]) => [r, links.map((l) => localized('tabs', l))]));
+
+/** Mobile bottom bar: four sidebar items per role (by key). */
 export const QUICK_NAV = {
-  ADMIN: ['Dashboard', 'Users', 'Orders', 'Transport'],
-  SHOPKEEPER: ['Dashboard', 'Billing', 'Stock', 'Orders'],
-  FARMER: ['Dashboard', 'My Harvest', 'Orders', 'Earnings'],
-  MANDI_OWNER: ['Dashboard', 'Lots', 'Orders', 'Transport'],
-  DRIVER: ['Dashboard', 'My Trips', 'Live Tracking', 'Earnings'],
+  ADMIN: ['dashboard', 'users', 'orders', 'transport'],
+  SHOPKEEPER: ['dashboard', 'billing', 'stock', 'orders'],
+  FARMER: ['dashboard', 'myHarvest', 'orders', 'earnings'],
+  MANDI_OWNER: ['dashboard', 'lots', 'orders', 'transport'],
+  DRIVER: ['dashboard', 'myTrips', 'liveTracking', 'earnings'],
 };
 
 const pathMatches = (tab, pathname) => pathname === tab.to || (!tab.end && pathname.startsWith(`${tab.to}/`));

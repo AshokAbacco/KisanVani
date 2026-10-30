@@ -17,10 +17,10 @@ import { applyFieldErrors } from '../../utils/errors';
 
 /** Password, language and session management — the same for every role. */
 const AccountSettingsPage = ({ children }) => {
-  const { setUser, logout } = useAuth();
+  const { logout } = useAuth();
   const toast = useToast();
   const navigate = useNavigate();
-  const { lang, setLang } = useI18n();
+  const { lang, setLang, t } = useI18n();
   const [confirmAll, setConfirmAll] = useState(false);
   const {
     register,
@@ -36,21 +36,18 @@ const AccountSettingsPage = ({ children }) => {
       const res = await authApi.changePassword({ currentPassword: v.currentPassword, newPassword: v.newPassword });
       setAccessToken(res.accessToken);
       reset();
-      toast.success('Password changed. Other devices have been signed out.');
+      toast.success(t('accountSettings.passwordChanged'));
     } catch (e) {
-      if (e.response?.data?.error?.code === 'INVALID_PASSWORD') setError('currentPassword', { message: 'Current password is incorrect' });
+      if (e.response?.data?.error?.code === 'INVALID_PASSWORD') setError('currentPassword', { message: t('accountSettings.wrongPassword') });
       else if (!applyFieldErrors(e, setError)) toast.error(e);
     }
   };
 
-  const changeLang = async (code) => {
+  // Same language state as the website navbar and dashboard header; <LanguageSync> saves it to the profile.
+  const changeLang = (code) => {
+    if (code === lang) return;
     setLang(code);
-    try {
-      setUser(await authApi.updateMe({ preferredLanguage: code }));
-      toast.success('Language saved');
-    } catch (e) {
-      toast.error(e);
-    }
+    toast.success(t('accountSettings.languageSaved'));
   };
 
   const signOutEverywhere = async () => {
@@ -61,47 +58,48 @@ const AccountSettingsPage = ({ children }) => {
 
   return (
     <>
-      <PageHeader title="Settings" description="Your password, language and signed-in devices." />
+      <PageHeader title={t('common.settings')} description={t('accountSettings.intro')} />
       <div className="grid gap-6 lg:grid-cols-2">
-        <Section title="Change password">
+        <Section title={t('accountSettings.changePassword')}>
           <form onSubmit={handleSubmit(changePassword)} className="space-y-4" noValidate>
-            <Input label="Current password" type="password" autoComplete="current-password" error={errors.currentPassword?.message} {...register('currentPassword', { required: 'Enter your current password' })} />
-            <Input label="New password" type="password" autoComplete="new-password" hint="8+ characters with a letter and a number" error={errors.newPassword?.message} {...register('newPassword', rules.password)} />
-            <Input label="Confirm new password" type="password" autoComplete="new-password" error={errors.confirm?.message} {...register('confirm', { validate: (v) => v === watch('newPassword') || 'Passwords do not match' })} />
+            <Input label={t('accountSettings.currentPassword')} type="password" autoComplete="current-password" error={errors.currentPassword?.message} {...register('currentPassword', { required: t('accountSettings.enterCurrent') })} />
+            <Input label={t('reset.newPassword')} type="password" autoComplete="new-password" hint={t('register.fields.passwordHint')} error={errors.newPassword?.message} {...register('newPassword', rules.password)} />
+            <Input label={t('reset.confirmNew')} type="password" autoComplete="new-password" error={errors.confirm?.message} {...register('confirm', { validate: (v) => v === watch('newPassword') || t('validation.mismatch') })} />
             <Button type="submit" icon={KeyRound} loading={isSubmitting}>
-              Change password
+              {t('accountSettings.changePassword')}
             </Button>
           </form>
         </Section>
         <div className="space-y-6">
-          <Section title="Language">
+          <Section title={t('common.language')} description={t('accountSettings.languageIntro')}>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-              {LANGUAGES.map((l) => (
+              {LANGUAGES.filter((l) => l.ready).map((l) => (
                 <button
                   key={l.code}
-                  disabled={!l.ready}
+                  lang={l.code}
+                  aria-pressed={lang === l.code}
                   onClick={() => changeLang(l.code)}
                   className={`rounded-lg border px-3 py-2 text-left text-sm disabled:cursor-not-allowed disabled:opacity-50 ${lang === l.code ? 'accent-soft border-transparent font-semibold accent-text' : 'border-soil-200 hover:bg-soil-100'}`}
                 >
                   <span className="block">{l.native}</span>
-                  <span className="text-xs text-soil-500">{l.ready ? l.label : `${l.label} (coming soon)`}</span>
+                  <span className="text-xs text-soil-500">{l.label}</span>
                 </button>
               ))}
             </div>
             <p className="mt-3 flex items-center gap-1.5 text-xs text-soil-500">
-              <Languages className="h-3.5 w-3.5" aria-hidden /> Screens not yet translated stay in English.
+              <Languages className="h-3.5 w-3.5" aria-hidden /> {t('accountSettings.languageNote')}
             </p>
           </Section>
-          <Section title="Signed-in devices">
-            <p className="text-sm text-soil-600">Lost a phone or used a shared computer? Sign out everywhere, including this device.</p>
+          <Section title={t('accountSettings.devices')}>
+            <p className="text-sm text-soil-600">{t('accountSettings.devicesIntro')}</p>
             <Button className="mt-4" variant="secondary" icon={LogOut} onClick={() => setConfirmAll(true)}>
-              Sign out of all devices
+              {t('accountSettings.signOutAll')}
             </Button>
           </Section>
           {children}
         </div>
       </div>
-      <ConfirmDialog open={confirmAll} onClose={() => setConfirmAll(false)} title="Sign out of all devices?" message="You will need your password to sign in again on every device." confirmLabel="Sign out everywhere" onConfirm={signOutEverywhere} />
+      <ConfirmDialog open={confirmAll} onClose={() => setConfirmAll(false)} title={t('accountSettings.signOutAllTitle')} message={t('accountSettings.signOutAllMessage')} confirmLabel={t('accountSettings.signOutEverywhere')} onConfirm={signOutEverywhere} />
     </>
   );
 };

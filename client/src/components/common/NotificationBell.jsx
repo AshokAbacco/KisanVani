@@ -5,9 +5,11 @@ import { notificationsApi } from '../../services';
 import { getSocket } from '../../services/socket';
 import { timeAgo } from '../../utils/format';
 import { useToast } from '../../context/ToastContext';
+import { useI18n } from '../../i18n';
 
 /** Bell with unread count; new notifications arrive over Socket.IO and show as a toast. */
 const NotificationBell = ({ allLink }) => {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState([]);
   const [unread, setUnread] = useState(0);
@@ -60,22 +62,22 @@ const NotificationBell = ({ allLink }) => {
 
   return (
     <div className="relative" ref={ref}>
-      <button onClick={() => setOpen((o) => !o)} className="relative rounded-lg p-2 text-soil-600 hover:bg-soil-100" aria-label={`Notifications, ${unread} unread`} aria-expanded={open}>
+      <button onClick={() => setOpen((o) => !o)} className="relative rounded-lg p-2 text-soil-600 hover:bg-soil-100" aria-label={t('components.notifications.bellLabel', '', { n: unread })} aria-expanded={open}>
         <Bell className="h-5 w-5" />
         {unread > 0 && <span className="num absolute -right-0.5 -top-0.5 grid h-5 min-w-5 place-items-center rounded-full bg-chilli-500 px-1 text-[11px] font-bold text-white">{unread > 99 ? '99+' : unread}</span>}
       </button>
       {open && (
         <div className="absolute right-0 z-50 mt-2 w-[min(92vw,360px)] overflow-hidden rounded-xl border border-soil-200 bg-white shadow-lift">
           <div className="flex items-center justify-between border-b border-soil-200 px-4 py-2.5">
-            <p className="font-semibold">Notifications</p>
+            <p className="font-semibold">{t('common.notifications')}</p>
             {unread > 0 && (
               <button className="text-sm text-soil-500 hover:text-soil" onClick={markAll}>
-                Mark all read
+                {t('components.notifications.markAllRead')}
               </button>
             )}
           </div>
           <ul className="max-h-96 divide-y divide-soil-100 overflow-y-auto">
-            {items.length === 0 && <li className="px-4 py-8 text-center text-sm text-soil-500">You are all caught up.</li>}
+            {items.length === 0 && <li className="px-4 py-8 text-center text-sm text-soil-500">{t('components.notifications.caughtUp')}</li>}
             {items.map((n) => (
               <li key={n.id}>
                 <button onClick={() => openItem(n)} className={`flex w-full gap-3 px-4 py-3 text-left hover:bg-leafwhite ${n.readAt ? '' : 'bg-field-50/50'}`}>
@@ -90,7 +92,7 @@ const NotificationBell = ({ allLink }) => {
             ))}
           </ul>
           <Link to={allLink} onClick={() => setOpen(false)} className="block border-t border-soil-200 px-4 py-2.5 text-center text-sm font-medium accent-text hover:bg-leafwhite">
-            See all notifications
+            {t('components.notifications.seeAll')}
           </Link>
         </div>
       )}

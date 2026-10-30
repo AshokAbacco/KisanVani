@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react';
 import Modal from '../../components/modals/Modal';
 import Button from '../../components/common/Button';
 import { formatKg } from '../../utils/format';
+import { useI18n } from '../../i18n';
 
 /**
  * Per-item quantity confirmation used for "mark delivered" (seller) and "confirm receipt" (buyer).
  * Each quantity defaults to the previous step and may not exceed `cap(item)`.
  */
 const QuantityConfirmModal = ({ open, onClose, title, description, items, cap, defaultQty, field, confirmLabel, onConfirm }) => {
+  const { t } = useI18n();
   const [values, setValues] = useState({});
   const [busy, setBusy] = useState(false);
   useEffect(() => {
@@ -41,7 +43,7 @@ const QuantityConfirmModal = ({ open, onClose, title, description, items, cap, d
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button onClick={submit} disabled={!!invalid} loading={busy}>
             {confirmLabel}
@@ -58,10 +60,10 @@ const QuantityConfirmModal = ({ open, onClose, title, description, items, cap, d
                 <p className="font-medium">
                   {i.product?.emoji} {i.itemName}
                 </p>
-                <p className="text-xs text-soil-500">Up to {formatKg(cap(i), { grams: false })}</p>
+                <p className="text-xs text-soil-500">{t('driverTrip.upTo', '', { qty: formatKg(cap(i), { grams: false }) })}</p>
               </div>
               <label className="w-36 shrink-0">
-                <span className="sr-only">Quantity for {i.itemName}</span>
+                <span className="sr-only">{t('orders.quantityFor', '', { name: i.itemName })}</span>
                 <div className="relative">
                   <input className={`input num pr-9 text-right ${bad ? 'input-error' : ''}`} inputMode="decimal" value={values[i.id] ?? ''} onChange={(e) => setValues((v) => ({ ...v, [i.id]: e.target.value }))} />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-soil-400">kg</span>

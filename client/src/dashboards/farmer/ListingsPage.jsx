@@ -12,10 +12,12 @@ import ConfirmDialog from '../../components/modals/ConfirmDialog';
 import useList from '../../hooks/useList';
 import { farmerApi } from '../../services';
 import { useToast } from '../../context/ToastContext';
-import { formatINR, formatKg, formatDate } from '../../utils/format';
+import { formatINR, formatKg, formatDate, humanize } from '../../utils/format';
+import { useI18n } from '../../i18n';
 
 /** The farmer's harvest listings with publish / pause / complete controls. */
 const ListingsPage = () => {
+  const { t } = useI18n();
   const toast = useToast();
   const navigate = useNavigate();
   const [completing, setCompleting] = useState(null);
@@ -24,7 +26,7 @@ const ListingsPage = () => {
   const setStatus = async (l, status) => {
     try {
       await farmerApi.setStatus(l.id, status);
-      toast.success({ ACTIVE: 'Listing published — buyers can see it now', PAUSED: 'Listing paused', COMPLETED: 'Listing completed' }[status]);
+      toast.success(t(`listings.toast.${status}`));
       list.reload();
     } catch (e) {
       toast.error(e);
@@ -34,11 +36,11 @@ const ListingsPage = () => {
   return (
     <>
       <PageHeader
-        title="Harvest listings"
-        description="Only published listings with quantity left are shown to shops and Market Mandis."
+        title={t('listings.title')}
+        description={t('listings.intro')}
         actions={
           <Button icon={Plus} to="/farmer/listings/new">
-            Post new harvest
+            {t('dnav.tabs.postNewHarvest')}
           </Button>
         }
       />
@@ -48,22 +50,22 @@ const ListingsPage = () => {
         columns={[
           {
             key: 'crop',
-            header: 'Crop',
+            header: t('crops.crop'),
             render: (l) => (
               <div className="flex items-center gap-3">
                 {l.images[0] ? <img src={l.images[0]} alt="" className="h-10 w-10 rounded-lg object-cover" /> : <span className="grid h-10 w-10 place-items-center rounded-lg bg-field-50 text-xl">{l.product.emoji}</span>}
                 <div>
                   <p className="font-medium">{l.cropName}</p>
-                  <p className="text-xs text-soil-500">{[l.variety, l.grade && `Grade ${l.grade}`].filter(Boolean).join(', ') || '—'}</p>
+                  <p className="text-xs text-soil-500">{[l.variety, l.grade && t('common.grade', '', { grade: l.grade })].filter(Boolean).join(', ') || '—'}</p>
                 </div>
               </div>
             ),
           },
-          { key: 'harvestAt', header: 'Harvest', sortable: true, render: (l) => formatDate(l.harvestAt) },
-          { key: 'pricePerKg', header: 'Price', align: 'right', sortable: true, render: (l) => `${formatINR(l.pricePerKg)}/kg` },
+          { key: 'harvestAt', header: t('listings.harvest'), sortable: true, render: (l) => formatDate(l.harvestAt) },
+          { key: 'pricePerKg', header: t('common.price'), align: 'right', sortable: true, render: (l) => t('common.perKg', '', { price: formatINR(l.pricePerKg) }) },
           {
             key: 'availableQuantityKg',
-            header: 'Left / total',
+            header: t('listings.leftTotal'),
             align: 'right',
             sortable: true,
             render: (l) => (
@@ -73,8 +75,8 @@ const ListingsPage = () => {
               </span>
             ),
           },
-          { key: 'orders', header: 'Orders', align: 'right', render: (l) => l._count.orderItems },
-          { key: 'status', header: 'Status', render: (l) => <StatusBadge status={l.status} /> },
+          { key: 'orders', header: t('dnav.items.orders'), align: 'right', render: (l) => l._count.orderItems },
+          { key: 'status', header: t('common.status'), render: (l) => <StatusBadge status={l.status} /> },
           {
             key: 'actions',
             header: '',
@@ -82,16 +84,16 @@ const ListingsPage = () => {
               <div className="flex justify-end gap-1" onClick={(e) => e.stopPropagation()}>
                 {['DRAFT', 'PAUSED'].includes(l.status) && Number(l.availableQuantityKg) > 0 && (
                   <Button size="sm" icon={Play} onClick={() => setStatus(l, 'ACTIVE')}>
-                    Publish
+                    {t('listings.publish')}
                   </Button>
                 )}
                 {['ACTIVE', 'SOLD_OUT'].includes(l.status) && (
                   <Button size="sm" variant="ghost" icon={Pause} onClick={() => setStatus(l, 'PAUSED')}>
-                    Pause
+                    {t('listings.pause')}
                   </Button>
                 )}
-                {l.status !== 'COMPLETED' && <Button size="sm" variant="ghost" icon={CheckCheck} onClick={() => setCompleting(l)} aria-label="Complete" />}
-                <Button size="sm" variant="ghost" icon={Pencil} to={`/farmer/listings/${l.id}/edit`} aria-label="Edit" />
+                {l.status !== 'COMPLETED' && <Button size="sm" variant="ghost" icon={CheckCheck} onClick={() => setCompleting(l)} aria-label={t('listings.complete')} />}
+                <Button size="sm" variant="ghost" icon={Pencil} to={`/farmer/listings/${l.id}/edit`} aria-label={t('common.edit')} />
               </div>
             ),
           },
@@ -102,25 +104,25 @@ const ListingsPage = () => {
               value={list.filters.status}
               onChange={(status) => list.setFilters({ status })}
               tabs={[
-                { value: '', label: 'All' },
-                { value: 'ACTIVE', label: 'Published' },
-                { value: 'DRAFT', label: 'Drafts' },
-                { value: 'PAUSED', label: 'Paused' },
-                { value: 'SOLD_OUT', label: 'Sold out' },
-                { value: 'COMPLETED', label: 'Completed' },
+                { value: '', label: t('common.all') },
+                { value: 'ACTIVE', label: t('listings.published') },
+                { value: 'DRAFT', label: t('listings.drafts') },
+                { value: 'PAUSED', label: humanize('PAUSED') },
+                { value: 'SOLD_OUT', label: humanize('SOLD_OUT') },
+                { value: 'COMPLETED', label: humanize('COMPLETED') },
               ]}
             />
-            <SearchInput value={list.search} onChange={list.setSearch} placeholder="Crop or variety" className="sm:w-56" />
+            <SearchInput value={list.search} onChange={list.setSearch} placeholder={t('listings.searchPlaceholder')} className="sm:w-56" />
           </>
         }
-        empty={<EmptyState icon={Package} title="No listings here" description="Post a harvest with its quantity and price per kg." action={<Button to="/farmer/listings/new">Post new harvest</Button>} />}
+        empty={<EmptyState icon={Package} title={t('listings.emptyTitle')} description={t('listings.emptyBody')} action={<Button to="/farmer/listings/new">{t('dnav.tabs.postNewHarvest')}</Button>} />}
       />
       <ConfirmDialog
         open={!!completing}
         onClose={() => setCompleting(null)}
-        title={`Complete ${completing?.cropName}?`}
-        message="A completed listing is closed for good and cannot be edited. Open orders must be finished or rejected first."
-        confirmLabel="Complete listing"
+        title={t('listings.completeTitle', '', { name: completing?.cropName })}
+        message={t('listings.completeMessage')}
+        confirmLabel={t('listings.completeListing')}
         tone="primary"
         onConfirm={() => setStatus(completing, 'COMPLETED').then(() => setCompleting(null))}
       />

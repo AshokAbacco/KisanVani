@@ -12,9 +12,11 @@ import useAsync from '../../hooks/useAsync';
 import { vehiclesApi } from '../../services';
 import { useToast } from '../../context/ToastContext';
 import { formatKg, formatDate, humanize } from '../../utils/format';
+import { useI18n } from '../../i18n';
 
 /** Admin review of one vehicle and its documents. */
 const VehicleReviewPage = () => {
+  const { t } = useI18n();
   const { id } = useParams();
   const toast = useToast();
   const { data: v, loading, error, reload, setData } = useAsync(() => vehiclesApi.get(id), [id]);
@@ -28,7 +30,7 @@ const VehicleReviewPage = () => {
     setBusy(true);
     try {
       setData(await vehiclesApi.verify(v.id, { status, note: note || null }));
-      toast.success(status === 'VERIFIED' ? 'Vehicle verified. The driver can take trips.' : 'Vehicle rejected. The driver has been told why.');
+      toast.success(t(status === 'VERIFIED' ? 'vehicleReview.verifiedToast' : 'vehicleReview.rejectedToast'));
       setRejecting(false);
     } catch (e) {
       toast.error(e);
@@ -39,7 +41,7 @@ const VehicleReviewPage = () => {
 
   const verifyDoc = async (docId, status) => {
     try {
-      setData(await vehiclesApi.verifyDocument(v.id, docId, { status, note: status === 'REJECTED' ? 'Document not acceptable' : null }));
+      setData(await vehiclesApi.verifyDocument(v.id, docId, { status, note: status === 'REJECTED' ? t('vehicleReview.docNotAcceptable') : null }));
     } catch (e) {
       toast.error(e);
     }
@@ -48,42 +50,42 @@ const VehicleReviewPage = () => {
   return (
     <>
       <PageHeader
-        back={{ to: '/admin/vehicles', label: 'Vehicles' }}
+        back={{ to: '/admin/vehicles', label: t('dnav.tabs.vehicles') }}
         title={v.registrationNumber}
         description={<span className="inline-flex items-center gap-2">{humanize(v.type)} <StatusBadge status={v.verificationStatus} /></span>}
         actions={
           <>
             {v.verificationStatus !== 'VERIFIED' && (
               <Button icon={CheckCircle2} onClick={() => decide('VERIFIED')} loading={busy}>
-                Verify vehicle
+                {t('vehicleReview.verify')}
               </Button>
             )}
             {v.verificationStatus !== 'REJECTED' && (
               <Button variant="secondary" icon={XCircle} onClick={() => setRejecting(true)}>
-                Reject
+                {t('driverTrip.reject')}
               </Button>
             )}
           </>
         }
       />
       <div className="grid gap-6 xl:grid-cols-2">
-        <Section title="Details">
+        <Section title={t('common.details')}>
           <DetailList
             items={[
-              ['Driver', <Link key="d" className="link" to={`/admin/users/${v.driver.id}`}>{v.driver.name}</Link>],
-              ['Driver mobile', v.driver.mobile],
-              ['Owner', `${v.ownerName}${v.ownerMobile ? `, ${v.ownerMobile}` : ''}`],
-              ['Make and model', [v.make, v.model].filter(Boolean).join(' ') || '—'],
-              ['Capacity', formatKg(v.capacityKg)],
-              ['Insurance', `${v.insurancePolicyNo || '—'} until ${formatDate(v.insuranceExpiry)}`],
-              ['Fitness', formatDate(v.fitnessExpiry)],
-              ['Permit', `${v.permitNumber || '—'} until ${formatDate(v.permitExpiry)}`],
-              ['Trips', v._count.trips],
-              v.verificationNote && ['Last note', v.verificationNote],
+              [t('roleNames.DRIVER'), <Link key="d" className="link" to={`/admin/users/${v.driver.id}`}>{v.driver.name}</Link>],
+              [t('vehicleReview.driverMobile'), v.driver.mobile],
+              [t('vehicles.owner'), `${v.ownerName}${v.ownerMobile ? `, ${v.ownerMobile}` : ''}`],
+              [t('vehicles.makeModel'), [v.make, v.model].filter(Boolean).join(' ') || '—'],
+              [t('vehicles.capacity'), formatKg(v.capacityKg)],
+              [t('vehicles.docTypes.INSURANCE'), t('vehicles.numberUntil', '', { number: v.insurancePolicyNo || '—', date: formatDate(v.insuranceExpiry) })],
+              [humanize('FITNESS'), formatDate(v.fitnessExpiry)],
+              [t('vehicles.docTypes.PERMIT'), t('vehicles.numberUntil', '', { number: v.permitNumber || '—', date: formatDate(v.permitExpiry) })],
+              [t('dnav.tabs.trips'), v._count.trips],
+              v.verificationNote && [t('vehicleReview.lastNote'), v.verificationNote],
             ]}
           />
         </Section>
-        <Section title="Documents">
+        <Section title={t('dnav.tabs.documents')}>
           <ul className="divide-y divide-soil-100">
             {v.documents.map((d) => (
               <li key={d.id} className="flex flex-wrap items-center justify-between gap-2 py-3">
@@ -93,26 +95,26 @@ const VehicleReviewPage = () => {
                   {d.documentNumber ? ` — ${d.documentNumber}` : ''}
                 </a>
                 <span className="flex items-center gap-2 text-sm">
-                  {d.expiryDate && <span className="text-soil-500">until {formatDate(d.expiryDate)}</span>}
+                  {d.expiryDate && <span className="text-soil-500">{t('vehicles.until', '', { date: formatDate(d.expiryDate) })}</span>}
                   <StatusBadge status={d.verificationStatus} />
                   {d.verificationStatus === 'PENDING' && (
                     <>
                       <Button size="sm" variant="ghost" onClick={() => verifyDoc(d.id, 'VERIFIED')}>
-                        Accept
+                        {t('vehicleReview.accept')}
                       </Button>
                       <Button size="sm" variant="ghost" onClick={() => verifyDoc(d.id, 'REJECTED')}>
-                        Reject
+                        {t('driverTrip.reject')}
                       </Button>
                     </>
                   )}
                 </span>
               </li>
             ))}
-            {!v.documents.length && <li className="py-6 text-sm text-soil-500">The driver has not uploaded documents yet.</li>}
+            {!v.documents.length && <li className="py-6 text-sm text-soil-500">{t('vehicleReview.noDocs')}</li>}
           </ul>
         </Section>
       </div>
-      <ConfirmDialog open={rejecting} onClose={() => setRejecting(false)} title="Reject this vehicle?" message="Tell the driver what to fix — the note is sent to them." confirmLabel="Reject vehicle" requireReason reasonLabel="What needs fixing" busy={busy} onConfirm={(note) => decide('REJECTED', note)} />
+      <ConfirmDialog open={rejecting} onClose={() => setRejecting(false)} title={t('vehicleReview.rejectTitle')} message={t('vehicleReview.rejectMessage')} confirmLabel={t('vehicleReview.rejectVehicle')} requireReason reasonLabel={t('vehicleReview.whatToFix')} busy={busy} onConfirm={(note) => decide('REJECTED', note)} />
     </>
   );
 };

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
+import { translate } from '../../i18n';
 
 /** Accessible dialog: focus moves in, Escape closes, focus returns to the opener. */
 const Modal = ({ open, onClose, title, description, children, footer, size = 'md' }) => {
@@ -41,7 +42,7 @@ const Modal = ({ open, onClose, title, description, children, footer, size = 'md
             </h2>
             {description && <p className="mt-0.5 text-sm text-soil-500">{description}</p>}
           </div>
-          <button data-close onClick={onClose} className="rounded-md p-1 text-soil-400 hover:bg-soil-100 hover:text-soil" aria-label="Close">
+          <button data-close onClick={onClose} className="rounded-md p-1 text-soil-400 hover:bg-soil-100 hover:text-soil" aria-label={translate('common.close', 'Close')}>
             <X className="h-5 w-5" />
           </button>
         </div>

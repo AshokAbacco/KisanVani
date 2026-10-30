@@ -9,12 +9,14 @@ import { authApi } from '../../services';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { placeUrl } from '../../utils/maps';
+import { useI18n } from '../../i18n';
 
 /**
  * The shop's GPS pin. It is used to show distance to farmers' listings and mandi lots, and as the drop point
  * that drivers navigate to.
  */
 const ShopGpsPage = () => {
+  const { t } = useI18n();
   const { user, setUser } = useAuth();
   const toast = useToast();
   const addr = user.shopProfile?.address;
@@ -25,7 +27,7 @@ const ShopGpsPage = () => {
     setSaving(true);
     try {
       setUser(await authApi.updateMe({ address: { latitude: coords.lat, longitude: coords.lng } }));
-      toast.success('Shop location saved');
+      toast.success(t('shopGps.saved'));
     } catch (e) {
       toast.error(e);
     } finally {
@@ -35,37 +37,37 @@ const ShopGpsPage = () => {
 
   return (
     <>
-      <PageHeader title="Shop GPS profile" description="Set the exact spot of your shop so suppliers and drivers can find it." />
+      <PageHeader title={t('shopGps.title')} description={t('shopGps.intro')} />
       <div className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
-        <Section title="Pin your shop">
+        <Section title={t('shopGps.pin')}>
           <LocationPicker value={coords} onChange={setCoords} height={420} />
           <div className="mt-4 flex flex-wrap justify-end gap-2">
             {coords.lat != null && (
               <Button variant="secondary" icon={Navigation} href={placeUrl(coords.lat, coords.lng)}>
-                Open in maps
+                {t('common.openInMaps')}
               </Button>
             )}
             <Button icon={MapPin} onClick={save} loading={saving}>
-              Save location
+              {t('shopGps.saveLocation')}
             </Button>
           </div>
         </Section>
         <div className="space-y-6">
-          <Section title="Shop address">
+          <Section title={t('shopGps.address')}>
             <DetailList
               cols={1}
               items={[
-                ['Shop', user.shopProfile?.shopName],
-                ['Address', [addr?.line1, addr?.city, addr?.district, addr?.state, addr?.pincode].filter(Boolean).join(', ') || 'Not set'],
-                ['Shop code', user.shopProfile?.shopCode],
+                [t('shopGps.shop'), user.shopProfile?.shopName],
+                [t('common.address'), [addr?.line1, addr?.city, addr?.district, addr?.state, addr?.pincode].filter(Boolean).join(', ') || t('common.notSet')],
+                [t('shopGps.shopCode'), user.shopProfile?.shopCode],
               ]}
             />
             <Button to="/shop/profile" variant="secondary" size="sm" className="mt-4">
-              Edit address & bill details
+              {t('shopGps.editAddress')}
             </Button>
           </Section>
-          <Alert tone="info" title="Why it matters">
-            Marketplace listings show how far each farm or mandi is from this pin, and new delivery requests use it as the default drop point.
+          <Alert tone="info" title={t('shopGps.whyTitle')}>
+            {t('shopGps.whyBody')}
           </Alert>
         </div>
       </div>

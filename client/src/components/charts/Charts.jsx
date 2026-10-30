@@ -2,6 +2,7 @@ import { Area, AreaChart, Bar, BarChart, CartesianGrid, Legend, Line, LineChart,
 import { formatINR, formatINRCompact, formatNumber, formatDate } from '../../utils/format';
 import EmptyState from '../common/EmptyState';
 import { BarChart3 } from 'lucide-react';
+import { translate } from '../../i18n';
 
 // Series colours chosen to stay distinguishable for common colour-vision deficiencies.
 export const SERIES = ['#1F6F3D', '#E09A1B', '#1D5E9B', '#B44F16', '#6B5CA5', '#3FA34D'];
@@ -14,7 +15,7 @@ const tipFmt = (kind) => (kind === 'money' ? (v) => formatINR(v) : (v) => format
 
 const Frame = ({ data, height, children }) =>
   !data?.length ? (
-    <EmptyState compact icon={BarChart3} title="No data for this period" />
+    <EmptyState compact icon={BarChart3} title={translate('components.charts.noData', 'No data for this period')} />
   ) : (
     <div style={{ height }} className="w-full">
       <ResponsiveContainer width="100%" height="100%">

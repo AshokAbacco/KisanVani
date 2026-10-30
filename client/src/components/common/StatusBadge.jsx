@@ -1,5 +1,6 @@
 import { STATUS_TONES } from '../../constants/status';
 import { humanize } from '../../utils/format';
+import { useI18n } from '../../i18n';
 
 const TONES = {
   green: 'bg-field-50 text-field-800 ring-field-200',
@@ -11,6 +12,7 @@ const TONES = {
 };
 
 const StatusBadge = ({ status, tone, children, className = '' }) => {
+  useI18n(); // re-render on language change; humanize() reads the active language
   const t = tone || STATUS_TONES[status] || 'grey';
   return (
     <span className={`inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset ${TONES[t]} ${className}`}>

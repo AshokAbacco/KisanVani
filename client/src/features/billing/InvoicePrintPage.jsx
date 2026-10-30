@@ -4,6 +4,7 @@ import ThermalReceipt from './ThermalReceipt';
 import { billingApi } from '../../services';
 import { PageLoader } from '../../components/common/Spinner';
 import ErrorState from '../../components/feedback/ErrorState';
+import { translate } from '../../i18n';
 
 /**
  * Print view for a bill. Each visit records one print on the server (reprints are counted);
@@ -29,7 +30,7 @@ const InvoicePrintPage = () => {
   }, [id, params]);
 
   if (error) return <ErrorState error={error} />;
-  if (!invoice) return <PageLoader label="Preparing the bill…" />;
+  if (!invoice) return <PageLoader label={translate('receipt.preparing', 'Preparing the bill…')} />;
   return <ThermalReceipt invoice={invoice} />;
 };
 

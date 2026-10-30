@@ -21,8 +21,10 @@ import { useToast } from '../../context/ToastContext';
 import { formatINR, formatKg, formatDateTime, formatTime, humanize, timeAgo } from '../../utils/format';
 import { TRIP_STEPS, TRIP_TRACKABLE } from '../../constants/status';
 import { directionsUrl } from '../../utils/maps';
+import { useI18n } from '../../i18n';
 
 const QtyModal = ({ open, onClose, title, label, max, defaultValue, confirmLabel, onConfirm, withEta }) => {
+  const { t } = useI18n();
   const [qty, setQty] = useState(defaultValue);
   const [eta, setEta] = useState('');
   const [busy, setBusy] = useState(false);
@@ -36,7 +38,7 @@ const QtyModal = ({ open, onClose, title, label, max, defaultValue, confirmLabel
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             disabled={!valid}
@@ -59,14 +61,15 @@ const QtyModal = ({ open, onClose, title, label, max, defaultValue, confirmLabel
       }
     >
       <div className="space-y-4">
-        <Input label={label} suffix="kg" inputMode="decimal" value={qty} onChange={(e) => setQty(e.target.value)} hint={max ? `Up to ${formatKg(max, { grams: false })}` : undefined} />
-        {withEta && <Input label="Estimated arrival" type="datetime-local" value={eta} onChange={(e) => setEta(e.target.value)} hint="Shared with the buyer" />}
+        <Input label={label} suffix="kg" inputMode="decimal" value={qty} onChange={(e) => setQty(e.target.value)} hint={max ? t('driverTrip.upTo', '', { qty: formatKg(max, { grams: false }) }) : undefined} />
+        {withEta && <Input label={t('driverTrip.eta')} type="datetime-local" value={eta} onChange={(e) => setEta(e.target.value)} hint={t('driverTrip.sharedWithBuyer')} />}
       </div>
     </Modal>
   );
 };
 
 const DeliveryModal = ({ open, onClose, trip, onDone }) => {
+  const { t } = useI18n();
   const toast = useToast();
   const [qty, setQty] = useState(trip.loadedQuantityKg ? String(Number(trip.loadedQuantityKg)) : '');
   const [receiverName, setReceiverName] = useState(trip.dropContactName || '');
@@ -81,7 +84,7 @@ const DeliveryModal = ({ open, onClose, trip, onDone }) => {
     setBusy(true);
     try {
       await transportApi.proof(trip.id, { deliveredQuantityKg: qty, receiverName, receiverMobile: receiverMobile || '', notes }, file);
-      toast.success('Delivery confirmed. Location sharing has stopped.');
+      toast.success(t('driverTrip.deliveredToast'));
       onDone();
       onClose();
     } catch (e) {
@@ -95,37 +98,37 @@ const DeliveryModal = ({ open, onClose, trip, onDone }) => {
     <Modal
       open={open}
       onClose={onClose}
-      title="Confirm delivery"
-      description="Record what was handed over and who received it."
+      title={t('driverTrip.confirmDelivery')}
+      description={t('driverTrip.deliveryIntro')}
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button onClick={submit} disabled={!valid} loading={busy}>
-            Confirm delivery
+            {t('driverTrip.confirmDelivery')}
           </Button>
         </>
       }
     >
       <div className="space-y-4">
-        <Input label="Delivered quantity" suffix="kg" inputMode="decimal" value={qty} onChange={(e) => setQty(e.target.value)} hint={max ? `Loaded ${formatKg(max, { grams: false })}` : undefined} />
+        <Input label={t('driverTrip.deliveredQty')} suffix="kg" inputMode="decimal" value={qty} onChange={(e) => setQty(e.target.value)} hint={max ? t('driverTrip.loadedQty', '', { qty: formatKg(max, { grams: false }) }) : undefined} />
         <div className="grid grid-cols-2 gap-3">
-          <Input label="Received by" value={receiverName} onChange={(e) => setReceiverName(e.target.value)} />
-          <Input label="Receiver mobile" inputMode="tel" value={receiverMobile} onChange={(e) => setReceiverMobile(e.target.value)} />
+          <Input label={t('driverTrip.receivedBy')} value={receiverName} onChange={(e) => setReceiverName(e.target.value)} />
+          <Input label={t('driverTrip.receiverMobile')} inputMode="tel" value={receiverMobile} onChange={(e) => setReceiverMobile(e.target.value)} />
         </div>
-        <Textarea label="Notes" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="e.g. 2 crates damaged" />
+        <Textarea label={t('common.notes')} rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t('driverTrip.notesPlaceholder')} />
         <div>
-          <p className="field-label">Proof photo or signed challan</p>
+          <p className="field-label">{t('driverTrip.proof')}</p>
           {file ? (
             <p className="flex items-center justify-between rounded-lg bg-leafwhite px-3 py-2 text-sm">
               {file.name}
               <button className="link" onClick={() => setFile(null)}>
-                Remove
+                {t('common.remove')}
               </button>
             </p>
           ) : (
-            <FileUpload accept="image/jpeg,image/png,image/webp,application/pdf" onFiles={(f) => setFile(f[0])} label="Take or choose a photo" />
+            <FileUpload accept="image/jpeg,image/png,image/webp,application/pdf" onFiles={(f) => setFile(f[0])} label={t('driverTrip.takePhoto')} />
           )}
         </div>
       </div>
@@ -134,7 +137,15 @@ const DeliveryModal = ({ open, onClose, trip, onDone }) => {
 };
 
 /** The driver's working screen for one trip: status actions, GPS sharing, navigation and proof of delivery. */
+/* Consequential actions confirmed with a reason; texts come from driverTrip.confirm.<key>. */
+const CONFIRMS = {
+  reject: 'REJECTED',
+  cancel: 'CANCELLED',
+  fail: 'FAILED',
+};
+
 const DriverTripPage = () => {
+  const { t } = useI18n();
   const { id } = useParams();
   const toast = useToast();
   const { data: trip, loading, error, reload } = useAsync(() => transportApi.trip(id), [id]);
@@ -152,7 +163,7 @@ const DriverTripPage = () => {
     setBusy(true);
     try {
       await transportApi.transition(trip.id, { status, ...extra });
-      toast.success(`Trip ${humanize(status).toLowerCase()}`);
+      toast.success(t('driverTrip.movedToast', '', { status: humanize(status) }));
       await reload();
     } catch (e) {
       toast.error(e);
@@ -176,7 +187,11 @@ const DriverTripPage = () => {
 
   return (
     <>
-      <PageHeader back={{ to: '/driver/trips', label: 'My trips' }} title={`Trip ${trip.tripNumber}`} description={`${trip.commodity}, ${formatKg(trip.expectedQuantityKg)} for ${formatINR(trip.transportCharge)}`} />
+      <PageHeader
+        back={{ to: '/driver/trips', label: t('myTrips.presets.all.title') }}
+        title={t('trips.tripTitle', '', { number: trip.tripNumber })}
+        description={t('driverTrip.summary', '', { load: trip.commodity, qty: formatKg(trip.expectedQuantityKg), charge: formatINR(trip.transportCharge) })}
+      />
       <div className="space-y-6">
         <Section>
           <Stepper steps={TRIP_STEPS} current={trip.status} offPath={offPath} />
@@ -187,57 +202,57 @@ const DriverTripPage = () => {
           {trip.status === 'ASSIGNED' && (
             <>
               <Button size="lg" icon={CheckCircle2} onClick={() => move('ACCEPTED').catch(() => {})} loading={busy}>
-                Accept trip
+                {t('driverTrip.accept')}
               </Button>
-              <Button size="lg" variant="secondary" icon={XCircle} onClick={() => setConfirm({ status: 'REJECTED', title: 'Reject this trip?', label: 'Reject trip', message: 'The load goes back to the market for another driver.' })}>
-                Reject
+              <Button size="lg" variant="secondary" icon={XCircle} onClick={() => setConfirm('reject')}>
+                {t('driverTrip.reject')}
               </Button>
             </>
           )}
           {trip.status === 'ACCEPTED' && (
             <>
               <Button size="lg" icon={PackageOpen} onClick={() => setModal('pickup')}>
-                Confirm pickup
+                {t('driverTrip.confirmPickup')}
               </Button>
-              <Button size="lg" variant="secondary" icon={Ban} onClick={() => setConfirm({ status: 'CANCELLED', title: 'Cancel this trip?', label: 'Cancel trip', message: 'Only cancel if you cannot reach the pickup. The requester is told immediately.' })}>
-                Can’t do this trip
+              <Button size="lg" variant="secondary" icon={Ban} onClick={() => setConfirm('cancel')}>
+                {t('driverTrip.cantDo')}
               </Button>
             </>
           )}
           {trip.status === 'PICKED_UP' && (
             <Button size="lg" icon={Truck} onClick={() => setModal('start')}>
-              Start trip
+              {t('driverTrip.startTrip')}
             </Button>
           )}
           {trip.status === 'IN_TRANSIT' && (
             <Button size="lg" icon={PackageCheck} onClick={() => setModal('deliver')}>
-              Confirm delivery
+              {t('driverTrip.confirmDelivery')}
             </Button>
           )}
           {['PICKED_UP', 'IN_TRANSIT'].includes(trip.status) && (
-            <Button size="lg" variant="secondary" icon={AlertTriangle} onClick={() => setConfirm({ status: 'FAILED', title: 'Report failed delivery?', label: 'Report failure', message: 'Use this if the delivery cannot be completed. The buyer and requester are notified with your reason.' })}>
-              Report a problem
+            <Button size="lg" variant="secondary" icon={AlertTriangle} onClick={() => setConfirm('fail')}>
+              {t('driverTrip.reportProblem')}
             </Button>
           )}
           {!offPath && trip.status !== 'DELIVERED' && (
             <Button size="lg" variant="secondary" icon={Navigation} href={nav}>
-              Navigate to {toPickup ? 'pickup' : 'drop'}
+              {t(toPickup ? 'driverTrip.navPickup' : 'driverTrip.navDrop')}
             </Button>
           )}
         </div>
 
         <div className="grid gap-6 xl:grid-cols-[1.4fr_1fr]">
           <Section
-            title="Location"
+            title={t('driverTrip.location')}
             actions={
               trackable &&
               (sharing.sharing ? (
                 <Button size="sm" variant="secondary" icon={Square} onClick={sharing.stop}>
-                  Stop sharing
+                  {t('driverTrip.stopSharing')}
                 </Button>
               ) : (
                 <Button size="sm" icon={Radio} onClick={sharing.start}>
-                  Share my location
+                  {t('driverTrip.shareLocation')}
                 </Button>
               ))
             }
@@ -245,16 +260,16 @@ const DriverTripPage = () => {
             {trackable ? (
               sharing.sharing ? (
                 <Alert tone="success" className="mb-3">
-                  Sharing every {sharing.intervalSec} seconds with the buyer and requester of this trip.{' '}
-                  {sharing.lastSent ? `Last sent at ${formatTime(sharing.lastSent)}.` : 'Waiting for GPS…'} Keep this screen open while driving.
+                  {t('driverTrip.sharingEvery', '', { n: sharing.intervalSec })}{' '}
+                  {sharing.lastSent ? t('driverTrip.lastSentAt', '', { time: formatTime(sharing.lastSent) }) : t('driverTrip.waitingGps')} {t('driverTrip.keepOpen')}
                 </Alert>
               ) : (
                 <Alert tone="info" className="mb-3">
-                  Location is shared only when you switch it on, only for this trip, and stops automatically when the trip ends.
+                  {t('driverTrip.sharingInfo')}
                 </Alert>
               )
             ) : (
-              <p className="mb-3 text-sm text-soil-500">{trip.status === 'ASSIGNED' ? 'Accept the trip to share your location.' : 'Location sharing has ended for this trip.'}</p>
+              <p className="mb-3 text-sm text-soil-500">{t(trip.status === 'ASSIGNED' ? 'driverTrip.acceptToShare' : 'driverTrip.sharingEnded')}</p>
             )}
             {sharing.error && (
               <Alert tone="warning" className="mb-3">
@@ -270,62 +285,65 @@ const DriverTripPage = () => {
               current={current}
               isStale={!sharing.sharing && tracking.isStale}
             />
-            {current && <p className="mt-2 text-xs text-soil-500">Last position {timeAgo(current.at)}.</p>}
+            {current && <p className="mt-2 text-xs text-soil-500">{t('driverTrip.lastPosition', '', { ago: timeAgo(current.at) })}</p>}
           </Section>
 
           <div className="space-y-6">
-            <Section title="Pickup">
+            <Section title={t('components.tripMap.pickup')}>
               <DetailList
                 cols={1}
                 items={[
-                  ['Address', trip.pickupAddress],
-                  ['Contact', <a key="p" className="link inline-flex items-center gap-1" href={`tel:${trip.pickupContactPhone}`}><Phone className="h-3.5 w-3.5" aria-hidden />{trip.pickupContactName}, {trip.pickupContactPhone}</a>],
-                  ['Expected load', formatKg(trip.expectedQuantityKg)],
-                  ['Loaded', trip.loadedQuantityKg ? `${formatKg(trip.loadedQuantityKg)} at ${formatDateTime(trip.pickedUpAt)}` : '—'],
+                  [t('common.address'), trip.pickupAddress],
+                  [t('common.contact'), <a key="p" className="link inline-flex items-center gap-1" href={`tel:${trip.pickupContactPhone}`}><Phone className="h-3.5 w-3.5" aria-hidden />{trip.pickupContactName}, {trip.pickupContactPhone}</a>],
+                  [t('driverTrip.expectedLoad'), formatKg(trip.expectedQuantityKg)],
+                  [t('driverTrip.loaded'), trip.loadedQuantityKg ? t('common.qtyAt', '', { qty: formatKg(trip.loadedQuantityKg), at: formatDateTime(trip.pickedUpAt) }) : '—'],
                 ]}
               />
             </Section>
-            <Section title="Destination">
+            <Section title={t('components.tripMap.destination')}>
               <DetailList
                 cols={1}
                 items={[
-                  ['Address', <span key="d">{trip.dropAddress} <a className="link inline-flex items-center gap-0.5" target="_blank" rel="noreferrer" href={directionsUrl({ toLat: trip.dropLat, toLng: trip.dropLng, toAddress: trip.dropAddress })}>map <ExternalLink className="h-3 w-3" aria-hidden /></a></span>],
-                  trip.dropContactPhone && ['Receiver', <a key="r" className="link" href={`tel:${trip.dropContactPhone}`}>{trip.dropContactName || 'Receiver'}, {trip.dropContactPhone}</a>],
-                  ['Estimated arrival', formatDateTime(trip.estimatedArrivalAt)],
-                  ['Delivered', trip.deliveredQuantityKg ? `${formatKg(trip.deliveredQuantityKg)} at ${formatDateTime(trip.deliveredAt)}` : '—'],
-                  trip.order && ['Order', trip.order.orderNumber],
-                  ['Charge', `${formatINR(trip.transportCharge)} (received ${formatINR(trip.amountPaid)})`],
+                  [t('common.address'), <span key="d">{trip.dropAddress} <a className="link inline-flex items-center gap-0.5" target="_blank" rel="noreferrer" href={directionsUrl({ toLat: trip.dropLat, toLng: trip.dropLng, toAddress: trip.dropAddress })}>{t('driverTrip.map')} <ExternalLink className="h-3 w-3" aria-hidden /></a></span>],
+                  trip.dropContactPhone && [t('driverTrip.receiver'), <a key="r" className="link" href={`tel:${trip.dropContactPhone}`}>{trip.dropContactName || t('driverTrip.receiver')}, {trip.dropContactPhone}</a>],
+                  [t('driverTrip.eta'), formatDateTime(trip.estimatedArrivalAt)],
+                  [humanize('DELIVERED'), trip.deliveredQuantityKg ? t('common.qtyAt', '', { qty: formatKg(trip.deliveredQuantityKg), at: formatDateTime(trip.deliveredAt) }) : '—'],
+                  trip.order && [t('enums.ORDER'), trip.order.orderNumber],
+                  [t('trips.charge'), t('driverTrip.chargeReceived', '', { charge: formatINR(trip.transportCharge), received: formatINR(trip.amountPaid) })],
                 ]}
               />
               {trip.status === 'DELIVERED' && !trip.deliveryProofs.length && (
                 <Button className="mt-4" size="sm" variant="secondary" onClick={() => setModal('deliver')}>
-                  Add proof of delivery
+                  {t('driverTrip.addProof')}
                 </Button>
               )}
             </Section>
-            <Section title="History">
+            <Section title={t('dnav.tabs.history')}>
               <Timeline items={trip.events.map((e) => ({ id: e.id, title: humanize(e.toStatus), meta: formatDateTime(e.createdAt), note: e.note }))} />
             </Section>
             <p className="text-center text-sm text-soil-500">
-              Need to change vehicle details? <Link className="link" to="/driver/vehicles">Vehicles</Link>
+              {t('driverTrip.changeVehicle')}{' '}
+              <Link className="link" to="/driver/vehicles">
+                {t('dnav.tabs.vehicles')}
+              </Link>
             </p>
           </div>
         </div>
       </div>
 
       {modal === 'pickup' && (
-        <QtyModal open onClose={() => setModal(null)} title="Confirm pickup" label="Loaded quantity" defaultValue={String(Number(trip.expectedQuantityKg))} confirmLabel="Confirm pickup" onConfirm={(q) => move('PICKED_UP', { loadedQuantityKg: q })} />
+        <QtyModal open onClose={() => setModal(null)} title={t('driverTrip.confirmPickup')} label={t('driverTrip.loadedQuantity')} defaultValue={String(Number(trip.expectedQuantityKg))} confirmLabel={t('driverTrip.confirmPickup')} onConfirm={(q) => move('PICKED_UP', { loadedQuantityKg: q })} />
       )}
       {modal === 'start' && (
         <QtyModal
           open
           withEta
           onClose={() => setModal(null)}
-          title="Start the trip"
-          label="Load on board"
+          title={t('driverTrip.startTheTrip')}
+          label={t('driverTrip.loadOnBoard')}
           defaultValue={String(Number(trip.loadedQuantityKg || trip.expectedQuantityKg))}
           max={trip.loadedQuantityKg}
-          confirmLabel="Start trip"
+          confirmLabel={t('driverTrip.startTrip')}
           onConfirm={(_q, eta) => {
             if (!sharing.sharing) sharing.start();
             return move('IN_TRANSIT', eta ? { estimatedArrivalAt: new Date(eta).toISOString() } : {});
@@ -333,7 +351,20 @@ const DriverTripPage = () => {
         />
       )}
       {modal === 'deliver' && <DeliveryModal open trip={trip} onClose={() => setModal(null)} onDone={reload} />}
-      <ConfirmDialog open={!!confirm} onClose={() => setConfirm(null)} title={confirm?.title} message={confirm?.message} confirmLabel={confirm?.label} requireReason busy={busy} onConfirm={(reason) => move(confirm.status, { reason }).then(() => setConfirm(null)).catch(() => {})} />
+      <ConfirmDialog
+        open={!!confirm}
+        onClose={() => setConfirm(null)}
+        title={confirm && t(`driverTrip.confirm.${confirm}.title`)}
+        message={confirm && t(`driverTrip.confirm.${confirm}.message`)}
+        confirmLabel={confirm && t(`driverTrip.confirm.${confirm}.label`)}
+        requireReason
+        busy={busy}
+        onConfirm={(reason) =>
+          move(CONFIRMS[confirm], { reason })
+            .then(() => setConfirm(null))
+            .catch(() => {})
+        }
+      />
     </>
   );
 };

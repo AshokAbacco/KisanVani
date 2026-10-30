@@ -2,18 +2,17 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { Check, ChevronDown, Languages } from 'lucide-react';
 import { LANGUAGES, useI18n } from '../../i18n';
-import { useAuth } from '../../context/AuthContext';
-import { authApi } from '../../services';
 
 /**
- * Navbar language picker. Changing the language re-renders every page that reads from t(),
- * is remembered in this browser, and — for a signed-in user — saved to their profile too.
+ * Language picker used in BOTH the website navbar and the dashboard header.
+ * Changing the language re-renders every page that reads from t() and is remembered in this
+ * browser; <LanguageSync> also saves it to the signed-in user's profile.
  *
  * `compact` shows only the icon + a short script label (used on narrow screens).
+ * `variant="dashboard"` uses the plain white dashboard header styling.
  */
-const LanguageSwitcher = ({ compact = false, align = 'right', className = '' }) => {
+const LanguageSwitcher = ({ compact = false, align = 'right', className = '', variant = 'site' }) => {
   const { lang, setLang, t } = useI18n();
-  const { user, setUser } = useAuth();
   const [open, setOpen] = useState(false);
   const rootRef = useRef(null);
   const itemRefs = useRef([]);
@@ -49,17 +48,9 @@ const LanguageSwitcher = ({ compact = false, align = 'right', className = '' }) 
     itemRefs.current[i]?.focus();
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const choose = async (code) => {
+  const choose = (code) => {
     setOpen(false);
-    if (code === lang) return;
-    setLang(code);
-    if (user) {
-      try {
-        setUser(await authApi.updateMe({ preferredLanguage: code }));
-      } catch {
-        /* the local choice still applies */
-      }
-    }
+    if (code !== lang) setLang(code);
   };
 
   const onItemKey = (e, i) => {
@@ -85,9 +76,9 @@ const LanguageSwitcher = ({ compact = false, align = 'right', className = '' }) 
         aria-controls={menuId}
         aria-label={`${t('nav.language')}: ${current.native}`}
         title={t('nav.chooseLanguage')}
-        className={`inline-flex h-10 items-center gap-1.5 rounded-lg border border-white/70 bg-white/60 text-sm font-semibold text-soil-700 shadow-sm transition hover:bg-white hover:text-soil focus-visible:outline focus-visible:outline-2 focus-visible:outline-field-700 ${
-          compact ? 'px-2.5' : 'px-3'
-        } ${open ? 'bg-white ring-2 ring-[#34bb0c]/25' : ''}`}
+        className={`inline-flex h-10 items-center gap-1.5 rounded-lg text-sm font-semibold text-soil-700 transition hover:text-soil focus-visible:outline focus-visible:outline-2 focus-visible:outline-field-700 ${
+          variant === 'dashboard' ? 'border border-soil-200 bg-white hover:bg-soil-100' : 'border border-white/70 bg-white/60 shadow-sm hover:bg-white'
+        } ${compact ? 'px-2.5' : 'px-3'} ${open ? 'bg-white ring-2 ring-[#34bb0c]/25' : ''}`}
       >
         <Languages className="h-[18px] w-[18px] shrink-0 text-field-700" aria-hidden />
         <span className="whitespace-nowrap">{compact ? current.short : current.native}</span>

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { translate } from '../../i18n';
 
 /**
  * Optional weighing-scale integration through the Web Serial API (Chrome / Edge, HTTPS or localhost).
@@ -42,7 +43,7 @@ export const useWeighingScale = ({ enabled, baudRate = 9600 }) => {
   }, []);
 
   const connect = useCallback(async () => {
-    if (!supported) return setError('This browser cannot talk to a scale. Use Chrome or Edge, or type the weight.');
+    if (!supported) return setError(translate('scale.unsupported', 'This browser cannot talk to a scale. Use Chrome or Edge, or type the weight.'));
     setError(null);
     try {
       port.current = await navigator.serial.requestPort();
@@ -65,7 +66,7 @@ export const useWeighingScale = ({ enabled, baudRate = 9600 }) => {
         }
       }
     } catch (e) {
-      if (e?.name !== 'NotFoundError') setError(`Scale connection failed: ${e.message}`);
+      if (e?.name !== 'NotFoundError') setError(translate('scale.failed', 'Scale connection failed: {error}', { error: e.message }));
       await disconnect();
     }
     return undefined;

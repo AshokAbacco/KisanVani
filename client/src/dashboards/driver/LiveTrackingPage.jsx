@@ -10,44 +10,49 @@ import TripMap from '../../components/maps/TripMap';
 import useAsync from '../../hooks/useAsync';
 import { trackingApi } from '../../services';
 import { timeAgo } from '../../utils/format';
+import { useI18n } from '../../i18n';
 
 /** All of the driver's active trips on one map, with a shortcut into each trip's sharing controls. */
 const LiveTrackingPage = () => {
+  const { t } = useI18n();
   const { data, loading, reload } = useAsync(() => trackingApi.active(), []);
   if (loading && !data) return <PageLoader />;
   const trips = data || [];
   return (
     <>
-      <PageHeader title="Live tracking" description="Location is only shared from inside a trip, after you switch it on." actions={<Button variant="secondary" onClick={reload}>Refresh</Button>} />
+      <PageHeader title={t('dnav.tabs.liveTracking')} description={t('liveTracking.intro')} actions={<Button variant="secondary" onClick={reload}>{t('common.refresh')}</Button>} />
       {!trips.length ? (
         <div className="panel">
-          <EmptyState icon={Navigation} title="No active trips" description="When you accept a trip, you can share your location from the trip screen." action={<Button to="/driver/assignments">See assignments</Button>} />
+          <EmptyState icon={Navigation} title={t('liveTracking.emptyTitle')} description={t('liveTracking.emptyBody')} action={<Button to="/driver/assignments">{t('liveTracking.seeAssignments')}</Button>} />
         </div>
       ) : (
         <div className="space-y-6">
-          {trips.map((t) => (
+          {trips.map((trip) => (
             <Section
-              key={t.id}
-              title={`${t.tripNumber} — ${t.commodity}`}
-              description={t.lastLocationAt ? `Last shared ${timeAgo(t.lastLocationAt)}` : 'Not sharing yet'}
+              key={trip.id}
+              title={`${trip.tripNumber} — ${trip.commodity}`}
+              description={trip.lastLocationAt ? t('liveTracking.lastShared', '', { ago: timeAgo(trip.lastLocationAt) }) : t('liveTracking.notSharing')}
               actions={
                 <>
-                  <StatusBadge status={t.status} />
-                  <Button size="sm" to={`/driver/trips/${t.id}`} icon={Navigation}>
-                    Open trip
+                  <StatusBadge status={trip.status} />
+                  <Button size="sm" to={`/driver/trips/${trip.id}`} icon={Navigation}>
+                    {t('liveTracking.openTrip')}
                   </Button>
                 </>
               }
             >
               <TripMap
                 height={300}
-                pickup={{ lat: t.pickupLat, lng: t.pickupLng, label: t.pickupAddress }}
-                drop={{ lat: t.dropLat, lng: t.dropLng, label: t.dropAddress }}
-                current={t.lastLat != null ? { lat: t.lastLat, lng: t.lastLng, at: t.lastLocationAt } : null}
-                isStale={t.isStale}
+                pickup={{ lat: trip.pickupLat, lng: trip.pickupLng, label: trip.pickupAddress }}
+                drop={{ lat: trip.dropLat, lng: trip.dropLng, label: trip.dropAddress }}
+                current={trip.lastLat != null ? { lat: trip.lastLat, lng: trip.lastLng, at: trip.lastLocationAt } : null}
+                isStale={trip.isStale}
               />
               <p className="mt-2 text-sm text-soil-500">
-                {t.pickupAddress} to {t.dropAddress}. Vehicle {t.vehicle.registrationNumber}. <Link to={`/driver/trips/${t.id}`} className="link">Manage sharing</Link>
+                {t('liveTracking.summary', '', { from: trip.pickupAddress, to: trip.dropAddress, reg: trip.vehicle.registrationNumber })}{' '}
+                <Link to={`/driver/trips/${trip.id}`} className="link">
+                  {t('liveTracking.manageSharing')}
+                </Link>
               </p>
             </Section>
           ))}

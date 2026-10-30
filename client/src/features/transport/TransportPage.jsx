@@ -16,13 +16,16 @@ import useList from '../../hooks/useList';
 import { transportApi } from '../../services';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
-import { formatINR, formatKg, formatDateTime } from '../../utils/format';
+import { formatINR, formatKg, formatDateTime, humanize } from '../../utils/format';
+import { useI18n } from '../../i18n';
 
 /**
  * Transport requests and trips for farmers, shops, mandi owners and admins.
  * `canAssign` (admin, mandi owner) adds driver assignment for open requests.
+ * `copy` is the locale key holding this screen's title/description (routes.<screen>).
  */
-const TransportPage = ({ base, title = 'Transport', description = 'Loads you have requested and the trips carrying your orders.', canAssign = false, defaultTab = 'trips', showMap = true }) => {
+const TransportPage = ({ base, copy = 'transport', canAssign = false, defaultTab = 'trips', showMap = true }) => {
+  const { t } = useI18n();
   const { user } = useAuth();
   const toast = useToast();
   const navigate = useNavigate();
@@ -39,7 +42,7 @@ const TransportPage = ({ base, title = 'Transport', description = 'Loads you hav
     setBusy(true);
     try {
       await transportApi.cancelRequest(cancelFor.id, reason);
-      toast.success('Transport request cancelled');
+      toast.success(t('transport.cancelledToast'));
       setCancelFor(null);
       requests.reload();
       trips.reload();
@@ -53,26 +56,26 @@ const TransportPage = ({ base, title = 'Transport', description = 'Loads you hav
   const requestColumns = [
     {
       key: 'requestNumber',
-      header: 'Request',
+      header: t('transport.request'),
       render: (r) => (
         <div>
           <p className="num whitespace-nowrap font-semibold">{r.requestNumber}</p>
-          <p className="text-xs text-soil-500">{r.order ? `Order ${r.order.orderNumber}` : 'Standalone load'}</p>
+          <p className="text-xs text-soil-500">{r.order ? t('orderDetail.title', '', { number: r.order.orderNumber }) : t('transport.standalone')}</p>
         </div>
       ),
     },
-    { key: 'commodity', header: 'Load', render: (r) => `${r.commodity} (${formatKg(r.expectedQuantityKg)})` },
+    { key: 'commodity', header: t('trips.load'), render: (r) => `${r.commodity} (${formatKg(r.expectedQuantityKg)})` },
     {
       key: 'route',
-      header: 'Route',
+      header: t('trips.route'),
       render: (r) => (
         <span className="text-soil-600">
-          {r.pickupAddress} <span className="text-soil-400">to</span> {r.dropAddress}
+          {r.pickupAddress} <span className="text-soil-400">{t('components.dateRange.to')}</span> {r.dropAddress}
         </span>
       ),
     },
-    { key: 'offeredCharge', header: 'Offer', align: 'right', render: (r) => (r.offeredCharge ? formatINR(r.offeredCharge) : '—') },
-    { key: 'status', header: 'Status', render: (r) => <StatusBadge status={r.status} /> },
+    { key: 'offeredCharge', header: t('transport.offer'), align: 'right', render: (r) => (r.offeredCharge ? formatINR(r.offeredCharge) : '—') },
+    { key: 'status', header: t('common.status'), render: (r) => <StatusBadge status={r.status} /> },
     {
       key: 'actions',
       header: '',
@@ -80,12 +83,12 @@ const TransportPage = ({ base, title = 'Transport', description = 'Loads you hav
         <div className="flex justify-end gap-1" onClick={(e) => e.stopPropagation()}>
           {canAssign && r.status === 'OPEN' && (
             <Button size="sm" icon={UserCheck} onClick={() => setAssignFor(r)}>
-              Assign
+              {t('transport.assign')}
             </Button>
           )}
           {(r.requester.id === user.id || user.role === 'ADMIN') && ['OPEN', 'ASSIGNED'].includes(r.status) && (
             <Button size="sm" variant="ghost" icon={Ban} onClick={() => setCancelFor(r)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
           )}
         </div>
@@ -94,31 +97,31 @@ const TransportPage = ({ base, title = 'Transport', description = 'Loads you hav
   ];
 
   const tripColumns = [
-    { key: 'tripNumber', header: 'Trip', render: (t) => <span className="num whitespace-nowrap font-semibold">{t.tripNumber}</span> },
-    { key: 'commodity', header: 'Load', render: (t) => `${t.commodity} (${formatKg(t.expectedQuantityKg)})` },
+    { key: 'tripNumber', header: t('trips.trip'), render: (trip) => <span className="num whitespace-nowrap font-semibold">{trip.tripNumber}</span> },
+    { key: 'commodity', header: t('trips.load'), render: (trip) => `${trip.commodity} (${formatKg(trip.expectedQuantityKg)})` },
     {
       key: 'driver',
-      header: 'Driver & vehicle',
-      render: (t) => (
+      header: t('transport.driverVehicle'),
+      render: (trip) => (
         <div>
-          <p>{t.driver.name}</p>
-          <p className="text-xs text-soil-500">{t.vehicle.registrationNumber}</p>
+          <p>{trip.driver.name}</p>
+          <p className="text-xs text-soil-500">{trip.vehicle.registrationNumber}</p>
         </div>
       ),
     },
-    { key: 'transportCharge', header: 'Charge', align: 'right', render: (t) => formatINR(t.transportCharge) },
-    { key: 'status', header: 'Status', sortable: true, render: (t) => <StatusBadge status={t.status} /> },
-    { key: 'createdAt', header: 'Created', sortable: true, render: (t) => <span className="whitespace-nowrap text-soil-500">{formatDateTime(t.createdAt)}</span> },
+    { key: 'transportCharge', header: t('trips.charge'), align: 'right', render: (trip) => formatINR(trip.transportCharge) },
+    { key: 'status', header: t('common.status'), sortable: true, render: (trip) => <StatusBadge status={trip.status} /> },
+    { key: 'createdAt', header: t('trips.created'), sortable: true, render: (trip) => <span className="whitespace-nowrap text-soil-500">{formatDateTime(trip.createdAt)}</span> },
   ];
 
   return (
     <>
       <PageHeader
-        title={title}
-        description={description}
+        title={t(`${copy}.title`)}
+        description={t(`${copy}.description`)}
         actions={
           <Button icon={Plus} onClick={() => setCreating(true)}>
-            Request transport
+            {t('orderDetail.requestTransport')}
           </Button>
         }
       />
@@ -132,8 +135,8 @@ const TransportPage = ({ base, title = 'Transport', description = 'Loads you hav
         value={tab}
         onChange={setTab}
         tabs={[
-          { value: 'trips', label: 'Trips', count: trips.meta?.total },
-          { value: 'requests', label: 'Requests', count: requests.meta?.total },
+          { value: 'trips', label: t('dnav.tabs.trips'), count: trips.meta?.total },
+          { value: 'requests', label: t('transport.requests'), count: requests.meta?.total },
         ]}
       />
       {tab === 'requests' ? (
@@ -146,39 +149,39 @@ const TransportPage = ({ base, title = 'Transport', description = 'Loads you hav
                 value={requests.filters.status}
                 onChange={(status) => requests.setFilters({ status })}
                 tabs={[
-                  { value: '', label: 'All' },
-                  { value: 'OPEN', label: 'Waiting for driver' },
-                  { value: 'ASSIGNED', label: 'Assigned' },
-                  { value: 'COMPLETED', label: 'Completed' },
-                  { value: 'CANCELLED', label: 'Cancelled' },
+                  { value: '', label: t('common.all') },
+                  { value: 'OPEN', label: t('transport.waitingDriver') },
+                  { value: 'ASSIGNED', label: humanize('ASSIGNED') },
+                  { value: 'COMPLETED', label: humanize('COMPLETED') },
+                  { value: 'CANCELLED', label: humanize('CANCELLED') },
                 ]}
               />
-              <SearchInput value={requests.search} onChange={requests.setSearch} placeholder="Request no., load or place" className="sm:w-64" />
+              <SearchInput value={requests.search} onChange={requests.setSearch} placeholder={t('transport.searchRequests')} className="sm:w-64" />
             </>
           }
-          empty={<EmptyState icon={Truck} title="No transport requests" description="Request a vehicle for an order or any load you need moved." />}
+          empty={<EmptyState icon={Truck} title={t('transport.noRequests')} description={t('transport.noRequestsBody')} />}
         />
       ) : (
         <DataTable
           list={trips}
           columns={tripColumns}
-          onRowClick={(t) => navigate(`${base}/transport/trips/${t.id}`)}
+          onRowClick={(trip) => navigate(`${base}/transport/trips/${trip.id}`)}
           toolbar={
             <>
               <Tabs
                 value={trips.filters.status}
                 onChange={(status) => trips.setFilters({ status })}
                 tabs={[
-                  { value: '', label: 'All' },
-                  { value: 'ASSIGNED,ACCEPTED,PICKED_UP,IN_TRANSIT', label: 'Active' },
-                  { value: 'DELIVERED', label: 'Delivered' },
-                  { value: 'REJECTED,FAILED,CANCELLED', label: 'Not completed' },
+                  { value: '', label: t('common.all') },
+                  { value: 'ASSIGNED,ACCEPTED,PICKED_UP,IN_TRANSIT', label: humanize('ACTIVE') },
+                  { value: 'DELIVERED', label: humanize('DELIVERED') },
+                  { value: 'REJECTED,FAILED,CANCELLED', label: t('transport.notCompleted') },
                 ]}
               />
-              <SearchInput value={trips.search} onChange={trips.setSearch} placeholder="Trip, driver or vehicle" className="sm:w-64" />
+              <SearchInput value={trips.search} onChange={trips.setSearch} placeholder={t('transport.searchTrips')} className="sm:w-64" />
             </>
           }
-          empty={<EmptyState icon={Truck} title="No trips yet" description="Trips appear once a driver is assigned to one of your loads." />}
+          empty={<EmptyState icon={Truck} title={t('transport.noTrips')} description={t('transport.noTripsBody')} />}
         />
       )}
 
@@ -202,9 +205,9 @@ const TransportPage = ({ base, title = 'Transport', description = 'Loads you hav
       <ConfirmDialog
         open={!!cancelFor}
         onClose={() => setCancelFor(null)}
-        title={`Cancel ${cancelFor?.requestNumber}`}
-        message="If a driver has accepted but not yet picked up, their trip is cancelled too and they are notified."
-        confirmLabel="Cancel request"
+        title={t('transport.cancelTitle', '', { number: cancelFor?.requestNumber })}
+        message={t('transport.cancelMessage')}
+        confirmLabel={t('transport.cancelRequest')}
         requireReason
         busy={busy}
         onConfirm={cancel}

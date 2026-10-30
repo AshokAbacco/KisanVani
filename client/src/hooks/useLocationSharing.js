@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { getSocket } from '../services/socket';
 import { trackingApi } from '../services';
 import { useSettings } from '../context/SettingsContext';
+import { translate } from '../i18n';
 
 /**
  * Driver-side GPS sharing for one trip. Only runs after the driver explicitly starts it, asks the browser for
@@ -50,7 +51,7 @@ export const useLocationSharing = (tripId, active) => {
           } else if (ack?.code === 'TRACKING_NOT_ALLOWED') {
             setError(ack.error);
             stop();
-          } else if (ack?.code !== 'RATE_LIMITED') setError(ack?.error || 'Location not accepted');
+          } else if (ack?.code !== 'RATE_LIMITED') setError(ack?.error || translate('hooks.location.notAccepted', 'Location not accepted'));
         } else {
           await viaRest();
           setError(null);
@@ -60,7 +61,7 @@ export const useLocationSharing = (tripId, active) => {
           await viaRest();
           setError(null);
         } catch (e) {
-          setError(e.response?.data?.error?.message || 'Could not send location — will retry');
+          setError(e.response?.data?.error?.message || translate('hooks.location.sendFailed', 'Could not send location — will retry'));
         }
       }
     },
@@ -69,11 +70,11 @@ export const useLocationSharing = (tripId, active) => {
 
   const start = useCallback(() => {
     if (!('geolocation' in navigator)) {
-      setError('This device or browser does not support location sharing.');
+      setError(translate('hooks.location.unsupported', 'This device or browser does not support location sharing.'));
       return;
     }
     if (!window.isSecureContext) {
-      setError('Location needs a secure (HTTPS or localhost) connection.');
+      setError(translate('hooks.location.insecure', 'Location needs a secure (HTTPS or localhost) connection.'));
       return;
     }
     setError(null);
@@ -81,7 +82,7 @@ export const useLocationSharing = (tripId, active) => {
     watchId.current = navigator.geolocation.watchPosition(
       send,
       (err) => {
-        setError(err.code === err.PERMISSION_DENIED ? 'Location permission was denied. Allow it in your browser settings to share your trip.' : 'Waiting for a GPS signal…');
+        setError(err.code === err.PERMISSION_DENIED ? translate('hooks.location.denied', 'Location permission was denied. Allow it in your browser settings to share your trip.') : translate('hooks.location.waitingGps', 'Waiting for a GPS signal…'));
         if (err.code === err.PERMISSION_DENIED) stop();
       },
       { enableHighAccuracy: true, maximumAge: 5000, timeout: 30000 }

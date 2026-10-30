@@ -18,23 +18,22 @@ import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { roleLabel } from '../../constants/roles';
 import { formatDate, formatDateTime, humanize } from '../../utils/format';
+import { LANGUAGES, useI18n } from '../../i18n';
 
-const ACTIVITY_LABELS = {
-  totalSales: 'POS sales',
-  invoices: 'Bills',
-  procurementOrders: 'Orders placed',
-  stockItems: 'Products stocked',
-  listings: 'Harvest listings',
-  ordersReceived: 'Orders received',
-  earnings: 'Settled earnings',
-  lots: 'Mandi lots',
-  wholesaleOrders: 'Wholesale orders',
-  farmerProcurementOrders: 'Farmer purchases',
-  trips: 'Trips',
-  deliveredTrips: 'Delivered trips',
+/** Activity counters with a label in userDetail.activity.<key>; others fall back to humanize(). */
+const ACTIVITY_KEYS = ['totalSales', 'invoices', 'procurementOrders', 'stockItems', 'listings', 'ordersReceived', 'earnings', 'lots', 'wholesaleOrders', 'farmerProcurementOrders', 'trips', 'deliveredTrips'];
+
+/* Status actions; their texts come from userDetail.actions.<key>. */
+const ACTIONS = {
+  approve: { status: 'ACTIVE', tone: 'primary' },
+  activate: { status: 'ACTIVE', tone: 'primary' },
+  suspend: { status: 'SUSPENDED', reason: true },
+  deactivate: { status: 'DEACTIVATED', reason: true },
+  signOut: { tone: 'primary' },
 };
 
 const UserDetailPage = () => {
+  const { t } = useI18n();
   const { id } = useParams();
   const { user: me } = useAuth();
   const toast = useToast();
@@ -56,7 +55,7 @@ const UserDetailPage = () => {
     try {
       if (action.status) await adminApi.setStatus(u.id, { status: action.status, reason: reason || null });
       else await adminApi.revokeSessions(u.id);
-      toast.success(action.done);
+      toast.success(t(`userDetail.actions.${action.key}.done`));
       setAction(null);
       reload();
     } catch (e) {
@@ -70,7 +69,7 @@ const UserDetailPage = () => {
     setBusy(true);
     try {
       await adminApi.updateUser(u.id, { name: form.name, email: form.email || null, mobile: form.mobile });
-      toast.success('User updated');
+      toast.success(t('userDetail.updated'));
       setEditing(false);
       reload();
     } catch (e) {
@@ -82,12 +81,13 @@ const UserDetailPage = () => {
 
   const activityItems = Object.entries(u.activity || {})
     .filter(([k]) => k !== 'vehicles')
-    .map(([k, v]) => [ACTIVITY_LABELS[k] || humanize(k), ['totalSales', 'earnings'].includes(k) ? `₹${Number(v).toLocaleString('en-IN')}` : v]);
+    .map(([k, v]) => [ACTIVITY_KEYS.includes(k) ? t(`userDetail.activity.${k}`) : humanize(k), ['totalSales', 'earnings'].includes(k) ? `₹${Number(v).toLocaleString('en-IN')}` : v]);
+  const open = (key) => setAction({ key, ...ACTIONS[key] });
 
   return (
     <>
       <PageHeader
-        back={{ to: '/admin/users', label: 'Users' }}
+        back={{ to: '/admin/users', label: t('dnav.items.users') }}
         title={u.name}
         description={<span className="inline-flex items-center gap-2">{roleLabel(u.role)} <StatusBadge status={u.status} /></span>}
         actions={
@@ -101,34 +101,34 @@ const UserDetailPage = () => {
                   setEditing(true);
                 }}
               >
-                Edit
+                {t('common.edit')}
               </Button>
               {u.status !== 'ACTIVE' && (
-                <Button icon={CheckCircle2} onClick={() => setAction({ status: 'ACTIVE', title: u.status === 'PENDING_APPROVAL' ? 'Approve this account?' : 'Reactivate this account?', label: u.status === 'PENDING_APPROVAL' ? 'Approve' : 'Activate', done: 'Account activated', tone: 'primary' })}>
-                  {u.status === 'PENDING_APPROVAL' ? 'Approve' : 'Activate'}
+                <Button icon={CheckCircle2} onClick={() => open(u.status === 'PENDING_APPROVAL' ? 'approve' : 'activate')}>
+                  {t(u.status === 'PENDING_APPROVAL' ? 'userDetail.actions.approve.label' : 'userDetail.actions.activate.label')}
                 </Button>
               )}
               {u.status === 'ACTIVE' && (
-                <Button variant="secondary" icon={PauseCircle} onClick={() => setAction({ status: 'SUSPENDED', title: 'Suspend this account?', label: 'Suspend', done: 'Account suspended', reason: true, message: 'The user is signed out everywhere and cannot sign in until reactivated.' })}>
-                  Suspend
+                <Button variant="secondary" icon={PauseCircle} onClick={() => open('suspend')}>
+                  {t('userDetail.actions.suspend.label')}
                 </Button>
               )}
               {u.status !== 'DEACTIVATED' && (
-                <Button variant="ghost" icon={Power} onClick={() => setAction({ status: 'DEACTIVATED', title: 'Deactivate this account?', label: 'Deactivate', done: 'Account deactivated', reason: true, message: 'Use for accounts that have left the platform. Their records are kept.' })}>
-                  Deactivate
+                <Button variant="ghost" icon={Power} onClick={() => open('deactivate')}>
+                  {t('userDetail.actions.deactivate.label')}
                 </Button>
               )}
-              <Button variant="ghost" icon={LogOut} onClick={() => setAction({ title: 'Sign this user out everywhere?', label: 'Sign out', done: 'Sessions revoked', tone: 'primary', message: `${u.activeSessions} active session(s) will be ended.` })}>
-                Sign out
+              <Button variant="ghost" icon={LogOut} onClick={() => open('signOut')}>
+                {t('userDetail.actions.signOut.label')}
               </Button>
             </>
           )
         }
       />
-      {self && <Alert tone="info" className="mb-6">This is your own account. Manage it from Account settings.</Alert>}
+      {self && <Alert tone="info" className="mb-6">{t('userDetail.ownAccount')}</Alert>}
       {u.status === 'PENDING_APPROVAL' && (
-        <Alert tone="warning" className="mb-6" title="Waiting for approval">
-          Check the details below before approving. {u.role === 'DRIVER' && 'Vehicles are verified separately under Vehicles.'}
+        <Alert tone="warning" className="mb-6" title={t('userDetail.waitingTitle')}>
+          {t('userDetail.waitingBody')} {u.role === 'DRIVER' && t('userDetail.vehiclesSeparate')}
         </Alert>
       )}
       <div className="grid gap-6 xl:grid-cols-[1fr_1.2fr]">
@@ -138,30 +138,30 @@ const UserDetailPage = () => {
               <Avatar name={u.name} src={u.avatarUrl} size="h-14 w-14" />
               <div>
                 <p className="font-display text-lg font-semibold">{u.name}</p>
-                <p className="text-sm text-soil-500">Joined {formatDate(u.createdAt)}</p>
+                <p className="text-sm text-soil-500">{t('userDetail.joinedOn', '', { date: formatDate(u.createdAt) })}</p>
               </div>
             </div>
             <DetailList
               items={[
-                ['Mobile', u.mobile],
-                ['E-mail', u.email],
-                ['Last sign-in', formatDateTime(u.lastLoginAt)],
-                ['Language', u.preferredLanguage],
-                u.shopProfile && ['Shop', `${u.shopProfile.shopName} (${u.shopProfile.shopCode})`],
+                [t('common.mobile'), u.mobile],
+                [t('common.email'), u.email],
+                [t('users.lastSignIn'), formatDateTime(u.lastLoginAt)],
+                [t('common.language'), LANGUAGES.find((l) => l.code === u.preferredLanguage)?.native || u.preferredLanguage],
+                u.shopProfile && [t('shopGps.shop'), `${u.shopProfile.shopName} (${u.shopProfile.shopCode})`],
                 u.shopProfile?.gstin && ['GSTIN', u.shopProfile.gstin],
-                u.farmerProfile && ['Farm', u.farmerProfile.farmName],
-                u.farmerProfile && ['Crops', u.farmerProfile.primaryCrops?.join(', ')],
-                u.mandiProfile && ['Mandi', u.mandiProfile.mandiName],
-                u.mandiProfile && ['Yard', u.mandiProfile.marketYardName],
-                u.mandiProfile && ['APMC licence', u.mandiProfile.licenseNumber],
-                u.mandiProfile && ['Commission', `${Number(u.mandiProfile.commissionPercent)}%`],
-                u.driverProfile && ['Driving licence', u.driverProfile.licenseNumber],
-                u.driverProfile && ['Licence valid until', formatDate(u.driverProfile.licenseExpiry)],
-                addr && ['Address', [addr.line1, addr.village, addr.city, addr.district, addr.state, addr.pincode].filter(Boolean).join(', ')],
+                u.farmerProfile && [t('userDetail.farm'), u.farmerProfile.farmName],
+                u.farmerProfile && [t('userDetail.crops'), u.farmerProfile.primaryCrops?.join(', ')],
+                u.mandiProfile && [t('enums.MANDI'), u.mandiProfile.mandiName],
+                u.mandiProfile && [t('lots.yard'), u.mandiProfile.marketYardName],
+                u.mandiProfile && [t('userDetail.apmcLicence'), u.mandiProfile.licenseNumber],
+                u.mandiProfile && [t('userDetail.commission'), `${Number(u.mandiProfile.commissionPercent)}%`],
+                u.driverProfile && [t('users.drivingLicence'), u.driverProfile.licenseNumber],
+                u.driverProfile && [t('userDetail.licenceValid'), formatDate(u.driverProfile.licenseExpiry)],
+                addr && [t('common.address'), [addr.line1, addr.village, addr.city, addr.district, addr.state, addr.pincode].filter(Boolean).join(', ')],
               ]}
             />
           </Section>
-          <Section title="Activity">
+          <Section title={t('userDetail.activityTitle')}>
             <DetailList items={activityItems} />
             {u.activity?.vehicles?.length > 0 && (
               <ul className="mt-4 space-y-2 border-t border-soil-200 pt-4">
@@ -178,27 +178,37 @@ const UserDetailPage = () => {
           </Section>
         </div>
       </div>
-      <ConfirmDialog open={!!action} onClose={() => setAction(null)} title={action?.title} message={action?.message} confirmLabel={action?.label} tone={action?.tone || 'danger'} requireReason={action?.reason} busy={busy} onConfirm={run} />
+      <ConfirmDialog
+        open={!!action}
+        onClose={() => setAction(null)}
+        title={action && t(`userDetail.actions.${action.key}.title`)}
+        message={action && t(`userDetail.actions.${action.key}.message`, '', { n: u.activeSessions })}
+        confirmLabel={action && t(`userDetail.actions.${action.key}.label`)}
+        tone={action?.tone || 'danger'}
+        requireReason={action?.reason}
+        busy={busy}
+        onConfirm={run}
+      />
       <Modal
         open={editing}
         onClose={() => setEditing(false)}
-        title="Edit user"
+        title={t('userDetail.editUser')}
         size="sm"
         footer={
           <>
             <Button variant="secondary" onClick={() => setEditing(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button onClick={saveEdit} loading={busy}>
-              Save
+              {t('common.save')}
             </Button>
           </>
         }
       >
         <div className="space-y-4">
-          <Input label="Name" value={form.name || ''} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-          <Input label="Mobile" value={form.mobile || ''} onChange={(e) => setForm({ ...form, mobile: e.target.value })} />
-          <Input label="E-mail" value={form.email || ''} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+          <Input label={t('common.name')} value={form.name || ''} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+          <Input label={t('common.mobile')} value={form.mobile || ''} onChange={(e) => setForm({ ...form, mobile: e.target.value })} />
+          <Input label={t('common.email')} value={form.email || ''} onChange={(e) => setForm({ ...form, email: e.target.value })} />
         </div>
       </Modal>
     </>

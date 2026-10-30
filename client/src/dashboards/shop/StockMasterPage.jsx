@@ -17,8 +17,10 @@ import { useToast } from '../../context/ToastContext';
 import { formatINR, formatKg, formatDateTime } from '../../utils/format';
 import { rules } from '../../validators';
 import { applyFieldErrors } from '../../utils/errors';
+import { useI18n } from '../../i18n';
 
 const ItemForm = ({ item, onClose, onSaved }) => {
+  const { t } = useI18n();
   const toast = useToast();
   const editing = !!item;
   const {
@@ -36,10 +38,10 @@ const ItemForm = ({ item, onClose, onSaved }) => {
     try {
       if (editing) {
         await inventoryApi.update(item.id, { sellingPricePerKg: v.sellingPricePerKg, costPricePerKg: v.costPricePerKg || null, lowStockThresholdKg: v.lowStockThresholdKg, isActive: v.isActive });
-        toast.success(`${item.product.name} updated`);
+        toast.success(t('stock.updated', '', { name: item.product.name }));
       } else {
         await inventoryApi.create({ productId: v.productId, sellingPricePerKg: v.sellingPricePerKg, costPricePerKg: v.costPricePerKg || null, openingQuantityKg: v.openingQuantityKg || '0', lowStockThresholdKg: v.lowStockThresholdKg || '0' });
-        toast.success('Product added to your stock master');
+        toast.success(t('stock.added'));
       }
       onSaved();
       onClose();
@@ -52,33 +54,33 @@ const ItemForm = ({ item, onClose, onSaved }) => {
     <Modal
       open
       onClose={onClose}
-      title={editing ? `Edit ${item.product.name}` : 'Add a product'}
-      description={editing ? 'Rate changes apply to new bills immediately and are logged.' : 'Choose from the KisanVani catalogue and set your selling rate.'}
+      title={editing ? t('stock.editTitle', '', { name: item.product.name }) : t('stock.addTitle')}
+      description={t(editing ? 'stock.editIntro' : 'stock.addIntro')}
       size="sm"
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button onClick={handleSubmit(submit)} loading={isSubmitting}>
-            {editing ? 'Save changes' : 'Add product'}
+            {editing ? t('common.saveChanges') : t('stock.addProduct')}
           </Button>
         </>
       }
     >
       <form className="space-y-4" onSubmit={handleSubmit(submit)} noValidate>
-        {!editing && <ProductSelect required error={errors.productId?.message} {...register('productId', rules.required('Product'))} />}
+        {!editing && <ProductSelect required error={errors.productId?.message} {...register('productId', rules.required(t('common.product')))} />}
         <div className="grid grid-cols-2 gap-3">
-          <Input label="Selling rate" required suffix="₹/kg" inputMode="decimal" error={errors.sellingPricePerKg?.message} {...register('sellingPricePerKg', rules.money('Selling rate'))} />
-          <Input label="Cost rate" suffix="₹/kg" inputMode="decimal" error={errors.costPricePerKg?.message} {...register('costPricePerKg', { validate: (v) => !v || rules.money('Cost', { allowZero: true }).validate(v) })} />
+          <Input label={t('stock.sellingRate')} required suffix="₹/kg" inputMode="decimal" error={errors.sellingPricePerKg?.message} {...register('sellingPricePerKg', rules.money(t('stock.sellingRate')))} />
+          <Input label={t('stock.costRate')} suffix="₹/kg" inputMode="decimal" error={errors.costPricePerKg?.message} {...register('costPricePerKg', { validate: (v) => !v || rules.money(t('stock.cost'), { allowZero: true }).validate(v) })} />
         </div>
         <div className="grid grid-cols-2 gap-3">
-          {!editing && <Input label="Opening stock" suffix="kg" inputMode="decimal" error={errors.openingQuantityKg?.message} {...register('openingQuantityKg', { validate: (v) => !v || /^\d+(\.\d{1,3})?$/.test(v) || 'Up to 3 decimals' })} />}
-          <Input label="Warn below" suffix="kg" inputMode="decimal" error={errors.lowStockThresholdKg?.message} {...register('lowStockThresholdKg', { validate: (v) => !v || /^\d+(\.\d{1,3})?$/.test(v) || 'Up to 3 decimals' })} />
+          {!editing && <Input label={t('stock.openingStock')} suffix="kg" inputMode="decimal" error={errors.openingQuantityKg?.message} {...register('openingQuantityKg', { validate: (v) => !v || /^\d+(\.\d{1,3})?$/.test(v) || t('validation.upTo3Decimals') })} />}
+          <Input label={t('stock.warnBelow')} suffix="kg" inputMode="decimal" error={errors.lowStockThresholdKg?.message} {...register('lowStockThresholdKg', { validate: (v) => !v || /^\d+(\.\d{1,3})?$/.test(v) || t('validation.upTo3Decimals') })} />
         </div>
         {editing && (
           <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" className="h-4 w-4 accent-field-700" {...register('isActive')} /> Available for billing
+            <input type="checkbox" className="h-4 w-4 accent-field-700" {...register('isActive')} /> {t('stock.availableForBilling')}
           </label>
         )}
       </form>
@@ -88,13 +90,14 @@ const ItemForm = ({ item, onClose, onSaved }) => {
 
 /** Stock & rates master: what the shop sells and at what price. */
 const StockMasterPage = () => {
+  const { t } = useI18n();
   const [editing, setEditing] = useState(null);
   const list = useList((p) => inventoryApi.list(p), { initialFilters: { categoryType: '', includeInactive: 'true' }, pageSize: 25, sortBy: 'name', sortOrder: 'asc' });
 
   const columns = [
     {
       key: 'name',
-      header: 'Product',
+      header: t('common.product'),
       sortable: true,
       render: (i) => (
         <span className="flex items-center gap-2">
@@ -108,23 +111,23 @@ const StockMasterPage = () => {
         </span>
       ),
     },
-    { key: 'sellingPricePerKg', header: 'Selling ₹/kg', align: 'right', sortable: true, render: (i) => <span className="font-semibold">{formatINR(i.sellingPricePerKg)}</span> },
-    { key: 'cost', header: 'Cost ₹/kg', align: 'right', render: (i) => (i.costPricePerKg ? formatINR(i.costPricePerKg) : '—') },
+    { key: 'sellingPricePerKg', header: t('stock.sellingPerKg'), align: 'right', sortable: true, render: (i) => <span className="font-semibold">{formatINR(i.sellingPricePerKg)}</span> },
+    { key: 'cost', header: t('stock.costPerKg'), align: 'right', render: (i) => (i.costPricePerKg ? formatINR(i.costPricePerKg) : '—') },
     {
       key: 'margin',
-      header: 'Margin',
+      header: t('stock.margin'),
       align: 'right',
       render: (i) => (i.costPricePerKg && Number(i.costPricePerKg) > 0 ? `${(((Number(i.sellingPricePerKg) - Number(i.costPricePerKg)) / Number(i.costPricePerKg)) * 100).toFixed(0)}%` : '—'),
     },
-    { key: 'quantityKg', header: 'In stock', align: 'right', sortable: true, render: (i) => <span className={i.isLowStock ? 'font-semibold text-turmeric-700' : ''}>{formatKg(i.quantityKg)}</span> },
-    { key: 'isActive', header: 'Billing', render: (i) => <StatusBadge status={i.isActive ? 'ACTIVE' : 'PAUSED'}>{i.isActive ? 'On' : 'Off'}</StatusBadge> },
-    { key: 'updatedAt', header: 'Updated', sortable: true, render: (i) => <span className="text-soil-500">{formatDateTime(i.updatedAt)}</span> },
+    { key: 'quantityKg', header: t('stock.inStock'), align: 'right', sortable: true, render: (i) => <span className={i.isLowStock ? 'font-semibold text-turmeric-700' : ''}>{formatKg(i.quantityKg)}</span> },
+    { key: 'isActive', header: t('stock.billing'), render: (i) => <StatusBadge status={i.isActive ? 'ACTIVE' : 'PAUSED'}>{t(i.isActive ? 'common.on' : 'common.off')}</StatusBadge> },
+    { key: 'updatedAt', header: t('stock.updatedCol'), sortable: true, render: (i) => <span className="text-soil-500">{formatDateTime(i.updatedAt)}</span> },
     {
       key: 'edit',
       header: '',
       render: (i) => (
         <Button size="sm" variant="ghost" icon={Pencil} onClick={() => setEditing(i)}>
-          Edit
+          {t('common.edit')}
         </Button>
       ),
     },
@@ -133,11 +136,11 @@ const StockMasterPage = () => {
   return (
     <>
       <PageHeader
-        title="Stock & rates master"
-        description="Products you sell and their selling rates. The billing screen always uses these rates."
+        title={t('stock.title')}
+        description={t('stock.intro')}
         actions={
           <Button icon={Plus} onClick={() => setEditing('new')}>
-            Add product
+            {t('stock.addProduct')}
           </Button>
         }
       />
@@ -149,17 +152,12 @@ const StockMasterPage = () => {
             <Tabs
               value={list.filters.categoryType}
               onChange={(categoryType) => list.setFilters({ categoryType })}
-              tabs={[
-                { value: '', label: 'All' },
-                { value: 'VEGETABLE', label: 'Vegetables' },
-                { value: 'FRUIT', label: 'Fruits' },
-                { value: 'LEAFY_GREEN', label: 'Leafy greens' },
-              ]}
+              tabs={['', 'VEGETABLE', 'FRUIT', 'LEAFY_GREEN'].map((value) => ({ value, label: value ? t(`categoryType.${value}`) : t('common.all') }))}
             />
-            <SearchInput value={list.search} onChange={list.setSearch} placeholder="Search products" className="sm:w-60" />
+            <SearchInput value={list.search} onChange={list.setSearch} placeholder={t('common.searchProducts')} className="sm:w-60" />
           </>
         }
-        empty={<EmptyState icon={Tags} title="Your stock master is empty" description="Add the products you sell with a selling rate per kg." action={<Button onClick={() => setEditing('new')}>Add product</Button>} />}
+        empty={<EmptyState icon={Tags} title={t('stock.emptyTitle')} description={t('stock.emptyBody')} action={<Button onClick={() => setEditing('new')}>{t('stock.addProduct')}</Button>} />}
       />
       {editing && <ItemForm item={editing === 'new' ? null : editing} onClose={() => setEditing(null)} onSaved={list.reload} />}
     </>

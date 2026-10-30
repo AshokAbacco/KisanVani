@@ -1,6 +1,7 @@
 import { forwardRef, useEffect, useState } from 'react';
 import { catalogApi } from '../../services';
 import { Field } from '../../components/forms/Field';
+import { useI18n } from '../../i18n';
 
 let cache = null;
 /** Loads the active catalogue once per session (it is small and rarely changes). */
@@ -16,13 +17,14 @@ export const clearCatalogueCache = () => {
 };
 
 /** <select> of catalogue products grouped by category. Works with react-hook-form register(). */
-const ProductSelect = forwardRef(function ProductSelect({ label = 'Product', error, required, exclude = [], className, ...rest }, ref) {
+const ProductSelect = forwardRef(function ProductSelect({ label, error, required, exclude = [], className, ...rest }, ref) {
+  const { t } = useI18n();
   const [products, setProducts] = useState([]);
   const [loadError, setLoadError] = useState(null);
   useEffect(() => {
     loadCatalogue()
       .then(setProducts)
-      .catch(() => setLoadError('Could not load the product list'));
+      .catch(() => setLoadError('products.loadError'));
   }, []);
   const groups = products.reduce((acc, p) => {
     if (exclude.includes(p.id)) return acc;
@@ -30,9 +32,9 @@ const ProductSelect = forwardRef(function ProductSelect({ label = 'Product', err
     return acc;
   }, {});
   return (
-    <Field label={label} error={error || loadError} required={required} className={className}>
+    <Field label={label ?? t('common.product')} error={error || (loadError && t(loadError))} required={required} className={className}>
       <select ref={ref} className={`input ${error ? 'input-error' : ''}`} {...rest}>
-        <option value="">{products.length ? 'Choose a product' : 'Loading…'}</option>
+        <option value="">{products.length ? t('products.choose') : t('common.loading')}</option>
         {Object.entries(groups).map(([cat, list]) => (
           <optgroup key={cat} label={cat}>
             {list.map((p) => (
