@@ -121,14 +121,15 @@ const register = async (input, meta) => {
   return { pendingApproval: false, ...(await buildSession(user, meta)) };
 };
 
-const login = async ({ identifier, password, role }, meta) => {
+/**
+ * One sign-in for every role. E-mail and mobile are unique, so the identifier points to exactly one
+ * account; its role comes from the database and the client sends the user to that role's dashboard.
+ */
+const login = async ({ identifier, password }, meta) => {
   const user = await repo.findByIdentifier(identifier);
   const valid = await bcrypt.compare(password, user?.passwordHash || DUMMY_HASH);
   if (!user || !valid) throw new ApiError(401, 'Incorrect e-mail/mobile or password', 'INVALID_CREDENTIALS');
 
-  if (user.role !== role) {
-    throw new ApiError(403, `This account is registered as ${ROLE_LABELS[user.role]}. Please choose that role to sign in.`, 'ROLE_MISMATCH');
-  }
   if (user.status === 'PENDING_APPROVAL') throw new ApiError(403, 'Your account is awaiting admin approval', 'ACCOUNT_PENDING');
   if (user.status === 'SUSPENDED') throw new ApiError(403, 'Your account has been suspended. Contact support.', 'ACCOUNT_SUSPENDED');
   if (user.status === 'DEACTIVATED') throw new ApiError(403, 'Your account has been deactivated', 'ACCOUNT_DEACTIVATED');

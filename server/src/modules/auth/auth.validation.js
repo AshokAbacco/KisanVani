@@ -42,7 +42,7 @@ const register = z.discriminatedUnion('role', [
 const login = z.object({
   identifier: z.string().trim().min(3, 'Enter your e-mail or mobile number').max(120),
   password: z.string().min(1, 'Password is required').max(72),
-  role: z.enum(Object.values(ROLES)),
+  // No role: it is read from the account. A `role` sent by an older client is ignored (stripped).
 });
 
 const forgotPassword = z.object({ identifier: z.string().trim().min(3).max(120) });

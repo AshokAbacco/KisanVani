@@ -219,7 +219,7 @@ const HomePage = () => {
                 return (
                   <Link
                     key={r}
-                    to={`/login?role=${r}`}
+                    to="/login"
                     className="group flex flex-col rounded-2xl bg-white/[0.06] p-4 ring-1 ring-white/10 transition hover:bg-white/[0.12] hover:ring-field-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-field-300 sm:p-5"
                   >
                     <meta.icon className={`h-7 w-7 sm:h-8 sm:w-8 ${PORTAL_ACCENT[r] || 'text-field-300'}`} aria-hidden />

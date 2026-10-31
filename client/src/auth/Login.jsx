@@ -1,38 +1,27 @@
 // src/auth/Login.jsx
 
 import { useState } from 'react';
-import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import { Eye, EyeOff, Mail, Lock, ArrowRight, Leaf, Check } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, ArrowRight, Leaf } from 'lucide-react';
 import Button from '../components/common/Button';
 import Alert from '../components/feedback/Alert';
 import { useAuth } from '../context/AuthContext';
-import { LOGIN_ROLES, ROLES, roleBase } from '../constants/roles';
+import { roleBase } from '../constants/roles';
 import { errorMessage } from '../utils/errors';
 import { useI18n } from '../i18n';
-
-/* Role thumbnails are cropped from the single /Home/loginUsers.png strip,
-   so no extra image files are needed. Tweak a position if a face sits off-centre. */
-const USERS_IMG = '/Home/loginUsers.png';
-const ROLE_THUMB = {
-  FARMER: '5% 18%',
-  SHOPKEEPER: '30% 18%',
-  MANDI_OWNER: '52% 32%',
-  DRIVER: '75% 40%',
-  ADMIN: '96% 18%',
-};
 
 const inputBase =
   'w-full rounded-xl border bg-white py-2.5 pl-11 pr-4 text-[15px] text-soil shadow-sm outline-none transition placeholder:text-soil-400 focus:border-green-600 focus:ring-4 focus:ring-green-600/15';
 
 /**
+ * One sign-in form for every role. There is no role picker: the server reads the role from the
+ * account (e-mail and mobile are unique) and we send the user to that role's dashboard.
+ *
  * Rendered inside PublicLayout: the site navbar (logo, links, language switcher) sits above
  * and the footer below. The section fills exactly the screen height left under the header.
  */
 const Login = () => {
-  const [params] = useSearchParams();
-  const initialRole = LOGIN_ROLES.includes(params.get('role')) ? params.get('role') : 'FARMER';
-  const [role, setRole] = useState(initialRole);
   const [show, setShow] = useState(false);
   const [error, setError] = useState(null);
   const { login, expired } = useAuth();
@@ -45,15 +34,13 @@ const Login = () => {
     formState: { errors, isSubmitting },
   } = useForm();
 
-  const roleName = (r) => t(`roleNames.${r}`, ROLES[r]?.label ?? r);
-
   const submit = async (v) => {
     setError(null);
     try {
-      const user = await login({ identifier: v.identifier, password: v.password, role });
+      const user = await login({ identifier: v.identifier, password: v.password });
       // Language is reconciled with the profile by <LanguageSync> (a choice made on the website wins).
       const from = location.state?.from;
-      // Only return to a page inside this user's own dashboard.
+      // The role comes from the server. Only return to a page inside this user's own dashboard.
       navigate(from && from.startsWith(roleBase(user.role)) ? from : roleBase(user.role), { replace: true });
     } catch (e) {
       setError(errorMessage(e));
@@ -96,7 +83,7 @@ const Login = () => {
               {t('auth.welcomeBack')}
               <Leaf className="h-7 w-7 shrink-0 -rotate-12 text-green-500" aria-hidden />
             </h1>
-            <p className="mt-1 text-sm text-soil-500">{t('login.subtitle', '', { role: roleName(role) })}</p>
+            <p className="mt-1 text-sm text-soil-500">{t('login.subtitle')}</p>
 
             {expired && (
               <Alert tone="warning" className="mt-4">
@@ -105,54 +92,6 @@ const Login = () => {
             )}
 
             <form onSubmit={handleSubmit(submit)} className="mt-5 space-y-4" noValidate>
-              {/* Role tiles */}
-              <fieldset>
-                <legend className="mb-2 text-sm font-medium text-soil">{t('auth.chooseRole')}</legend>
-                <div role="radiogroup" className="grid grid-cols-1 gap-2.5 min-[380px]:grid-cols-2">
-                  {LOGIN_ROLES.map((r) => {
-                    const meta = ROLES[r];
-                    const active = role === r;
-                    const thumb = ROLE_THUMB[r];
-                    return (
-                      <button
-                        key={r}
-                        type="button"
-                        role="radio"
-                        aria-checked={active}
-                        onClick={() => setRole(r)}
-                        className={`relative flex items-center gap-3 rounded-xl border bg-white p-1.5 pr-3 text-left text-sm font-semibold shadow-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600 ${
-                          active
-                            ? 'border-green-600 bg-green-50 text-green-800 ring-2 ring-green-600/20'
-                            : 'border-soil-200 text-soil hover:-translate-y-0.5 hover:border-green-300 hover:shadow-md'
-                        }`}
-                      >
-                        {thumb ? (
-                          <span
-                            className="h-9 w-9 shrink-0 rounded-lg bg-green-50 bg-no-repeat ring-1 ring-black/5"
-                            style={{
-                              backgroundImage: `url('${USERS_IMG}')`,
-                              backgroundSize: '520% auto',
-                              backgroundPosition: thumb,
-                            }}
-                            aria-hidden
-                          />
-                        ) : (
-                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-green-50 text-green-700">
-                            {meta?.icon && <meta.icon className="h-5 w-5" aria-hidden />}
-                          </span>
-                        )}
-                        <span className="truncate">{roleName(r)}</span>
-                        {active && (
-                          <span className="ml-auto flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-600 text-white">
-                            <Check className="h-3.5 w-3.5" aria-hidden />
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              </fieldset>
-
               {/* Identifier */}
               <div>
                 <label htmlFor="login-identifier" className="mb-1 block text-sm font-medium text-soil">
