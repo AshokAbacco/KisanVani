@@ -62,8 +62,8 @@ const TRIP_TERMINAL_STATUSES = ['DELIVERED', 'REJECTED', 'FAILED', 'CANCELLED'];
 
 const DEFAULT_SETTINGS = Object.freeze({
   'platform.name': { value: 'KisanVani', isPublic: true, description: 'Platform display name' },
-  'platform.supportEmail': { value: 'support@kisanvani.local', isPublic: true, description: 'Support e-mail shown to users' },
-  'platform.supportPhone': { value: '+91 80000 00000', isPublic: true, description: 'Support phone shown to users' },
+  'platform.supportEmail': { value: 'info.kisanvani@gmail.com', isPublic: true, description: 'Support e-mail shown to users' },
+  'platform.supportPhone': { value: '+91 91879 23213', isPublic: true, description: 'Support phone shown to users' },
   'auth.approvalRequiredRoles': {
     value: ['MANDI_OWNER', 'DRIVER'],
     isPublic: false,

@@ -3,8 +3,8 @@ import { settingsApi } from '../services';
 
 const DEFAULTS = {
   'platform.name': 'KisanVani',
-  'platform.supportEmail': 'support@kisanvani.local',
-  'platform.supportPhone': '+91 80000 00000',
+  'platform.supportEmail': 'info.kisanvani@gmail.com',
+  'platform.supportPhone': '+91 91879 23213',
   'billing.maxDiscountPercent': 10,
   'billing.weighingScale': { enabled: false, baudRate: 9600 },
   'tracking.locationIntervalSec': 15,

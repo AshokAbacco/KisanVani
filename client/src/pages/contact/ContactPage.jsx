@@ -7,8 +7,8 @@ import { useI18n } from '../../i18n';
 const CONTAINER =
   'mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 2xl:max-w-[1440px] 2xl:px-10';
 
-const SUPPORT_PHONE = '+91 80000 00000';
-const SUPPORT_EMAIL = 'support@kisanvani.local';
+const SUPPORT_PHONE = '+91 91879 23213';
+const SUPPORT_EMAIL = 'info.kisanvani@gmail.com';
 
 const ROLE_OPTIONS = ['FARMER', 'SHOPKEEPER', 'MANDI_OWNER', 'DRIVER'];
 
