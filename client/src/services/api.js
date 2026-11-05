@@ -15,7 +15,15 @@ export const onSessionExpired = (fn) => {
   sessionExpiredHandler = fn;
 };
 
-const api = axios.create({ baseURL: API_BASE_URL, withCredentials: true, timeout: 30000 });
+// Generous timeout: a sleeping server (e.g. Render's free plan) needs ~30–60 s to wake up.
+export const REQUEST_TIMEOUT_MS = 90000;
+const api = axios.create({ baseURL: API_BASE_URL, withCredentials: true, timeout: REQUEST_TIMEOUT_MS });
+
+/**
+ * True only when the server itself said the session is over (401/403).
+ * A timeout, network error or 5xx means "server not reachable right now" — not "signed out".
+ */
+export const isSignedOutError = (err) => [401, 403].includes(err?.response?.status);
 
 api.interceptors.request.use((config) => {
   if (accessToken) config.headers.Authorization = `Bearer ${accessToken}`;
@@ -24,7 +32,7 @@ api.interceptors.request.use((config) => {
 
 let refreshing = null;
 
-const postRefresh = () => axios.post(`${API_BASE_URL}/auth/refresh`, {}, { withCredentials: true });
+const postRefresh = () => axios.post(`${API_BASE_URL}/auth/refresh`, {}, { withCredentials: true, timeout: REQUEST_TIMEOUT_MS });
 
 /**
  * All tabs of this browser share one refresh-token cookie, which changes on every refresh.
@@ -60,9 +68,13 @@ api.interceptors.response.use(
       try {
         await refreshSession();
         return api(config);
-      } catch {
-        setAccessToken(null);
-        sessionExpiredHandler();
+      } catch (refreshErr) {
+        // Only a real "session over" answer signs the user out; an unreachable server does not.
+        if (isSignedOutError(refreshErr)) {
+          setAccessToken(null);
+          sessionExpiredHandler();
+        }
+        return Promise.reject(refreshErr);
       }
     }
     return Promise.reject(error);

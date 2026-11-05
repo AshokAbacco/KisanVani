@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { authApi } from '../services';
-import { onSessionExpired, refreshSession, setAccessToken } from '../services/api';
+import { isSignedOutError, onSessionExpired, refreshSession, setAccessToken } from '../services/api';
 import { closeSocket } from '../services/socket';
 
 const AuthContext = createContext(null);
@@ -33,6 +33,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [status, setStatus] = useState('loading'); // loading | authenticated | anonymous
   const [expired, setExpired] = useState(false);
+  const [waking, setWaking] = useState(false); // restoring, but the server has not answered yet
 
   const clear = useCallback(() => {
     setHint(false);
@@ -52,23 +53,41 @@ export const AuthProvider = ({ children }) => {
       });
       return undefined;
     }
-    refreshSession()
-      .then((session) => {
-        if (cancelled) return;
-        setUser(session.user);
-        setStatus('authenticated');
-      })
-      .catch(() => {
-        if (cancelled) return;
-        setHint(false);
-        setStatus('anonymous');
-      });
+    // Restore the session. If the server is asleep or unreachable, keep waiting and retry instead of
+    // signing the user out; only a real 401/403 from the server ends the session.
+    const RETRY_DELAYS_MS = [3000, 5000, 10000, 15000, 20000];
+    let timer = null;
+    const restore = (attempt = 0) =>
+      refreshSession()
+        .then((session) => {
+          if (cancelled) return;
+          setWaking(false);
+          setUser(session.user);
+          setStatus('authenticated');
+        })
+        .catch((err) => {
+          if (cancelled) return;
+          if (isSignedOutError(err)) {
+            setHint(false);
+            setWaking(false);
+            setStatus('anonymous');
+          } else if (attempt < RETRY_DELAYS_MS.length) {
+            setWaking(true);
+            timer = setTimeout(() => restore(attempt + 1), RETRY_DELAYS_MS[attempt]);
+          } else {
+            // Still unreachable: show the sign-in page but keep the hint, so the next reload tries again.
+            setWaking(false);
+            setStatus('anonymous');
+          }
+        });
+    restore();
     onSessionExpired(() => {
       setExpired(true);
       clear();
     });
     return () => {
       cancelled = true;
+      clearTimeout(timer);
     };
   }, [clear]);
 
@@ -108,8 +127,8 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const value = useMemo(
-    () => ({ user, status, expired, isAuthenticated: status === 'authenticated', login, register, logout, setUser, reloadUser, startSession }),
-    [user, status, expired, login, register, logout, reloadUser, startSession]
+    () => ({ user, status, expired, waking, isAuthenticated: status === 'authenticated', login, register, logout, setUser, reloadUser, startSession }),
+    [user, status, expired, waking, login, register, logout, reloadUser, startSession]
   );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
