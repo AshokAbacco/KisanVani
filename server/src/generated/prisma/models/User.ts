@@ -284,6 +284,8 @@ export type UserWhereInput = {
   tripEvents?: Prisma.TripEventListRelationFilter
   deliveryProofs?: Prisma.DeliveryProofListRelationFilter
   settingsUpdated?: Prisma.ApplicationSettingListRelationFilter
+  chatParticipations?: Prisma.ChatParticipantListRelationFilter
+  chatMessages?: Prisma.ChatMessageListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -331,6 +333,8 @@ export type UserOrderByWithRelationInput = {
   tripEvents?: Prisma.TripEventOrderByRelationAggregateInput
   deliveryProofs?: Prisma.DeliveryProofOrderByRelationAggregateInput
   settingsUpdated?: Prisma.ApplicationSettingOrderByRelationAggregateInput
+  chatParticipations?: Prisma.ChatParticipantOrderByRelationAggregateInput
+  chatMessages?: Prisma.ChatMessageOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -381,6 +385,8 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   tripEvents?: Prisma.TripEventListRelationFilter
   deliveryProofs?: Prisma.DeliveryProofListRelationFilter
   settingsUpdated?: Prisma.ApplicationSettingListRelationFilter
+  chatParticipations?: Prisma.ChatParticipantListRelationFilter
+  chatMessages?: Prisma.ChatMessageListRelationFilter
 }, "id" | "email" | "mobile">
 
 export type UserOrderByWithAggregationInput = {
@@ -468,6 +474,8 @@ export type UserCreateInput = {
   tripEvents?: Prisma.TripEventCreateNestedManyWithoutActorInput
   deliveryProofs?: Prisma.DeliveryProofCreateNestedManyWithoutUploadedByInput
   settingsUpdated?: Prisma.ApplicationSettingCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -515,6 +523,8 @@ export type UserUncheckedCreateInput = {
   tripEvents?: Prisma.TripEventUncheckedCreateNestedManyWithoutActorInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedCreateNestedManyWithoutUploadedByInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
 }
 
 export type UserUpdateInput = {
@@ -562,6 +572,8 @@ export type UserUpdateInput = {
   tripEvents?: Prisma.TripEventUpdateManyWithoutActorNestedInput
   deliveryProofs?: Prisma.DeliveryProofUpdateManyWithoutUploadedByNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -609,6 +621,8 @@ export type UserUncheckedUpdateInput = {
   tripEvents?: Prisma.TripEventUncheckedUpdateManyWithoutActorNestedInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedUpdateManyWithoutUploadedByNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -1181,6 +1195,34 @@ export type UserUpdateOneWithoutSettingsUpdatedNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutSettingsUpdatedInput, Prisma.UserUpdateWithoutSettingsUpdatedInput>, Prisma.UserUncheckedUpdateWithoutSettingsUpdatedInput>
 }
 
+export type UserCreateNestedOneWithoutChatParticipationsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutChatParticipationsInput, Prisma.UserUncheckedCreateWithoutChatParticipationsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutChatParticipationsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutChatParticipationsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutChatParticipationsInput, Prisma.UserUncheckedCreateWithoutChatParticipationsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutChatParticipationsInput
+  upsert?: Prisma.UserUpsertWithoutChatParticipationsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutChatParticipationsInput, Prisma.UserUpdateWithoutChatParticipationsInput>, Prisma.UserUncheckedUpdateWithoutChatParticipationsInput>
+}
+
+export type UserCreateNestedOneWithoutChatMessagesInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutChatMessagesInput, Prisma.UserUncheckedCreateWithoutChatMessagesInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutChatMessagesInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutChatMessagesNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutChatMessagesInput, Prisma.UserUncheckedCreateWithoutChatMessagesInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutChatMessagesInput
+  upsert?: Prisma.UserUpsertWithoutChatMessagesInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutChatMessagesInput, Prisma.UserUpdateWithoutChatMessagesInput>, Prisma.UserUncheckedUpdateWithoutChatMessagesInput>
+}
+
 export type UserCreateWithoutRefreshTokensInput = {
   id?: string
   name: string
@@ -1225,6 +1267,8 @@ export type UserCreateWithoutRefreshTokensInput = {
   tripEvents?: Prisma.TripEventCreateNestedManyWithoutActorInput
   deliveryProofs?: Prisma.DeliveryProofCreateNestedManyWithoutUploadedByInput
   settingsUpdated?: Prisma.ApplicationSettingCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
 }
 
 export type UserUncheckedCreateWithoutRefreshTokensInput = {
@@ -1271,6 +1315,8 @@ export type UserUncheckedCreateWithoutRefreshTokensInput = {
   tripEvents?: Prisma.TripEventUncheckedCreateNestedManyWithoutActorInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedCreateNestedManyWithoutUploadedByInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
 }
 
 export type UserCreateOrConnectWithoutRefreshTokensInput = {
@@ -1333,6 +1379,8 @@ export type UserUpdateWithoutRefreshTokensInput = {
   tripEvents?: Prisma.TripEventUpdateManyWithoutActorNestedInput
   deliveryProofs?: Prisma.DeliveryProofUpdateManyWithoutUploadedByNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
 }
 
 export type UserUncheckedUpdateWithoutRefreshTokensInput = {
@@ -1379,6 +1427,8 @@ export type UserUncheckedUpdateWithoutRefreshTokensInput = {
   tripEvents?: Prisma.TripEventUncheckedUpdateManyWithoutActorNestedInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedUpdateManyWithoutUploadedByNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
 }
 
 export type UserCreateWithoutPasswordResetTokensInput = {
@@ -1425,6 +1475,8 @@ export type UserCreateWithoutPasswordResetTokensInput = {
   tripEvents?: Prisma.TripEventCreateNestedManyWithoutActorInput
   deliveryProofs?: Prisma.DeliveryProofCreateNestedManyWithoutUploadedByInput
   settingsUpdated?: Prisma.ApplicationSettingCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
 }
 
 export type UserUncheckedCreateWithoutPasswordResetTokensInput = {
@@ -1471,6 +1523,8 @@ export type UserUncheckedCreateWithoutPasswordResetTokensInput = {
   tripEvents?: Prisma.TripEventUncheckedCreateNestedManyWithoutActorInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedCreateNestedManyWithoutUploadedByInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
 }
 
 export type UserCreateOrConnectWithoutPasswordResetTokensInput = {
@@ -1533,6 +1587,8 @@ export type UserUpdateWithoutPasswordResetTokensInput = {
   tripEvents?: Prisma.TripEventUpdateManyWithoutActorNestedInput
   deliveryProofs?: Prisma.DeliveryProofUpdateManyWithoutUploadedByNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
 }
 
 export type UserUncheckedUpdateWithoutPasswordResetTokensInput = {
@@ -1579,6 +1635,8 @@ export type UserUncheckedUpdateWithoutPasswordResetTokensInput = {
   tripEvents?: Prisma.TripEventUncheckedUpdateManyWithoutActorNestedInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedUpdateManyWithoutUploadedByNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
 }
 
 export type UserCreateWithoutFarmerProfileInput = {
@@ -1625,6 +1683,8 @@ export type UserCreateWithoutFarmerProfileInput = {
   tripEvents?: Prisma.TripEventCreateNestedManyWithoutActorInput
   deliveryProofs?: Prisma.DeliveryProofCreateNestedManyWithoutUploadedByInput
   settingsUpdated?: Prisma.ApplicationSettingCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
 }
 
 export type UserUncheckedCreateWithoutFarmerProfileInput = {
@@ -1671,6 +1731,8 @@ export type UserUncheckedCreateWithoutFarmerProfileInput = {
   tripEvents?: Prisma.TripEventUncheckedCreateNestedManyWithoutActorInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedCreateNestedManyWithoutUploadedByInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
 }
 
 export type UserCreateOrConnectWithoutFarmerProfileInput = {
@@ -1733,6 +1795,8 @@ export type UserUpdateWithoutFarmerProfileInput = {
   tripEvents?: Prisma.TripEventUpdateManyWithoutActorNestedInput
   deliveryProofs?: Prisma.DeliveryProofUpdateManyWithoutUploadedByNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
 }
 
 export type UserUncheckedUpdateWithoutFarmerProfileInput = {
@@ -1779,6 +1843,8 @@ export type UserUncheckedUpdateWithoutFarmerProfileInput = {
   tripEvents?: Prisma.TripEventUncheckedUpdateManyWithoutActorNestedInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedUpdateManyWithoutUploadedByNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
 }
 
 export type UserCreateWithoutShopProfileInput = {
@@ -1825,6 +1891,8 @@ export type UserCreateWithoutShopProfileInput = {
   tripEvents?: Prisma.TripEventCreateNestedManyWithoutActorInput
   deliveryProofs?: Prisma.DeliveryProofCreateNestedManyWithoutUploadedByInput
   settingsUpdated?: Prisma.ApplicationSettingCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
 }
 
 export type UserUncheckedCreateWithoutShopProfileInput = {
@@ -1871,6 +1939,8 @@ export type UserUncheckedCreateWithoutShopProfileInput = {
   tripEvents?: Prisma.TripEventUncheckedCreateNestedManyWithoutActorInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedCreateNestedManyWithoutUploadedByInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
 }
 
 export type UserCreateOrConnectWithoutShopProfileInput = {
@@ -1933,6 +2003,8 @@ export type UserUpdateWithoutShopProfileInput = {
   tripEvents?: Prisma.TripEventUpdateManyWithoutActorNestedInput
   deliveryProofs?: Prisma.DeliveryProofUpdateManyWithoutUploadedByNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
 }
 
 export type UserUncheckedUpdateWithoutShopProfileInput = {
@@ -1979,6 +2051,8 @@ export type UserUncheckedUpdateWithoutShopProfileInput = {
   tripEvents?: Prisma.TripEventUncheckedUpdateManyWithoutActorNestedInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedUpdateManyWithoutUploadedByNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
 }
 
 export type UserCreateWithoutMandiProfileInput = {
@@ -2025,6 +2099,8 @@ export type UserCreateWithoutMandiProfileInput = {
   tripEvents?: Prisma.TripEventCreateNestedManyWithoutActorInput
   deliveryProofs?: Prisma.DeliveryProofCreateNestedManyWithoutUploadedByInput
   settingsUpdated?: Prisma.ApplicationSettingCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
 }
 
 export type UserUncheckedCreateWithoutMandiProfileInput = {
@@ -2071,6 +2147,8 @@ export type UserUncheckedCreateWithoutMandiProfileInput = {
   tripEvents?: Prisma.TripEventUncheckedCreateNestedManyWithoutActorInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedCreateNestedManyWithoutUploadedByInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
 }
 
 export type UserCreateOrConnectWithoutMandiProfileInput = {
@@ -2133,6 +2211,8 @@ export type UserUpdateWithoutMandiProfileInput = {
   tripEvents?: Prisma.TripEventUpdateManyWithoutActorNestedInput
   deliveryProofs?: Prisma.DeliveryProofUpdateManyWithoutUploadedByNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
 }
 
 export type UserUncheckedUpdateWithoutMandiProfileInput = {
@@ -2179,6 +2259,8 @@ export type UserUncheckedUpdateWithoutMandiProfileInput = {
   tripEvents?: Prisma.TripEventUncheckedUpdateManyWithoutActorNestedInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedUpdateManyWithoutUploadedByNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
 }
 
 export type UserCreateWithoutDriverProfileInput = {
@@ -2225,6 +2307,8 @@ export type UserCreateWithoutDriverProfileInput = {
   tripEvents?: Prisma.TripEventCreateNestedManyWithoutActorInput
   deliveryProofs?: Prisma.DeliveryProofCreateNestedManyWithoutUploadedByInput
   settingsUpdated?: Prisma.ApplicationSettingCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
 }
 
 export type UserUncheckedCreateWithoutDriverProfileInput = {
@@ -2271,6 +2355,8 @@ export type UserUncheckedCreateWithoutDriverProfileInput = {
   tripEvents?: Prisma.TripEventUncheckedCreateNestedManyWithoutActorInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedCreateNestedManyWithoutUploadedByInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
 }
 
 export type UserCreateOrConnectWithoutDriverProfileInput = {
@@ -2333,6 +2419,8 @@ export type UserUpdateWithoutDriverProfileInput = {
   tripEvents?: Prisma.TripEventUpdateManyWithoutActorNestedInput
   deliveryProofs?: Prisma.DeliveryProofUpdateManyWithoutUploadedByNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
 }
 
 export type UserUncheckedUpdateWithoutDriverProfileInput = {
@@ -2379,6 +2467,8 @@ export type UserUncheckedUpdateWithoutDriverProfileInput = {
   tripEvents?: Prisma.TripEventUncheckedUpdateManyWithoutActorNestedInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedUpdateManyWithoutUploadedByNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
 }
 
 export type UserCreateWithoutVehiclesInput = {
@@ -2425,6 +2515,8 @@ export type UserCreateWithoutVehiclesInput = {
   tripEvents?: Prisma.TripEventCreateNestedManyWithoutActorInput
   deliveryProofs?: Prisma.DeliveryProofCreateNestedManyWithoutUploadedByInput
   settingsUpdated?: Prisma.ApplicationSettingCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
 }
 
 export type UserUncheckedCreateWithoutVehiclesInput = {
@@ -2471,6 +2563,8 @@ export type UserUncheckedCreateWithoutVehiclesInput = {
   tripEvents?: Prisma.TripEventUncheckedCreateNestedManyWithoutActorInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedCreateNestedManyWithoutUploadedByInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
 }
 
 export type UserCreateOrConnectWithoutVehiclesInput = {
@@ -2533,6 +2627,8 @@ export type UserUpdateWithoutVehiclesInput = {
   tripEvents?: Prisma.TripEventUpdateManyWithoutActorNestedInput
   deliveryProofs?: Prisma.DeliveryProofUpdateManyWithoutUploadedByNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
 }
 
 export type UserUncheckedUpdateWithoutVehiclesInput = {
@@ -2579,6 +2675,8 @@ export type UserUncheckedUpdateWithoutVehiclesInput = {
   tripEvents?: Prisma.TripEventUncheckedUpdateManyWithoutActorNestedInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedUpdateManyWithoutUploadedByNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
 }
 
 export type UserCreateWithoutHarvestListingsInput = {
@@ -2625,6 +2723,8 @@ export type UserCreateWithoutHarvestListingsInput = {
   tripEvents?: Prisma.TripEventCreateNestedManyWithoutActorInput
   deliveryProofs?: Prisma.DeliveryProofCreateNestedManyWithoutUploadedByInput
   settingsUpdated?: Prisma.ApplicationSettingCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
 }
 
 export type UserUncheckedCreateWithoutHarvestListingsInput = {
@@ -2671,6 +2771,8 @@ export type UserUncheckedCreateWithoutHarvestListingsInput = {
   tripEvents?: Prisma.TripEventUncheckedCreateNestedManyWithoutActorInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedCreateNestedManyWithoutUploadedByInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
 }
 
 export type UserCreateOrConnectWithoutHarvestListingsInput = {
@@ -2733,6 +2835,8 @@ export type UserUpdateWithoutHarvestListingsInput = {
   tripEvents?: Prisma.TripEventUpdateManyWithoutActorNestedInput
   deliveryProofs?: Prisma.DeliveryProofUpdateManyWithoutUploadedByNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
 }
 
 export type UserUncheckedUpdateWithoutHarvestListingsInput = {
@@ -2779,6 +2883,8 @@ export type UserUncheckedUpdateWithoutHarvestListingsInput = {
   tripEvents?: Prisma.TripEventUncheckedUpdateManyWithoutActorNestedInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedUpdateManyWithoutUploadedByNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
 }
 
 export type UserCreateWithoutMandiLotsInput = {
@@ -2825,6 +2931,8 @@ export type UserCreateWithoutMandiLotsInput = {
   tripEvents?: Prisma.TripEventCreateNestedManyWithoutActorInput
   deliveryProofs?: Prisma.DeliveryProofCreateNestedManyWithoutUploadedByInput
   settingsUpdated?: Prisma.ApplicationSettingCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
 }
 
 export type UserUncheckedCreateWithoutMandiLotsInput = {
@@ -2871,6 +2979,8 @@ export type UserUncheckedCreateWithoutMandiLotsInput = {
   tripEvents?: Prisma.TripEventUncheckedCreateNestedManyWithoutActorInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedCreateNestedManyWithoutUploadedByInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
 }
 
 export type UserCreateOrConnectWithoutMandiLotsInput = {
@@ -2933,6 +3043,8 @@ export type UserUpdateWithoutMandiLotsInput = {
   tripEvents?: Prisma.TripEventUpdateManyWithoutActorNestedInput
   deliveryProofs?: Prisma.DeliveryProofUpdateManyWithoutUploadedByNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
 }
 
 export type UserUncheckedUpdateWithoutMandiLotsInput = {
@@ -2979,6 +3091,8 @@ export type UserUncheckedUpdateWithoutMandiLotsInput = {
   tripEvents?: Prisma.TripEventUncheckedUpdateManyWithoutActorNestedInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedUpdateManyWithoutUploadedByNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
 }
 
 export type UserCreateWithoutInventoryItemsInput = {
@@ -3025,6 +3139,8 @@ export type UserCreateWithoutInventoryItemsInput = {
   tripEvents?: Prisma.TripEventCreateNestedManyWithoutActorInput
   deliveryProofs?: Prisma.DeliveryProofCreateNestedManyWithoutUploadedByInput
   settingsUpdated?: Prisma.ApplicationSettingCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
 }
 
 export type UserUncheckedCreateWithoutInventoryItemsInput = {
@@ -3071,6 +3187,8 @@ export type UserUncheckedCreateWithoutInventoryItemsInput = {
   tripEvents?: Prisma.TripEventUncheckedCreateNestedManyWithoutActorInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedCreateNestedManyWithoutUploadedByInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
 }
 
 export type UserCreateOrConnectWithoutInventoryItemsInput = {
@@ -3133,6 +3251,8 @@ export type UserUpdateWithoutInventoryItemsInput = {
   tripEvents?: Prisma.TripEventUpdateManyWithoutActorNestedInput
   deliveryProofs?: Prisma.DeliveryProofUpdateManyWithoutUploadedByNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
 }
 
 export type UserUncheckedUpdateWithoutInventoryItemsInput = {
@@ -3179,6 +3299,8 @@ export type UserUncheckedUpdateWithoutInventoryItemsInput = {
   tripEvents?: Prisma.TripEventUncheckedUpdateManyWithoutActorNestedInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedUpdateManyWithoutUploadedByNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
 }
 
 export type UserCreateWithoutInventoryTxnsInput = {
@@ -3225,6 +3347,8 @@ export type UserCreateWithoutInventoryTxnsInput = {
   tripEvents?: Prisma.TripEventCreateNestedManyWithoutActorInput
   deliveryProofs?: Prisma.DeliveryProofCreateNestedManyWithoutUploadedByInput
   settingsUpdated?: Prisma.ApplicationSettingCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
 }
 
 export type UserUncheckedCreateWithoutInventoryTxnsInput = {
@@ -3271,6 +3395,8 @@ export type UserUncheckedCreateWithoutInventoryTxnsInput = {
   tripEvents?: Prisma.TripEventUncheckedCreateNestedManyWithoutActorInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedCreateNestedManyWithoutUploadedByInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
 }
 
 export type UserCreateOrConnectWithoutInventoryTxnsInput = {
@@ -3333,6 +3459,8 @@ export type UserUpdateWithoutInventoryTxnsInput = {
   tripEvents?: Prisma.TripEventUpdateManyWithoutActorNestedInput
   deliveryProofs?: Prisma.DeliveryProofUpdateManyWithoutUploadedByNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
 }
 
 export type UserUncheckedUpdateWithoutInventoryTxnsInput = {
@@ -3379,6 +3507,8 @@ export type UserUncheckedUpdateWithoutInventoryTxnsInput = {
   tripEvents?: Prisma.TripEventUncheckedUpdateManyWithoutActorNestedInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedUpdateManyWithoutUploadedByNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
 }
 
 export type UserCreateWithoutCustomersInput = {
@@ -3425,6 +3555,8 @@ export type UserCreateWithoutCustomersInput = {
   tripEvents?: Prisma.TripEventCreateNestedManyWithoutActorInput
   deliveryProofs?: Prisma.DeliveryProofCreateNestedManyWithoutUploadedByInput
   settingsUpdated?: Prisma.ApplicationSettingCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
 }
 
 export type UserUncheckedCreateWithoutCustomersInput = {
@@ -3471,6 +3603,8 @@ export type UserUncheckedCreateWithoutCustomersInput = {
   tripEvents?: Prisma.TripEventUncheckedCreateNestedManyWithoutActorInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedCreateNestedManyWithoutUploadedByInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
 }
 
 export type UserCreateOrConnectWithoutCustomersInput = {
@@ -3533,6 +3667,8 @@ export type UserUpdateWithoutCustomersInput = {
   tripEvents?: Prisma.TripEventUpdateManyWithoutActorNestedInput
   deliveryProofs?: Prisma.DeliveryProofUpdateManyWithoutUploadedByNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
 }
 
 export type UserUncheckedUpdateWithoutCustomersInput = {
@@ -3579,6 +3715,8 @@ export type UserUncheckedUpdateWithoutCustomersInput = {
   tripEvents?: Prisma.TripEventUncheckedUpdateManyWithoutActorNestedInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedUpdateManyWithoutUploadedByNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
 }
 
 export type UserCreateWithoutSuppliersInput = {
@@ -3625,6 +3763,8 @@ export type UserCreateWithoutSuppliersInput = {
   tripEvents?: Prisma.TripEventCreateNestedManyWithoutActorInput
   deliveryProofs?: Prisma.DeliveryProofCreateNestedManyWithoutUploadedByInput
   settingsUpdated?: Prisma.ApplicationSettingCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
 }
 
 export type UserUncheckedCreateWithoutSuppliersInput = {
@@ -3671,6 +3811,8 @@ export type UserUncheckedCreateWithoutSuppliersInput = {
   tripEvents?: Prisma.TripEventUncheckedCreateNestedManyWithoutActorInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedCreateNestedManyWithoutUploadedByInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
 }
 
 export type UserCreateOrConnectWithoutSuppliersInput = {
@@ -3733,6 +3875,8 @@ export type UserUpdateWithoutSuppliersInput = {
   tripEvents?: Prisma.TripEventUpdateManyWithoutActorNestedInput
   deliveryProofs?: Prisma.DeliveryProofUpdateManyWithoutUploadedByNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
 }
 
 export type UserUncheckedUpdateWithoutSuppliersInput = {
@@ -3779,6 +3923,8 @@ export type UserUncheckedUpdateWithoutSuppliersInput = {
   tripEvents?: Prisma.TripEventUncheckedUpdateManyWithoutActorNestedInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedUpdateManyWithoutUploadedByNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
 }
 
 export type UserCreateWithoutSalesInvoicesInput = {
@@ -3825,6 +3971,8 @@ export type UserCreateWithoutSalesInvoicesInput = {
   tripEvents?: Prisma.TripEventCreateNestedManyWithoutActorInput
   deliveryProofs?: Prisma.DeliveryProofCreateNestedManyWithoutUploadedByInput
   settingsUpdated?: Prisma.ApplicationSettingCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
 }
 
 export type UserUncheckedCreateWithoutSalesInvoicesInput = {
@@ -3871,6 +4019,8 @@ export type UserUncheckedCreateWithoutSalesInvoicesInput = {
   tripEvents?: Prisma.TripEventUncheckedCreateNestedManyWithoutActorInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedCreateNestedManyWithoutUploadedByInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
 }
 
 export type UserCreateOrConnectWithoutSalesInvoicesInput = {
@@ -3933,6 +4083,8 @@ export type UserUpdateWithoutSalesInvoicesInput = {
   tripEvents?: Prisma.TripEventUpdateManyWithoutActorNestedInput
   deliveryProofs?: Prisma.DeliveryProofUpdateManyWithoutUploadedByNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
 }
 
 export type UserUncheckedUpdateWithoutSalesInvoicesInput = {
@@ -3979,6 +4131,8 @@ export type UserUncheckedUpdateWithoutSalesInvoicesInput = {
   tripEvents?: Prisma.TripEventUncheckedUpdateManyWithoutActorNestedInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedUpdateManyWithoutUploadedByNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
 }
 
 export type UserCreateWithoutPurchaseOrdersInput = {
@@ -4025,6 +4179,8 @@ export type UserCreateWithoutPurchaseOrdersInput = {
   tripEvents?: Prisma.TripEventCreateNestedManyWithoutActorInput
   deliveryProofs?: Prisma.DeliveryProofCreateNestedManyWithoutUploadedByInput
   settingsUpdated?: Prisma.ApplicationSettingCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
 }
 
 export type UserUncheckedCreateWithoutPurchaseOrdersInput = {
@@ -4071,6 +4227,8 @@ export type UserUncheckedCreateWithoutPurchaseOrdersInput = {
   tripEvents?: Prisma.TripEventUncheckedCreateNestedManyWithoutActorInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedCreateNestedManyWithoutUploadedByInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
 }
 
 export type UserCreateOrConnectWithoutPurchaseOrdersInput = {
@@ -4133,6 +4291,8 @@ export type UserUpdateWithoutPurchaseOrdersInput = {
   tripEvents?: Prisma.TripEventUpdateManyWithoutActorNestedInput
   deliveryProofs?: Prisma.DeliveryProofUpdateManyWithoutUploadedByNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
 }
 
 export type UserUncheckedUpdateWithoutPurchaseOrdersInput = {
@@ -4179,6 +4339,8 @@ export type UserUncheckedUpdateWithoutPurchaseOrdersInput = {
   tripEvents?: Prisma.TripEventUncheckedUpdateManyWithoutActorNestedInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedUpdateManyWithoutUploadedByNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
 }
 
 export type UserCreateWithoutBuyerOrdersInput = {
@@ -4225,6 +4387,8 @@ export type UserCreateWithoutBuyerOrdersInput = {
   tripEvents?: Prisma.TripEventCreateNestedManyWithoutActorInput
   deliveryProofs?: Prisma.DeliveryProofCreateNestedManyWithoutUploadedByInput
   settingsUpdated?: Prisma.ApplicationSettingCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
 }
 
 export type UserUncheckedCreateWithoutBuyerOrdersInput = {
@@ -4271,6 +4435,8 @@ export type UserUncheckedCreateWithoutBuyerOrdersInput = {
   tripEvents?: Prisma.TripEventUncheckedCreateNestedManyWithoutActorInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedCreateNestedManyWithoutUploadedByInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
 }
 
 export type UserCreateOrConnectWithoutBuyerOrdersInput = {
@@ -4322,6 +4488,8 @@ export type UserCreateWithoutSellerOrdersInput = {
   tripEvents?: Prisma.TripEventCreateNestedManyWithoutActorInput
   deliveryProofs?: Prisma.DeliveryProofCreateNestedManyWithoutUploadedByInput
   settingsUpdated?: Prisma.ApplicationSettingCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
 }
 
 export type UserUncheckedCreateWithoutSellerOrdersInput = {
@@ -4368,6 +4536,8 @@ export type UserUncheckedCreateWithoutSellerOrdersInput = {
   tripEvents?: Prisma.TripEventUncheckedCreateNestedManyWithoutActorInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedCreateNestedManyWithoutUploadedByInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
 }
 
 export type UserCreateOrConnectWithoutSellerOrdersInput = {
@@ -4430,6 +4600,8 @@ export type UserUpdateWithoutBuyerOrdersInput = {
   tripEvents?: Prisma.TripEventUpdateManyWithoutActorNestedInput
   deliveryProofs?: Prisma.DeliveryProofUpdateManyWithoutUploadedByNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
 }
 
 export type UserUncheckedUpdateWithoutBuyerOrdersInput = {
@@ -4476,6 +4648,8 @@ export type UserUncheckedUpdateWithoutBuyerOrdersInput = {
   tripEvents?: Prisma.TripEventUncheckedUpdateManyWithoutActorNestedInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedUpdateManyWithoutUploadedByNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
 }
 
 export type UserUpsertWithoutSellerOrdersInput = {
@@ -4533,6 +4707,8 @@ export type UserUpdateWithoutSellerOrdersInput = {
   tripEvents?: Prisma.TripEventUpdateManyWithoutActorNestedInput
   deliveryProofs?: Prisma.DeliveryProofUpdateManyWithoutUploadedByNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
 }
 
 export type UserUncheckedUpdateWithoutSellerOrdersInput = {
@@ -4579,6 +4755,8 @@ export type UserUncheckedUpdateWithoutSellerOrdersInput = {
   tripEvents?: Prisma.TripEventUncheckedUpdateManyWithoutActorNestedInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedUpdateManyWithoutUploadedByNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
 }
 
 export type UserCreateWithoutOrderHistoryInput = {
@@ -4625,6 +4803,8 @@ export type UserCreateWithoutOrderHistoryInput = {
   tripEvents?: Prisma.TripEventCreateNestedManyWithoutActorInput
   deliveryProofs?: Prisma.DeliveryProofCreateNestedManyWithoutUploadedByInput
   settingsUpdated?: Prisma.ApplicationSettingCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
 }
 
 export type UserUncheckedCreateWithoutOrderHistoryInput = {
@@ -4671,6 +4851,8 @@ export type UserUncheckedCreateWithoutOrderHistoryInput = {
   tripEvents?: Prisma.TripEventUncheckedCreateNestedManyWithoutActorInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedCreateNestedManyWithoutUploadedByInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
 }
 
 export type UserCreateOrConnectWithoutOrderHistoryInput = {
@@ -4733,6 +4915,8 @@ export type UserUpdateWithoutOrderHistoryInput = {
   tripEvents?: Prisma.TripEventUpdateManyWithoutActorNestedInput
   deliveryProofs?: Prisma.DeliveryProofUpdateManyWithoutUploadedByNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
 }
 
 export type UserUncheckedUpdateWithoutOrderHistoryInput = {
@@ -4779,6 +4963,8 @@ export type UserUncheckedUpdateWithoutOrderHistoryInput = {
   tripEvents?: Prisma.TripEventUncheckedUpdateManyWithoutActorNestedInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedUpdateManyWithoutUploadedByNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
 }
 
 export type UserCreateWithoutTransportRequestsInput = {
@@ -4825,6 +5011,8 @@ export type UserCreateWithoutTransportRequestsInput = {
   tripEvents?: Prisma.TripEventCreateNestedManyWithoutActorInput
   deliveryProofs?: Prisma.DeliveryProofCreateNestedManyWithoutUploadedByInput
   settingsUpdated?: Prisma.ApplicationSettingCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
 }
 
 export type UserUncheckedCreateWithoutTransportRequestsInput = {
@@ -4871,6 +5059,8 @@ export type UserUncheckedCreateWithoutTransportRequestsInput = {
   tripEvents?: Prisma.TripEventUncheckedCreateNestedManyWithoutActorInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedCreateNestedManyWithoutUploadedByInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
 }
 
 export type UserCreateOrConnectWithoutTransportRequestsInput = {
@@ -4933,6 +5123,8 @@ export type UserUpdateWithoutTransportRequestsInput = {
   tripEvents?: Prisma.TripEventUpdateManyWithoutActorNestedInput
   deliveryProofs?: Prisma.DeliveryProofUpdateManyWithoutUploadedByNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
 }
 
 export type UserUncheckedUpdateWithoutTransportRequestsInput = {
@@ -4979,6 +5171,8 @@ export type UserUncheckedUpdateWithoutTransportRequestsInput = {
   tripEvents?: Prisma.TripEventUncheckedUpdateManyWithoutActorNestedInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedUpdateManyWithoutUploadedByNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
 }
 
 export type UserCreateWithoutDriverTripsInput = {
@@ -5025,6 +5219,8 @@ export type UserCreateWithoutDriverTripsInput = {
   tripEvents?: Prisma.TripEventCreateNestedManyWithoutActorInput
   deliveryProofs?: Prisma.DeliveryProofCreateNestedManyWithoutUploadedByInput
   settingsUpdated?: Prisma.ApplicationSettingCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
 }
 
 export type UserUncheckedCreateWithoutDriverTripsInput = {
@@ -5071,6 +5267,8 @@ export type UserUncheckedCreateWithoutDriverTripsInput = {
   tripEvents?: Prisma.TripEventUncheckedCreateNestedManyWithoutActorInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedCreateNestedManyWithoutUploadedByInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
 }
 
 export type UserCreateOrConnectWithoutDriverTripsInput = {
@@ -5122,6 +5320,8 @@ export type UserCreateWithoutAssignedTripsInput = {
   tripEvents?: Prisma.TripEventCreateNestedManyWithoutActorInput
   deliveryProofs?: Prisma.DeliveryProofCreateNestedManyWithoutUploadedByInput
   settingsUpdated?: Prisma.ApplicationSettingCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
 }
 
 export type UserUncheckedCreateWithoutAssignedTripsInput = {
@@ -5168,6 +5368,8 @@ export type UserUncheckedCreateWithoutAssignedTripsInput = {
   tripEvents?: Prisma.TripEventUncheckedCreateNestedManyWithoutActorInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedCreateNestedManyWithoutUploadedByInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
 }
 
 export type UserCreateOrConnectWithoutAssignedTripsInput = {
@@ -5230,6 +5432,8 @@ export type UserUpdateWithoutDriverTripsInput = {
   tripEvents?: Prisma.TripEventUpdateManyWithoutActorNestedInput
   deliveryProofs?: Prisma.DeliveryProofUpdateManyWithoutUploadedByNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
 }
 
 export type UserUncheckedUpdateWithoutDriverTripsInput = {
@@ -5276,6 +5480,8 @@ export type UserUncheckedUpdateWithoutDriverTripsInput = {
   tripEvents?: Prisma.TripEventUncheckedUpdateManyWithoutActorNestedInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedUpdateManyWithoutUploadedByNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
 }
 
 export type UserUpsertWithoutAssignedTripsInput = {
@@ -5333,6 +5539,8 @@ export type UserUpdateWithoutAssignedTripsInput = {
   tripEvents?: Prisma.TripEventUpdateManyWithoutActorNestedInput
   deliveryProofs?: Prisma.DeliveryProofUpdateManyWithoutUploadedByNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
 }
 
 export type UserUncheckedUpdateWithoutAssignedTripsInput = {
@@ -5379,6 +5587,8 @@ export type UserUncheckedUpdateWithoutAssignedTripsInput = {
   tripEvents?: Prisma.TripEventUncheckedUpdateManyWithoutActorNestedInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedUpdateManyWithoutUploadedByNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
 }
 
 export type UserCreateWithoutTripEventsInput = {
@@ -5425,6 +5635,8 @@ export type UserCreateWithoutTripEventsInput = {
   orderHistory?: Prisma.OrderStatusHistoryCreateNestedManyWithoutChangedByInput
   deliveryProofs?: Prisma.DeliveryProofCreateNestedManyWithoutUploadedByInput
   settingsUpdated?: Prisma.ApplicationSettingCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
 }
 
 export type UserUncheckedCreateWithoutTripEventsInput = {
@@ -5471,6 +5683,8 @@ export type UserUncheckedCreateWithoutTripEventsInput = {
   orderHistory?: Prisma.OrderStatusHistoryUncheckedCreateNestedManyWithoutChangedByInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedCreateNestedManyWithoutUploadedByInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
 }
 
 export type UserCreateOrConnectWithoutTripEventsInput = {
@@ -5533,6 +5747,8 @@ export type UserUpdateWithoutTripEventsInput = {
   orderHistory?: Prisma.OrderStatusHistoryUpdateManyWithoutChangedByNestedInput
   deliveryProofs?: Prisma.DeliveryProofUpdateManyWithoutUploadedByNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
 }
 
 export type UserUncheckedUpdateWithoutTripEventsInput = {
@@ -5579,6 +5795,8 @@ export type UserUncheckedUpdateWithoutTripEventsInput = {
   orderHistory?: Prisma.OrderStatusHistoryUncheckedUpdateManyWithoutChangedByNestedInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedUpdateManyWithoutUploadedByNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
 }
 
 export type UserCreateWithoutDeliveryProofsInput = {
@@ -5625,6 +5843,8 @@ export type UserCreateWithoutDeliveryProofsInput = {
   orderHistory?: Prisma.OrderStatusHistoryCreateNestedManyWithoutChangedByInput
   tripEvents?: Prisma.TripEventCreateNestedManyWithoutActorInput
   settingsUpdated?: Prisma.ApplicationSettingCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
 }
 
 export type UserUncheckedCreateWithoutDeliveryProofsInput = {
@@ -5671,6 +5891,8 @@ export type UserUncheckedCreateWithoutDeliveryProofsInput = {
   orderHistory?: Prisma.OrderStatusHistoryUncheckedCreateNestedManyWithoutChangedByInput
   tripEvents?: Prisma.TripEventUncheckedCreateNestedManyWithoutActorInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
 }
 
 export type UserCreateOrConnectWithoutDeliveryProofsInput = {
@@ -5733,6 +5955,8 @@ export type UserUpdateWithoutDeliveryProofsInput = {
   orderHistory?: Prisma.OrderStatusHistoryUpdateManyWithoutChangedByNestedInput
   tripEvents?: Prisma.TripEventUpdateManyWithoutActorNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
 }
 
 export type UserUncheckedUpdateWithoutDeliveryProofsInput = {
@@ -5779,6 +6003,8 @@ export type UserUncheckedUpdateWithoutDeliveryProofsInput = {
   orderHistory?: Prisma.OrderStatusHistoryUncheckedUpdateManyWithoutChangedByNestedInput
   tripEvents?: Prisma.TripEventUncheckedUpdateManyWithoutActorNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
 }
 
 export type UserCreateWithoutPaymentsMadeInput = {
@@ -5825,6 +6051,8 @@ export type UserCreateWithoutPaymentsMadeInput = {
   tripEvents?: Prisma.TripEventCreateNestedManyWithoutActorInput
   deliveryProofs?: Prisma.DeliveryProofCreateNestedManyWithoutUploadedByInput
   settingsUpdated?: Prisma.ApplicationSettingCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
 }
 
 export type UserUncheckedCreateWithoutPaymentsMadeInput = {
@@ -5871,6 +6099,8 @@ export type UserUncheckedCreateWithoutPaymentsMadeInput = {
   tripEvents?: Prisma.TripEventUncheckedCreateNestedManyWithoutActorInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedCreateNestedManyWithoutUploadedByInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
 }
 
 export type UserCreateOrConnectWithoutPaymentsMadeInput = {
@@ -5922,6 +6152,8 @@ export type UserCreateWithoutPaymentsReceivedInput = {
   tripEvents?: Prisma.TripEventCreateNestedManyWithoutActorInput
   deliveryProofs?: Prisma.DeliveryProofCreateNestedManyWithoutUploadedByInput
   settingsUpdated?: Prisma.ApplicationSettingCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
 }
 
 export type UserUncheckedCreateWithoutPaymentsReceivedInput = {
@@ -5968,6 +6200,8 @@ export type UserUncheckedCreateWithoutPaymentsReceivedInput = {
   tripEvents?: Prisma.TripEventUncheckedCreateNestedManyWithoutActorInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedCreateNestedManyWithoutUploadedByInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
 }
 
 export type UserCreateOrConnectWithoutPaymentsReceivedInput = {
@@ -6019,6 +6253,8 @@ export type UserCreateWithoutPaymentsRecordedInput = {
   tripEvents?: Prisma.TripEventCreateNestedManyWithoutActorInput
   deliveryProofs?: Prisma.DeliveryProofCreateNestedManyWithoutUploadedByInput
   settingsUpdated?: Prisma.ApplicationSettingCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
 }
 
 export type UserUncheckedCreateWithoutPaymentsRecordedInput = {
@@ -6065,6 +6301,8 @@ export type UserUncheckedCreateWithoutPaymentsRecordedInput = {
   tripEvents?: Prisma.TripEventUncheckedCreateNestedManyWithoutActorInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedCreateNestedManyWithoutUploadedByInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
 }
 
 export type UserCreateOrConnectWithoutPaymentsRecordedInput = {
@@ -6127,6 +6365,8 @@ export type UserUpdateWithoutPaymentsMadeInput = {
   tripEvents?: Prisma.TripEventUpdateManyWithoutActorNestedInput
   deliveryProofs?: Prisma.DeliveryProofUpdateManyWithoutUploadedByNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
 }
 
 export type UserUncheckedUpdateWithoutPaymentsMadeInput = {
@@ -6173,6 +6413,8 @@ export type UserUncheckedUpdateWithoutPaymentsMadeInput = {
   tripEvents?: Prisma.TripEventUncheckedUpdateManyWithoutActorNestedInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedUpdateManyWithoutUploadedByNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
 }
 
 export type UserUpsertWithoutPaymentsReceivedInput = {
@@ -6230,6 +6472,8 @@ export type UserUpdateWithoutPaymentsReceivedInput = {
   tripEvents?: Prisma.TripEventUpdateManyWithoutActorNestedInput
   deliveryProofs?: Prisma.DeliveryProofUpdateManyWithoutUploadedByNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
 }
 
 export type UserUncheckedUpdateWithoutPaymentsReceivedInput = {
@@ -6276,6 +6520,8 @@ export type UserUncheckedUpdateWithoutPaymentsReceivedInput = {
   tripEvents?: Prisma.TripEventUncheckedUpdateManyWithoutActorNestedInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedUpdateManyWithoutUploadedByNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
 }
 
 export type UserUpsertWithoutPaymentsRecordedInput = {
@@ -6333,6 +6579,8 @@ export type UserUpdateWithoutPaymentsRecordedInput = {
   tripEvents?: Prisma.TripEventUpdateManyWithoutActorNestedInput
   deliveryProofs?: Prisma.DeliveryProofUpdateManyWithoutUploadedByNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
 }
 
 export type UserUncheckedUpdateWithoutPaymentsRecordedInput = {
@@ -6379,6 +6627,8 @@ export type UserUncheckedUpdateWithoutPaymentsRecordedInput = {
   tripEvents?: Prisma.TripEventUncheckedUpdateManyWithoutActorNestedInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedUpdateManyWithoutUploadedByNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
 }
 
 export type UserCreateWithoutSettlementsPayableInput = {
@@ -6425,6 +6675,8 @@ export type UserCreateWithoutSettlementsPayableInput = {
   tripEvents?: Prisma.TripEventCreateNestedManyWithoutActorInput
   deliveryProofs?: Prisma.DeliveryProofCreateNestedManyWithoutUploadedByInput
   settingsUpdated?: Prisma.ApplicationSettingCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
 }
 
 export type UserUncheckedCreateWithoutSettlementsPayableInput = {
@@ -6471,6 +6723,8 @@ export type UserUncheckedCreateWithoutSettlementsPayableInput = {
   tripEvents?: Prisma.TripEventUncheckedCreateNestedManyWithoutActorInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedCreateNestedManyWithoutUploadedByInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
 }
 
 export type UserCreateOrConnectWithoutSettlementsPayableInput = {
@@ -6522,6 +6776,8 @@ export type UserCreateWithoutSettlementsReceivedInput = {
   tripEvents?: Prisma.TripEventCreateNestedManyWithoutActorInput
   deliveryProofs?: Prisma.DeliveryProofCreateNestedManyWithoutUploadedByInput
   settingsUpdated?: Prisma.ApplicationSettingCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
 }
 
 export type UserUncheckedCreateWithoutSettlementsReceivedInput = {
@@ -6568,6 +6824,8 @@ export type UserUncheckedCreateWithoutSettlementsReceivedInput = {
   tripEvents?: Prisma.TripEventUncheckedCreateNestedManyWithoutActorInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedCreateNestedManyWithoutUploadedByInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
 }
 
 export type UserCreateOrConnectWithoutSettlementsReceivedInput = {
@@ -6630,6 +6888,8 @@ export type UserUpdateWithoutSettlementsPayableInput = {
   tripEvents?: Prisma.TripEventUpdateManyWithoutActorNestedInput
   deliveryProofs?: Prisma.DeliveryProofUpdateManyWithoutUploadedByNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
 }
 
 export type UserUncheckedUpdateWithoutSettlementsPayableInput = {
@@ -6676,6 +6936,8 @@ export type UserUncheckedUpdateWithoutSettlementsPayableInput = {
   tripEvents?: Prisma.TripEventUncheckedUpdateManyWithoutActorNestedInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedUpdateManyWithoutUploadedByNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
 }
 
 export type UserUpsertWithoutSettlementsReceivedInput = {
@@ -6733,6 +6995,8 @@ export type UserUpdateWithoutSettlementsReceivedInput = {
   tripEvents?: Prisma.TripEventUpdateManyWithoutActorNestedInput
   deliveryProofs?: Prisma.DeliveryProofUpdateManyWithoutUploadedByNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
 }
 
 export type UserUncheckedUpdateWithoutSettlementsReceivedInput = {
@@ -6779,6 +7043,8 @@ export type UserUncheckedUpdateWithoutSettlementsReceivedInput = {
   tripEvents?: Prisma.TripEventUncheckedUpdateManyWithoutActorNestedInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedUpdateManyWithoutUploadedByNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
 }
 
 export type UserCreateWithoutNotificationsInput = {
@@ -6825,6 +7091,8 @@ export type UserCreateWithoutNotificationsInput = {
   tripEvents?: Prisma.TripEventCreateNestedManyWithoutActorInput
   deliveryProofs?: Prisma.DeliveryProofCreateNestedManyWithoutUploadedByInput
   settingsUpdated?: Prisma.ApplicationSettingCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
 }
 
 export type UserUncheckedCreateWithoutNotificationsInput = {
@@ -6871,6 +7139,8 @@ export type UserUncheckedCreateWithoutNotificationsInput = {
   tripEvents?: Prisma.TripEventUncheckedCreateNestedManyWithoutActorInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedCreateNestedManyWithoutUploadedByInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
 }
 
 export type UserCreateOrConnectWithoutNotificationsInput = {
@@ -6933,6 +7203,8 @@ export type UserUpdateWithoutNotificationsInput = {
   tripEvents?: Prisma.TripEventUpdateManyWithoutActorNestedInput
   deliveryProofs?: Prisma.DeliveryProofUpdateManyWithoutUploadedByNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
 }
 
 export type UserUncheckedUpdateWithoutNotificationsInput = {
@@ -6979,6 +7251,8 @@ export type UserUncheckedUpdateWithoutNotificationsInput = {
   tripEvents?: Prisma.TripEventUncheckedUpdateManyWithoutActorNestedInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedUpdateManyWithoutUploadedByNestedInput
   settingsUpdated?: Prisma.ApplicationSettingUncheckedUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
 }
 
 export type UserCreateWithoutSettingsUpdatedInput = {
@@ -7025,6 +7299,8 @@ export type UserCreateWithoutSettingsUpdatedInput = {
   orderHistory?: Prisma.OrderStatusHistoryCreateNestedManyWithoutChangedByInput
   tripEvents?: Prisma.TripEventCreateNestedManyWithoutActorInput
   deliveryProofs?: Prisma.DeliveryProofCreateNestedManyWithoutUploadedByInput
+  chatParticipations?: Prisma.ChatParticipantCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
 }
 
 export type UserUncheckedCreateWithoutSettingsUpdatedInput = {
@@ -7071,6 +7347,8 @@ export type UserUncheckedCreateWithoutSettingsUpdatedInput = {
   orderHistory?: Prisma.OrderStatusHistoryUncheckedCreateNestedManyWithoutChangedByInput
   tripEvents?: Prisma.TripEventUncheckedCreateNestedManyWithoutActorInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedCreateNestedManyWithoutUploadedByInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedCreateNestedManyWithoutUserInput
+  chatMessages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
 }
 
 export type UserCreateOrConnectWithoutSettingsUpdatedInput = {
@@ -7133,6 +7411,8 @@ export type UserUpdateWithoutSettingsUpdatedInput = {
   orderHistory?: Prisma.OrderStatusHistoryUpdateManyWithoutChangedByNestedInput
   tripEvents?: Prisma.TripEventUpdateManyWithoutActorNestedInput
   deliveryProofs?: Prisma.DeliveryProofUpdateManyWithoutUploadedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
 }
 
 export type UserUncheckedUpdateWithoutSettingsUpdatedInput = {
@@ -7179,6 +7459,424 @@ export type UserUncheckedUpdateWithoutSettingsUpdatedInput = {
   orderHistory?: Prisma.OrderStatusHistoryUncheckedUpdateManyWithoutChangedByNestedInput
   tripEvents?: Prisma.TripEventUncheckedUpdateManyWithoutActorNestedInput
   deliveryProofs?: Prisma.DeliveryProofUncheckedUpdateManyWithoutUploadedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedUpdateManyWithoutUserNestedInput
+  chatMessages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
+}
+
+export type UserCreateWithoutChatParticipationsInput = {
+  id?: string
+  name: string
+  email?: string | null
+  mobile: string
+  passwordHash: string
+  role: $Enums.Role
+  status?: $Enums.UserStatus
+  statusReason?: string | null
+  preferredLanguage?: string
+  avatarUrl?: string | null
+  lastLoginAt?: Date | string | null
+  passwordChangedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  refreshTokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput
+  passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutUserInput
+  farmerProfile?: Prisma.FarmerProfileCreateNestedOneWithoutUserInput
+  shopProfile?: Prisma.ShopProfileCreateNestedOneWithoutUserInput
+  mandiProfile?: Prisma.MandiProfileCreateNestedOneWithoutUserInput
+  driverProfile?: Prisma.DriverProfileCreateNestedOneWithoutUserInput
+  harvestListings?: Prisma.HarvestListingCreateNestedManyWithoutFarmerInput
+  mandiLots?: Prisma.MandiLotCreateNestedManyWithoutMandiOwnerInput
+  inventoryItems?: Prisma.InventoryItemCreateNestedManyWithoutShopInput
+  customers?: Prisma.CustomerCreateNestedManyWithoutShopInput
+  suppliers?: Prisma.SupplierCreateNestedManyWithoutShopInput
+  salesInvoices?: Prisma.SalesInvoiceCreateNestedManyWithoutShopInput
+  purchaseOrders?: Prisma.PurchaseOrderCreateNestedManyWithoutShopInput
+  buyerOrders?: Prisma.OrderCreateNestedManyWithoutBuyerInput
+  sellerOrders?: Prisma.OrderCreateNestedManyWithoutSellerInput
+  transportRequests?: Prisma.TransportRequestCreateNestedManyWithoutRequesterInput
+  driverTrips?: Prisma.TripCreateNestedManyWithoutDriverInput
+  assignedTrips?: Prisma.TripCreateNestedManyWithoutAssignedByInput
+  vehicles?: Prisma.VehicleCreateNestedManyWithoutDriverInput
+  paymentsMade?: Prisma.PaymentCreateNestedManyWithoutPayerInput
+  paymentsReceived?: Prisma.PaymentCreateNestedManyWithoutPayeeInput
+  paymentsRecorded?: Prisma.PaymentCreateNestedManyWithoutRecordedByInput
+  settlementsPayable?: Prisma.SettlementCreateNestedManyWithoutPayerInput
+  settlementsReceived?: Prisma.SettlementCreateNestedManyWithoutPayeeInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  inventoryTxns?: Prisma.InventoryTransactionCreateNestedManyWithoutCreatedByInput
+  orderHistory?: Prisma.OrderStatusHistoryCreateNestedManyWithoutChangedByInput
+  tripEvents?: Prisma.TripEventCreateNestedManyWithoutActorInput
+  deliveryProofs?: Prisma.DeliveryProofCreateNestedManyWithoutUploadedByInput
+  settingsUpdated?: Prisma.ApplicationSettingCreateNestedManyWithoutUpdatedByInput
+  chatMessages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
+}
+
+export type UserUncheckedCreateWithoutChatParticipationsInput = {
+  id?: string
+  name: string
+  email?: string | null
+  mobile: string
+  passwordHash: string
+  role: $Enums.Role
+  status?: $Enums.UserStatus
+  statusReason?: string | null
+  preferredLanguage?: string
+  avatarUrl?: string | null
+  lastLoginAt?: Date | string | null
+  passwordChangedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  refreshTokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput
+  passwordResetTokens?: Prisma.PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+  farmerProfile?: Prisma.FarmerProfileUncheckedCreateNestedOneWithoutUserInput
+  shopProfile?: Prisma.ShopProfileUncheckedCreateNestedOneWithoutUserInput
+  mandiProfile?: Prisma.MandiProfileUncheckedCreateNestedOneWithoutUserInput
+  driverProfile?: Prisma.DriverProfileUncheckedCreateNestedOneWithoutUserInput
+  harvestListings?: Prisma.HarvestListingUncheckedCreateNestedManyWithoutFarmerInput
+  mandiLots?: Prisma.MandiLotUncheckedCreateNestedManyWithoutMandiOwnerInput
+  inventoryItems?: Prisma.InventoryItemUncheckedCreateNestedManyWithoutShopInput
+  customers?: Prisma.CustomerUncheckedCreateNestedManyWithoutShopInput
+  suppliers?: Prisma.SupplierUncheckedCreateNestedManyWithoutShopInput
+  salesInvoices?: Prisma.SalesInvoiceUncheckedCreateNestedManyWithoutShopInput
+  purchaseOrders?: Prisma.PurchaseOrderUncheckedCreateNestedManyWithoutShopInput
+  buyerOrders?: Prisma.OrderUncheckedCreateNestedManyWithoutBuyerInput
+  sellerOrders?: Prisma.OrderUncheckedCreateNestedManyWithoutSellerInput
+  transportRequests?: Prisma.TransportRequestUncheckedCreateNestedManyWithoutRequesterInput
+  driverTrips?: Prisma.TripUncheckedCreateNestedManyWithoutDriverInput
+  assignedTrips?: Prisma.TripUncheckedCreateNestedManyWithoutAssignedByInput
+  vehicles?: Prisma.VehicleUncheckedCreateNestedManyWithoutDriverInput
+  paymentsMade?: Prisma.PaymentUncheckedCreateNestedManyWithoutPayerInput
+  paymentsReceived?: Prisma.PaymentUncheckedCreateNestedManyWithoutPayeeInput
+  paymentsRecorded?: Prisma.PaymentUncheckedCreateNestedManyWithoutRecordedByInput
+  settlementsPayable?: Prisma.SettlementUncheckedCreateNestedManyWithoutPayerInput
+  settlementsReceived?: Prisma.SettlementUncheckedCreateNestedManyWithoutPayeeInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  inventoryTxns?: Prisma.InventoryTransactionUncheckedCreateNestedManyWithoutCreatedByInput
+  orderHistory?: Prisma.OrderStatusHistoryUncheckedCreateNestedManyWithoutChangedByInput
+  tripEvents?: Prisma.TripEventUncheckedCreateNestedManyWithoutActorInput
+  deliveryProofs?: Prisma.DeliveryProofUncheckedCreateNestedManyWithoutUploadedByInput
+  settingsUpdated?: Prisma.ApplicationSettingUncheckedCreateNestedManyWithoutUpdatedByInput
+  chatMessages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
+}
+
+export type UserCreateOrConnectWithoutChatParticipationsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutChatParticipationsInput, Prisma.UserUncheckedCreateWithoutChatParticipationsInput>
+}
+
+export type UserUpsertWithoutChatParticipationsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutChatParticipationsInput, Prisma.UserUncheckedUpdateWithoutChatParticipationsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutChatParticipationsInput, Prisma.UserUncheckedCreateWithoutChatParticipationsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutChatParticipationsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutChatParticipationsInput, Prisma.UserUncheckedUpdateWithoutChatParticipationsInput>
+}
+
+export type UserUpdateWithoutChatParticipationsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mobile?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  statusReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  preferredLanguage?: Prisma.StringFieldUpdateOperationsInput | string
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  passwordChangedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  refreshTokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput
+  passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutUserNestedInput
+  farmerProfile?: Prisma.FarmerProfileUpdateOneWithoutUserNestedInput
+  shopProfile?: Prisma.ShopProfileUpdateOneWithoutUserNestedInput
+  mandiProfile?: Prisma.MandiProfileUpdateOneWithoutUserNestedInput
+  driverProfile?: Prisma.DriverProfileUpdateOneWithoutUserNestedInput
+  harvestListings?: Prisma.HarvestListingUpdateManyWithoutFarmerNestedInput
+  mandiLots?: Prisma.MandiLotUpdateManyWithoutMandiOwnerNestedInput
+  inventoryItems?: Prisma.InventoryItemUpdateManyWithoutShopNestedInput
+  customers?: Prisma.CustomerUpdateManyWithoutShopNestedInput
+  suppliers?: Prisma.SupplierUpdateManyWithoutShopNestedInput
+  salesInvoices?: Prisma.SalesInvoiceUpdateManyWithoutShopNestedInput
+  purchaseOrders?: Prisma.PurchaseOrderUpdateManyWithoutShopNestedInput
+  buyerOrders?: Prisma.OrderUpdateManyWithoutBuyerNestedInput
+  sellerOrders?: Prisma.OrderUpdateManyWithoutSellerNestedInput
+  transportRequests?: Prisma.TransportRequestUpdateManyWithoutRequesterNestedInput
+  driverTrips?: Prisma.TripUpdateManyWithoutDriverNestedInput
+  assignedTrips?: Prisma.TripUpdateManyWithoutAssignedByNestedInput
+  vehicles?: Prisma.VehicleUpdateManyWithoutDriverNestedInput
+  paymentsMade?: Prisma.PaymentUpdateManyWithoutPayerNestedInput
+  paymentsReceived?: Prisma.PaymentUpdateManyWithoutPayeeNestedInput
+  paymentsRecorded?: Prisma.PaymentUpdateManyWithoutRecordedByNestedInput
+  settlementsPayable?: Prisma.SettlementUpdateManyWithoutPayerNestedInput
+  settlementsReceived?: Prisma.SettlementUpdateManyWithoutPayeeNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  inventoryTxns?: Prisma.InventoryTransactionUpdateManyWithoutCreatedByNestedInput
+  orderHistory?: Prisma.OrderStatusHistoryUpdateManyWithoutChangedByNestedInput
+  tripEvents?: Prisma.TripEventUpdateManyWithoutActorNestedInput
+  deliveryProofs?: Prisma.DeliveryProofUpdateManyWithoutUploadedByNestedInput
+  settingsUpdated?: Prisma.ApplicationSettingUpdateManyWithoutUpdatedByNestedInput
+  chatMessages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
+}
+
+export type UserUncheckedUpdateWithoutChatParticipationsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mobile?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  statusReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  preferredLanguage?: Prisma.StringFieldUpdateOperationsInput | string
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  passwordChangedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  refreshTokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
+  passwordResetTokens?: Prisma.PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+  farmerProfile?: Prisma.FarmerProfileUncheckedUpdateOneWithoutUserNestedInput
+  shopProfile?: Prisma.ShopProfileUncheckedUpdateOneWithoutUserNestedInput
+  mandiProfile?: Prisma.MandiProfileUncheckedUpdateOneWithoutUserNestedInput
+  driverProfile?: Prisma.DriverProfileUncheckedUpdateOneWithoutUserNestedInput
+  harvestListings?: Prisma.HarvestListingUncheckedUpdateManyWithoutFarmerNestedInput
+  mandiLots?: Prisma.MandiLotUncheckedUpdateManyWithoutMandiOwnerNestedInput
+  inventoryItems?: Prisma.InventoryItemUncheckedUpdateManyWithoutShopNestedInput
+  customers?: Prisma.CustomerUncheckedUpdateManyWithoutShopNestedInput
+  suppliers?: Prisma.SupplierUncheckedUpdateManyWithoutShopNestedInput
+  salesInvoices?: Prisma.SalesInvoiceUncheckedUpdateManyWithoutShopNestedInput
+  purchaseOrders?: Prisma.PurchaseOrderUncheckedUpdateManyWithoutShopNestedInput
+  buyerOrders?: Prisma.OrderUncheckedUpdateManyWithoutBuyerNestedInput
+  sellerOrders?: Prisma.OrderUncheckedUpdateManyWithoutSellerNestedInput
+  transportRequests?: Prisma.TransportRequestUncheckedUpdateManyWithoutRequesterNestedInput
+  driverTrips?: Prisma.TripUncheckedUpdateManyWithoutDriverNestedInput
+  assignedTrips?: Prisma.TripUncheckedUpdateManyWithoutAssignedByNestedInput
+  vehicles?: Prisma.VehicleUncheckedUpdateManyWithoutDriverNestedInput
+  paymentsMade?: Prisma.PaymentUncheckedUpdateManyWithoutPayerNestedInput
+  paymentsReceived?: Prisma.PaymentUncheckedUpdateManyWithoutPayeeNestedInput
+  paymentsRecorded?: Prisma.PaymentUncheckedUpdateManyWithoutRecordedByNestedInput
+  settlementsPayable?: Prisma.SettlementUncheckedUpdateManyWithoutPayerNestedInput
+  settlementsReceived?: Prisma.SettlementUncheckedUpdateManyWithoutPayeeNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  inventoryTxns?: Prisma.InventoryTransactionUncheckedUpdateManyWithoutCreatedByNestedInput
+  orderHistory?: Prisma.OrderStatusHistoryUncheckedUpdateManyWithoutChangedByNestedInput
+  tripEvents?: Prisma.TripEventUncheckedUpdateManyWithoutActorNestedInput
+  deliveryProofs?: Prisma.DeliveryProofUncheckedUpdateManyWithoutUploadedByNestedInput
+  settingsUpdated?: Prisma.ApplicationSettingUncheckedUpdateManyWithoutUpdatedByNestedInput
+  chatMessages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
+}
+
+export type UserCreateWithoutChatMessagesInput = {
+  id?: string
+  name: string
+  email?: string | null
+  mobile: string
+  passwordHash: string
+  role: $Enums.Role
+  status?: $Enums.UserStatus
+  statusReason?: string | null
+  preferredLanguage?: string
+  avatarUrl?: string | null
+  lastLoginAt?: Date | string | null
+  passwordChangedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  refreshTokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput
+  passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutUserInput
+  farmerProfile?: Prisma.FarmerProfileCreateNestedOneWithoutUserInput
+  shopProfile?: Prisma.ShopProfileCreateNestedOneWithoutUserInput
+  mandiProfile?: Prisma.MandiProfileCreateNestedOneWithoutUserInput
+  driverProfile?: Prisma.DriverProfileCreateNestedOneWithoutUserInput
+  harvestListings?: Prisma.HarvestListingCreateNestedManyWithoutFarmerInput
+  mandiLots?: Prisma.MandiLotCreateNestedManyWithoutMandiOwnerInput
+  inventoryItems?: Prisma.InventoryItemCreateNestedManyWithoutShopInput
+  customers?: Prisma.CustomerCreateNestedManyWithoutShopInput
+  suppliers?: Prisma.SupplierCreateNestedManyWithoutShopInput
+  salesInvoices?: Prisma.SalesInvoiceCreateNestedManyWithoutShopInput
+  purchaseOrders?: Prisma.PurchaseOrderCreateNestedManyWithoutShopInput
+  buyerOrders?: Prisma.OrderCreateNestedManyWithoutBuyerInput
+  sellerOrders?: Prisma.OrderCreateNestedManyWithoutSellerInput
+  transportRequests?: Prisma.TransportRequestCreateNestedManyWithoutRequesterInput
+  driverTrips?: Prisma.TripCreateNestedManyWithoutDriverInput
+  assignedTrips?: Prisma.TripCreateNestedManyWithoutAssignedByInput
+  vehicles?: Prisma.VehicleCreateNestedManyWithoutDriverInput
+  paymentsMade?: Prisma.PaymentCreateNestedManyWithoutPayerInput
+  paymentsReceived?: Prisma.PaymentCreateNestedManyWithoutPayeeInput
+  paymentsRecorded?: Prisma.PaymentCreateNestedManyWithoutRecordedByInput
+  settlementsPayable?: Prisma.SettlementCreateNestedManyWithoutPayerInput
+  settlementsReceived?: Prisma.SettlementCreateNestedManyWithoutPayeeInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  inventoryTxns?: Prisma.InventoryTransactionCreateNestedManyWithoutCreatedByInput
+  orderHistory?: Prisma.OrderStatusHistoryCreateNestedManyWithoutChangedByInput
+  tripEvents?: Prisma.TripEventCreateNestedManyWithoutActorInput
+  deliveryProofs?: Prisma.DeliveryProofCreateNestedManyWithoutUploadedByInput
+  settingsUpdated?: Prisma.ApplicationSettingCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutChatMessagesInput = {
+  id?: string
+  name: string
+  email?: string | null
+  mobile: string
+  passwordHash: string
+  role: $Enums.Role
+  status?: $Enums.UserStatus
+  statusReason?: string | null
+  preferredLanguage?: string
+  avatarUrl?: string | null
+  lastLoginAt?: Date | string | null
+  passwordChangedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  refreshTokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput
+  passwordResetTokens?: Prisma.PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+  farmerProfile?: Prisma.FarmerProfileUncheckedCreateNestedOneWithoutUserInput
+  shopProfile?: Prisma.ShopProfileUncheckedCreateNestedOneWithoutUserInput
+  mandiProfile?: Prisma.MandiProfileUncheckedCreateNestedOneWithoutUserInput
+  driverProfile?: Prisma.DriverProfileUncheckedCreateNestedOneWithoutUserInput
+  harvestListings?: Prisma.HarvestListingUncheckedCreateNestedManyWithoutFarmerInput
+  mandiLots?: Prisma.MandiLotUncheckedCreateNestedManyWithoutMandiOwnerInput
+  inventoryItems?: Prisma.InventoryItemUncheckedCreateNestedManyWithoutShopInput
+  customers?: Prisma.CustomerUncheckedCreateNestedManyWithoutShopInput
+  suppliers?: Prisma.SupplierUncheckedCreateNestedManyWithoutShopInput
+  salesInvoices?: Prisma.SalesInvoiceUncheckedCreateNestedManyWithoutShopInput
+  purchaseOrders?: Prisma.PurchaseOrderUncheckedCreateNestedManyWithoutShopInput
+  buyerOrders?: Prisma.OrderUncheckedCreateNestedManyWithoutBuyerInput
+  sellerOrders?: Prisma.OrderUncheckedCreateNestedManyWithoutSellerInput
+  transportRequests?: Prisma.TransportRequestUncheckedCreateNestedManyWithoutRequesterInput
+  driverTrips?: Prisma.TripUncheckedCreateNestedManyWithoutDriverInput
+  assignedTrips?: Prisma.TripUncheckedCreateNestedManyWithoutAssignedByInput
+  vehicles?: Prisma.VehicleUncheckedCreateNestedManyWithoutDriverInput
+  paymentsMade?: Prisma.PaymentUncheckedCreateNestedManyWithoutPayerInput
+  paymentsReceived?: Prisma.PaymentUncheckedCreateNestedManyWithoutPayeeInput
+  paymentsRecorded?: Prisma.PaymentUncheckedCreateNestedManyWithoutRecordedByInput
+  settlementsPayable?: Prisma.SettlementUncheckedCreateNestedManyWithoutPayerInput
+  settlementsReceived?: Prisma.SettlementUncheckedCreateNestedManyWithoutPayeeInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  inventoryTxns?: Prisma.InventoryTransactionUncheckedCreateNestedManyWithoutCreatedByInput
+  orderHistory?: Prisma.OrderStatusHistoryUncheckedCreateNestedManyWithoutChangedByInput
+  tripEvents?: Prisma.TripEventUncheckedCreateNestedManyWithoutActorInput
+  deliveryProofs?: Prisma.DeliveryProofUncheckedCreateNestedManyWithoutUploadedByInput
+  settingsUpdated?: Prisma.ApplicationSettingUncheckedCreateNestedManyWithoutUpdatedByInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutChatMessagesInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutChatMessagesInput, Prisma.UserUncheckedCreateWithoutChatMessagesInput>
+}
+
+export type UserUpsertWithoutChatMessagesInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutChatMessagesInput, Prisma.UserUncheckedUpdateWithoutChatMessagesInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutChatMessagesInput, Prisma.UserUncheckedCreateWithoutChatMessagesInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutChatMessagesInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutChatMessagesInput, Prisma.UserUncheckedUpdateWithoutChatMessagesInput>
+}
+
+export type UserUpdateWithoutChatMessagesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mobile?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  statusReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  preferredLanguage?: Prisma.StringFieldUpdateOperationsInput | string
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  passwordChangedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  refreshTokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput
+  passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutUserNestedInput
+  farmerProfile?: Prisma.FarmerProfileUpdateOneWithoutUserNestedInput
+  shopProfile?: Prisma.ShopProfileUpdateOneWithoutUserNestedInput
+  mandiProfile?: Prisma.MandiProfileUpdateOneWithoutUserNestedInput
+  driverProfile?: Prisma.DriverProfileUpdateOneWithoutUserNestedInput
+  harvestListings?: Prisma.HarvestListingUpdateManyWithoutFarmerNestedInput
+  mandiLots?: Prisma.MandiLotUpdateManyWithoutMandiOwnerNestedInput
+  inventoryItems?: Prisma.InventoryItemUpdateManyWithoutShopNestedInput
+  customers?: Prisma.CustomerUpdateManyWithoutShopNestedInput
+  suppliers?: Prisma.SupplierUpdateManyWithoutShopNestedInput
+  salesInvoices?: Prisma.SalesInvoiceUpdateManyWithoutShopNestedInput
+  purchaseOrders?: Prisma.PurchaseOrderUpdateManyWithoutShopNestedInput
+  buyerOrders?: Prisma.OrderUpdateManyWithoutBuyerNestedInput
+  sellerOrders?: Prisma.OrderUpdateManyWithoutSellerNestedInput
+  transportRequests?: Prisma.TransportRequestUpdateManyWithoutRequesterNestedInput
+  driverTrips?: Prisma.TripUpdateManyWithoutDriverNestedInput
+  assignedTrips?: Prisma.TripUpdateManyWithoutAssignedByNestedInput
+  vehicles?: Prisma.VehicleUpdateManyWithoutDriverNestedInput
+  paymentsMade?: Prisma.PaymentUpdateManyWithoutPayerNestedInput
+  paymentsReceived?: Prisma.PaymentUpdateManyWithoutPayeeNestedInput
+  paymentsRecorded?: Prisma.PaymentUpdateManyWithoutRecordedByNestedInput
+  settlementsPayable?: Prisma.SettlementUpdateManyWithoutPayerNestedInput
+  settlementsReceived?: Prisma.SettlementUpdateManyWithoutPayeeNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  inventoryTxns?: Prisma.InventoryTransactionUpdateManyWithoutCreatedByNestedInput
+  orderHistory?: Prisma.OrderStatusHistoryUpdateManyWithoutChangedByNestedInput
+  tripEvents?: Prisma.TripEventUpdateManyWithoutActorNestedInput
+  deliveryProofs?: Prisma.DeliveryProofUpdateManyWithoutUploadedByNestedInput
+  settingsUpdated?: Prisma.ApplicationSettingUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutChatMessagesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mobile?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  status?: Prisma.EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  statusReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  preferredLanguage?: Prisma.StringFieldUpdateOperationsInput | string
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  passwordChangedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  refreshTokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
+  passwordResetTokens?: Prisma.PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+  farmerProfile?: Prisma.FarmerProfileUncheckedUpdateOneWithoutUserNestedInput
+  shopProfile?: Prisma.ShopProfileUncheckedUpdateOneWithoutUserNestedInput
+  mandiProfile?: Prisma.MandiProfileUncheckedUpdateOneWithoutUserNestedInput
+  driverProfile?: Prisma.DriverProfileUncheckedUpdateOneWithoutUserNestedInput
+  harvestListings?: Prisma.HarvestListingUncheckedUpdateManyWithoutFarmerNestedInput
+  mandiLots?: Prisma.MandiLotUncheckedUpdateManyWithoutMandiOwnerNestedInput
+  inventoryItems?: Prisma.InventoryItemUncheckedUpdateManyWithoutShopNestedInput
+  customers?: Prisma.CustomerUncheckedUpdateManyWithoutShopNestedInput
+  suppliers?: Prisma.SupplierUncheckedUpdateManyWithoutShopNestedInput
+  salesInvoices?: Prisma.SalesInvoiceUncheckedUpdateManyWithoutShopNestedInput
+  purchaseOrders?: Prisma.PurchaseOrderUncheckedUpdateManyWithoutShopNestedInput
+  buyerOrders?: Prisma.OrderUncheckedUpdateManyWithoutBuyerNestedInput
+  sellerOrders?: Prisma.OrderUncheckedUpdateManyWithoutSellerNestedInput
+  transportRequests?: Prisma.TransportRequestUncheckedUpdateManyWithoutRequesterNestedInput
+  driverTrips?: Prisma.TripUncheckedUpdateManyWithoutDriverNestedInput
+  assignedTrips?: Prisma.TripUncheckedUpdateManyWithoutAssignedByNestedInput
+  vehicles?: Prisma.VehicleUncheckedUpdateManyWithoutDriverNestedInput
+  paymentsMade?: Prisma.PaymentUncheckedUpdateManyWithoutPayerNestedInput
+  paymentsReceived?: Prisma.PaymentUncheckedUpdateManyWithoutPayeeNestedInput
+  paymentsRecorded?: Prisma.PaymentUncheckedUpdateManyWithoutRecordedByNestedInput
+  settlementsPayable?: Prisma.SettlementUncheckedUpdateManyWithoutPayerNestedInput
+  settlementsReceived?: Prisma.SettlementUncheckedUpdateManyWithoutPayeeNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  inventoryTxns?: Prisma.InventoryTransactionUncheckedUpdateManyWithoutCreatedByNestedInput
+  orderHistory?: Prisma.OrderStatusHistoryUncheckedUpdateManyWithoutChangedByNestedInput
+  tripEvents?: Prisma.TripEventUncheckedUpdateManyWithoutActorNestedInput
+  deliveryProofs?: Prisma.DeliveryProofUncheckedUpdateManyWithoutUploadedByNestedInput
+  settingsUpdated?: Prisma.ApplicationSettingUncheckedUpdateManyWithoutUpdatedByNestedInput
+  chatParticipations?: Prisma.ChatParticipantUncheckedUpdateManyWithoutUserNestedInput
 }
 
 
@@ -7213,6 +7911,8 @@ export type UserCountOutputType = {
   tripEvents: number
   deliveryProofs: number
   settingsUpdated: number
+  chatParticipations: number
+  chatMessages: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -7242,6 +7942,8 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   tripEvents?: boolean | UserCountOutputTypeCountTripEventsArgs
   deliveryProofs?: boolean | UserCountOutputTypeCountDeliveryProofsArgs
   settingsUpdated?: boolean | UserCountOutputTypeCountSettingsUpdatedArgs
+  chatParticipations?: boolean | UserCountOutputTypeCountChatParticipationsArgs
+  chatMessages?: boolean | UserCountOutputTypeCountChatMessagesArgs
 }
 
 /**
@@ -7436,6 +8138,20 @@ export type UserCountOutputTypeCountSettingsUpdatedArgs<ExtArgs extends runtime.
   where?: Prisma.ApplicationSettingWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountChatParticipationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ChatParticipantWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountChatMessagesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ChatMessageWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -7482,6 +8198,8 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   tripEvents?: boolean | Prisma.User$tripEventsArgs<ExtArgs>
   deliveryProofs?: boolean | Prisma.User$deliveryProofsArgs<ExtArgs>
   settingsUpdated?: boolean | Prisma.User$settingsUpdatedArgs<ExtArgs>
+  chatParticipations?: boolean | Prisma.User$chatParticipationsArgs<ExtArgs>
+  chatMessages?: boolean | Prisma.User$chatMessagesArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -7568,6 +8286,8 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   tripEvents?: boolean | Prisma.User$tripEventsArgs<ExtArgs>
   deliveryProofs?: boolean | Prisma.User$deliveryProofsArgs<ExtArgs>
   settingsUpdated?: boolean | Prisma.User$settingsUpdatedArgs<ExtArgs>
+  chatParticipations?: boolean | Prisma.User$chatParticipationsArgs<ExtArgs>
+  chatMessages?: boolean | Prisma.User$chatMessagesArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -7606,6 +8326,8 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     tripEvents: Prisma.$TripEventPayload<ExtArgs>[]
     deliveryProofs: Prisma.$DeliveryProofPayload<ExtArgs>[]
     settingsUpdated: Prisma.$ApplicationSettingPayload<ExtArgs>[]
+    chatParticipations: Prisma.$ChatParticipantPayload<ExtArgs>[]
+    chatMessages: Prisma.$ChatMessagePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -8046,6 +8768,8 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   tripEvents<T extends Prisma.User$tripEventsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$tripEventsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TripEventPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   deliveryProofs<T extends Prisma.User$deliveryProofsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$deliveryProofsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$DeliveryProofPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   settingsUpdated<T extends Prisma.User$settingsUpdatedArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$settingsUpdatedArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ApplicationSettingPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  chatParticipations<T extends Prisma.User$chatParticipationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$chatParticipationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ChatParticipantPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  chatMessages<T extends Prisma.User$chatMessagesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$chatMessagesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ChatMessagePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -9179,6 +9903,54 @@ export type User$settingsUpdatedArgs<ExtArgs extends runtime.Types.Extensions.In
   take?: number
   skip?: number
   distinct?: Prisma.ApplicationSettingScalarFieldEnum | Prisma.ApplicationSettingScalarFieldEnum[]
+}
+
+/**
+ * User.chatParticipations
+ */
+export type User$chatParticipationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ChatParticipant
+   */
+  select?: Prisma.ChatParticipantSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ChatParticipant
+   */
+  omit?: Prisma.ChatParticipantOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ChatParticipantInclude<ExtArgs> | null
+  where?: Prisma.ChatParticipantWhereInput
+  orderBy?: Prisma.ChatParticipantOrderByWithRelationInput | Prisma.ChatParticipantOrderByWithRelationInput[]
+  cursor?: Prisma.ChatParticipantWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ChatParticipantScalarFieldEnum | Prisma.ChatParticipantScalarFieldEnum[]
+}
+
+/**
+ * User.chatMessages
+ */
+export type User$chatMessagesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ChatMessage
+   */
+  select?: Prisma.ChatMessageSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ChatMessage
+   */
+  omit?: Prisma.ChatMessageOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ChatMessageInclude<ExtArgs> | null
+  where?: Prisma.ChatMessageWhereInput
+  orderBy?: Prisma.ChatMessageOrderByWithRelationInput | Prisma.ChatMessageOrderByWithRelationInput[]
+  cursor?: Prisma.ChatMessageWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ChatMessageScalarFieldEnum | Prisma.ChatMessageScalarFieldEnum[]
 }
 
 /**

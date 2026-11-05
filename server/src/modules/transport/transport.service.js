@@ -239,7 +239,7 @@ const listTrips = async (user, query) => {
       query.status ? { status: { in: String(query.status).split(',') } } : {},
       dateRange(q),
       q.search
-        ? { OR: [{ tripNumber: { contains: q.search, mode: 'insensitive' } }, { commodity: { contains: q.search, mode: 'insensitive' } }, { vehicle: { registrationNumber: { contains: q.search, mode: 'insensitive' } } }, { driver: { name: { contains: q.search, mode: 'insensitive' } } }] }
+        ? { OR: [{ tripNumber: { contains: q.search, mode: 'insensitive' } }, { commodity: { contains: q.search, mode: 'insensitive' } }, { vehicle: { registrationNumber: { contains: q.search, mode: 'insensitive' } } }, { driver: { name: { contains: q.search, mode: 'insensitive' } } }, { transportRequest: { requester: { name: { contains: q.search, mode: 'insensitive' } } } }] }
         : {},
     ],
   };
@@ -249,7 +249,13 @@ const listTrips = async (user, query) => {
       skip,
       take,
       orderBy,
-      include: { driver: { select: { name: true, mobile: true } }, vehicle: { select: { registrationNumber: true, type: true } }, order: { select: { orderNumber: true } } },
+      include: {
+        driver: { select: { name: true, mobile: true } },
+        vehicle: { select: { registrationNumber: true, type: true } },
+        // Who placed the load (farmer, shopkeeper or Market Mandi owner), shown to the driver with a call link.
+        transportRequest: { select: { requester: { select: { name: true, mobile: true, role: true } } } },
+        order: { select: { orderNumber: true, buyer: { select: { name: true, mobile: true, role: true } } } },
+      },
     }),
     prisma.trip.count({ where }),
   ]);

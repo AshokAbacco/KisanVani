@@ -38,6 +38,7 @@ const ReportsPage = lazy(() => import('../features/reports/ReportsPage'));
 const ProfilePage = lazy(() => import('../features/account/ProfilePage'));
 const AccountSettingsPage = lazy(() => import('../features/account/AccountSettingsPage'));
 const NotificationsPage = lazy(() => import('../features/account/NotificationsPage'));
+const ChatPage = lazy(() => import('../features/chat/ChatPage'));
 const InvoicePrintPage = lazy(() => import('../features/billing/InvoicePrintPage'));
 import PageHeader from '../components/common/PageHeader';
 import { useI18n } from '../i18n';
@@ -166,6 +167,8 @@ const AppRouter = () => (
             <Route path="payments" element={<PaymentsPage base="/admin" copy="routes.adminPayments" />} />
             <Route path="reports" element={<ReportsPage />} />
             <Route path="notifications" element={<NotificationsPage><BroadcastPanel /></NotificationsPage>} />
+            <Route path="chat" element={<ChatPage />} />
+            <Route path="chat/:conversationId" element={<ChatPage />} />
             <Route path="settings" element={<PlatformSettingsPage />} />
             <Route path="profile" element={<ProfilePage />} />
             <Route path="account" element={<AccountSettingsPage />} />
@@ -193,6 +196,8 @@ const AppRouter = () => (
             <Route path="reports" element={<ReportsPage />} />
             <Route path="gps" element={<ShopGpsPage />} />
             <Route path="notifications" element={<NotificationsPage />} />
+            <Route path="chat" element={<ChatPage />} />
+            <Route path="chat/:conversationId" element={<ChatPage />} />
             <Route path="profile" element={<ProfilePage copy="routes.shopProfile" />} />
             <Route path="settings" element={<AccountSettingsPage />} />
           </Route>
@@ -213,6 +218,8 @@ const AppRouter = () => (
             <Route path="earnings" element={<PaymentsPage base="/farmer" copy="routes.farmerEarnings" />} />
             <Route path="reports" element={<ReportsPage />} />
             <Route path="notifications" element={<NotificationsPage />} />
+            <Route path="chat" element={<ChatPage />} />
+            <Route path="chat/:conversationId" element={<ChatPage />} />
             <Route path="profile" element={<ProfilePage copy="routes.farmerProfile" />} />
             <Route path="settings" element={<AccountSettingsPage />} />
           </Route>
@@ -236,6 +243,8 @@ const AppRouter = () => (
             <Route path="payments" element={<PaymentsPage base="/mandi" withSettlements={false} />} />
             <Route path="reports" element={<ReportsPage />} />
             <Route path="notifications" element={<NotificationsPage />} />
+            <Route path="chat" element={<ChatPage />} />
+            <Route path="chat/:conversationId" element={<ChatPage />} />
             <Route path="profile" element={<ProfilePage copy="routes.mandiProfile" />} />
             <Route path="settings" element={<AccountSettingsPage />} />
           </Route>
@@ -255,6 +264,8 @@ const AppRouter = () => (
             <Route path="vehicles/:id" element={<VehicleDetailPage />} />
             <Route path="earnings" element={<EarningsPage />} />
             <Route path="notifications" element={<NotificationsPage />} />
+            <Route path="chat" element={<ChatPage />} />
+            <Route path="chat/:conversationId" element={<ChatPage />} />
             <Route path="profile" element={<ProfilePage copy="routes.driverProfile" />} />
             <Route path="settings" element={<AccountSettingsPage />} />
           </Route>

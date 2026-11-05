@@ -5,6 +5,7 @@ const prisma = require('../config/prisma');
 const logger = require('../config/logger');
 const { setIO, userRoom } = require('./io');
 const registerTrackingHandlers = require('./tracking.socket');
+const registerChatHandlers = require('./chat.socket');
 
 /**
  * Socket.IO server. Every connection must present a valid access token; the user is re-loaded
@@ -36,6 +37,7 @@ const initSockets = (httpServer) => {
     socket.join(userRoom(user.id));
     if (user.role === 'ADMIN') socket.join('admins');
     registerTrackingHandlers(io, socket);
+    registerChatHandlers(io, socket);
     socket.on('error', (err) => logger.warn(`Socket error for ${user.id}: ${err.message}`));
   });
 

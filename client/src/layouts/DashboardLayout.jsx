@@ -10,8 +10,10 @@ import { useAuth } from '../context/AuthContext';
 import { useI18n } from '../i18n';
 import { NAV, QUICK_NAV, PROFILE_LINKS, findActive } from '../constants/nav';
 import { ROLES } from '../constants/roles';
+import useChatUnread from '../hooks/useChatUnread';
 
-const SidebarNav = ({ role, active, onNavigate }) => {
+/** `badges` maps a sidebar item key to a count shown beside it (e.g. unread chat messages). */
+const SidebarNav = ({ role, active, onNavigate, badges = {} }) => {
   const { t } = useI18n();
   return (
   <nav className="flex-1 overflow-y-auto px-3 py-4" aria-label={t('layout.mainNav')}>
@@ -28,6 +30,11 @@ const SidebarNav = ({ role, active, onNavigate }) => {
             >
               <it.icon className="h-[18px] w-[18px] shrink-0" aria-hidden />
               <span className="truncate">{it.label}</span>
+              {badges[it.key] > 0 && (
+                <span className="num ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-green-600 px-1.5 text-[11px] font-bold text-white" aria-label={String(badges[it.key])}>
+                  {badges[it.key] > 99 ? '99+' : badges[it.key]}
+                </span>
+              )}
             </Link>
           </li>
         );
@@ -120,6 +127,8 @@ const DashboardLayout = () => {
     navigate('/login', { replace: true });
   };
 
+  const chatUnread = useChatUnread();
+  const badges = { chat: chatUnread };
   const active = findActive(role, location.pathname);
   const quick = QUICK_NAV[role].map((key) => NAV[role].find((it) => it.key === key)).filter(Boolean);
   const notificationsPath = role === 'ADMIN' ? '/admin/notifications' : `${meta.base}/notifications`;
@@ -135,7 +144,7 @@ const DashboardLayout = () => {
           <meta.icon className="h-4 w-4 accent-text" aria-hidden />
           <span className="text-sm font-semibold accent-text">{meta.label}</span>
         </div>
-        <SidebarNav role={role} active={active} />
+        <SidebarNav role={role} active={active} badges={badges} />
       </aside>
 
       {/* Mobile drawer */}
@@ -149,7 +158,7 @@ const DashboardLayout = () => {
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <SidebarNav role={role} active={active} onNavigate={() => setDrawer(false)} />
+            <SidebarNav role={role} active={active} badges={badges} onNavigate={() => setDrawer(false)} />
           </aside>
         </div>
       )}
@@ -157,8 +166,9 @@ const DashboardLayout = () => {
       <div className="lg:pl-64">
         <header className="sticky top-0 z-20 flex h-16 items-center justify-between gap-3 border-b border-soil-200 bg-white/95 px-4 backdrop-blur sm:px-6">
           <div className="flex items-center gap-2">
-            <button onClick={() => setDrawer(true)} className="rounded-lg p-2 hover:bg-soil-100 lg:hidden" aria-label={t('layout.openMenu')}>
+            <button onClick={() => setDrawer(true)} className="relative rounded-lg p-2 hover:bg-soil-100 lg:hidden" aria-label={t('layout.openMenu')}>
               <Menu className="h-5 w-5" />
+              {chatUnread > 0 && <span className="absolute right-1 top-1 h-2.5 w-2.5 rounded-full bg-green-600 ring-2 ring-white" aria-hidden />}
             </button>
             <span className="hidden text-sm text-soil-500 sm:inline">
               {role === 'SHOPKEEPER' && user.shopProfile?.shopName}

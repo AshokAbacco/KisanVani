@@ -191,6 +191,20 @@ export const settlementsApi = {
   get: (id) => dataOf(api.get(`/settlements/${id}`)),
 };
 
+export const chatApi = {
+  contacts: (params) => dataOf(api.get('/chat/contacts', { params })),
+  conversations: () => dataOf(api.get('/chat/conversations')),
+  unreadCount: () => dataOf(api.get('/chat/unread-count')),
+  open: (userId) => dataOf(api.post('/chat/conversations', { userId })),
+  conversation: (id) => dataOf(api.get(`/chat/conversations/${id}`)),
+  messages: (id, params) => unwrap(api.get(`/chat/conversations/${id}/messages`, { params })),
+  send: (id, body) => dataOf(api.post(`/chat/conversations/${id}/messages`, { body })),
+  edit: (messageId, body) => dataOf(api.patch(`/chat/messages/${messageId}`, { body })),
+  markRead: (id) => dataOf(api.post(`/chat/conversations/${id}/read`)),
+  clear: (id) => dataOf(api.post(`/chat/conversations/${id}/clear`)),
+  remove: (id) => dataOf(api.delete(`/chat/conversations/${id}`)),
+};
+
 export const notificationsApi = {
   list: (params) => unwrap(api.get('/notifications', { params })),
   unreadCount: () => dataOf(api.get('/notifications/unread-count')),

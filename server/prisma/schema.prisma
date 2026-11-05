@@ -11,6 +11,7 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
 // ───────────────────────────── Enums ─────────────────────────────
 
 enum Role {
@@ -233,6 +234,8 @@ model User {
   tripEvents          TripEvent[]
   deliveryProofs      DeliveryProof[]
   settingsUpdated     ApplicationSetting[]
+  chatParticipations  ChatParticipant[]
+  chatMessages        ChatMessage[]          @relation("ChatSender")
 
   @@index([role, status])
   @@index([createdAt])
@@ -1030,4 +1033,61 @@ model DocumentCounter {
   value Int    @default(0)
 
   @@map("document_counters")
+}
+
+// ───────────────────────────── Chat ─────────────────────────────
+// One-to-one conversations between users whose roles may talk to each other (see chat.permissions.js).
+
+model ChatConversation {
+  id            String    @id @default(uuid())
+  /// The two user ids, sorted and joined with ":" — one conversation per pair of users.
+  pairKey       String    @unique
+  lastMessageAt DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  participants ChatParticipant[]
+  messages     ChatMessage[]
+
+  @@index([lastMessageAt])
+  @@map("chat_conversations")
+}
+
+/// Per-user state of a conversation: "clear chat" and "delete chat" only affect this user.
+model ChatParticipant {
+  id             String    @id @default(uuid())
+  conversationId String
+  userId         String
+  /// Messages created at or before this moment are hidden for this user.
+  clearedAt      DateTime?
+  /// Conversation hidden from this user's list until a newer message arrives.
+  deletedAt      DateTime?
+  createdAt      DateTime  @default(now())
+
+  conversation ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, userId])
+  @@index([userId])
+  @@map("chat_participants")
+}
+
+model ChatMessage {
+  id             String    @id @default(uuid())
+  conversationId String
+  senderId       String
+  body           String
+  editedAt       DateTime?
+  /// Sent = created; delivered = reached the other user's device; read = they opened the chat.
+  deliveredAt    DateTime?
+  readAt         DateTime?
+  createdAt      DateTime  @default(now())
+
+  conversation ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User             @relation("ChatSender", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
+  @@index([conversationId, senderId, readAt])
+  @@index([senderId])
+  @@map("chat_messages")
 }

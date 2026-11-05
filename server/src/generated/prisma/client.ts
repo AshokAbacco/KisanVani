@@ -214,3 +214,18 @@ export type ApplicationSetting = Prisma.ApplicationSettingModel
  * 
  */
 export type DocumentCounter = Prisma.DocumentCounterModel
+/**
+ * Model ChatConversation
+ * 
+ */
+export type ChatConversation = Prisma.ChatConversationModel
+/**
+ * Model ChatParticipant
+ * Per-user state of a conversation: "clear chat" and "delete chat" only affect this user.
+ */
+export type ChatParticipant = Prisma.ChatParticipantModel
+/**
+ * Model ChatMessage
+ * 
+ */
+export type ChatMessage = Prisma.ChatMessageModel

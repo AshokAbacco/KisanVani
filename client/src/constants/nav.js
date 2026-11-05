@@ -14,6 +14,7 @@ import {
   Navigation,
   Car,
   MapPin,
+  MessageCircle,
 } from 'lucide-react';
 import { translate } from '../i18n';
 
@@ -64,6 +65,7 @@ const RAW_NAV = {
         { to: '/admin/notifications', key: 'broadcast', label: 'Broadcast' },
       ],
     },
+    { key: 'chat', label: 'Chat', icon: MessageCircle, tabs: [{ to: '/admin/chat', key: 'chat', label: 'Chat' }] },
   ],
   SHOPKEEPER: [
     {
@@ -111,6 +113,7 @@ const RAW_NAV = {
         { to: '/shop/payments', key: 'payments', label: 'Payments' },
       ],
     },
+    { key: 'chat', label: 'Chat', icon: MessageCircle, tabs: [{ to: '/shop/chat', key: 'chat', label: 'Chat' }] },
   ],
   FARMER: [
     {
@@ -141,6 +144,7 @@ const RAW_NAV = {
     },
     { key: 'transport', label: 'Transport', icon: Truck, tabs: [{ to: '/farmer/transport', key: 'transport', label: 'Transport' }] },
     { key: 'earnings', label: 'Earnings', icon: Wallet, tabs: [{ to: '/farmer/earnings', key: 'earnings', label: 'Earnings' }] },
+    { key: 'chat', label: 'Chat', icon: MessageCircle, tabs: [{ to: '/farmer/chat', key: 'chat', label: 'Chat' }] },
   ],
   MANDI_OWNER: [
     {
@@ -186,6 +190,7 @@ const RAW_NAV = {
         { to: '/mandi/settlements', key: 'settlements', label: 'Settlements' },
       ],
     },
+    { key: 'chat', label: 'Chat', icon: MessageCircle, tabs: [{ to: '/mandi/chat', key: 'chat', label: 'Chat' }] },
   ],
   DRIVER: [
     { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, tabs: [{ to: '/driver', key: 'overview', label: 'Overview', end: true }] },
@@ -210,6 +215,7 @@ const RAW_NAV = {
       ],
     },
     { key: 'earnings', label: 'Earnings', icon: Wallet, tabs: [{ to: '/driver/earnings', key: 'earnings', label: 'Earnings' }] },
+    { key: 'chat', label: 'Chat', icon: MessageCircle, tabs: [{ to: '/driver/chat', key: 'chat', label: 'Chat' }] },
   ],
 };
 

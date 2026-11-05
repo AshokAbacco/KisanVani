@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Route } from 'lucide-react';
+import { Phone, Route } from 'lucide-react';
 import PageHeader from '../../components/common/PageHeader';
 import DataTable from '../../components/tables/DataTable';
 import Tabs from '../../components/common/Tabs';
@@ -20,6 +20,9 @@ const PRESETS = {
   history: { status: 'DELIVERED,REJECTED,FAILED,CANCELLED' },
 };
 
+/** The person who placed the load: the transport requester, or the order's buyer for older trips. */
+const placedBy = (trip) => trip.transportRequest?.requester || trip.order?.buyer || null;
+
 const MyTripsPage = ({ preset = 'all' }) => {
   const { t } = useI18n();
   const navigate = useNavigate();
@@ -35,6 +38,33 @@ const MyTripsPage = ({ preset = 'all' }) => {
         columns={[
           { key: 'tripNumber', header: t('trips.trip'), render: (trip) => <span className="num whitespace-nowrap font-semibold">{trip.tripNumber}</span> },
           { key: 'commodity', header: t('trips.load'), render: (trip) => `${trip.commodity} (${formatKg(trip.expectedQuantityKg)})` },
+          {
+            key: 'placedBy',
+            header: t('myTrips.placedBy', 'Placed by'),
+            render: (trip) => {
+              const owner = placedBy(trip);
+              if (!owner) return <span className="text-soil-400">—</span>;
+              return (
+                <div className="min-w-[150px]">
+                  <p className="whitespace-nowrap">
+                    <span className="text-soil-500">{t(`roleNames.${owner.role}`)}</span>
+                    <span className="mx-1.5 text-soil-300" aria-hidden>|</span>
+                    <span className="font-medium text-soil">{owner.name}</span>
+                  </p>
+                  {owner.mobile && (
+                    <a
+                      href={`tel:${owner.mobile}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="num mt-0.5 inline-flex items-center gap-1 text-sm text-green-700 hover:underline"
+                    >
+                      <Phone className="h-3.5 w-3.5" aria-hidden />
+                      {owner.mobile}
+                    </a>
+                  )}
+                </div>
+              );
+            },
+          },
           { key: 'route', header: t('trips.route'), render: (trip) => <span className="text-soil-600">{t('common.fromTo', '', { from: trip.pickupAddress, to: trip.dropAddress })}</span> },
           { key: 'vehicle', header: t('dnav.items.vehicle'), render: (trip) => <span className="num">{trip.vehicle.registrationNumber}</span> },
           { key: 'transportCharge', header: t('trips.charge'), align: 'right', render: (trip) => formatINR(trip.transportCharge) },

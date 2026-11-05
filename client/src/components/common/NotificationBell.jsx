@@ -1,13 +1,20 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Bell } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Bell, MessageCircle } from 'lucide-react';
 import { notificationsApi } from '../../services';
 import { getSocket } from '../../services/socket';
 import { timeAgo } from '../../utils/format';
+import { playNotificationSound } from '../../utils/notificationSound';
 import { useToast } from '../../context/ToastContext';
 import { useI18n } from '../../i18n';
 
-/** Bell with unread count; new notifications arrive over Socket.IO and show as a toast. */
+const CHAT = 'CHAT_MESSAGE';
+
+/**
+ * Bell with unread count; new notifications arrive over Socket.IO with a sound and a toast.
+ * Order and chat notifications share this list, count and sound. A chat notification opens its
+ * conversation; opening the conversation anywhere marks its notifications read (`notification:sync`).
+ */
 const NotificationBell = ({ allLink }) => {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
@@ -16,6 +23,9 @@ const NotificationBell = ({ allLink }) => {
   const ref = useRef(null);
   const toast = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
+  const pathRef = useRef(location.pathname);
+  pathRef.current = location.pathname;
 
   const load = () =>
     notificationsApi
@@ -29,13 +39,36 @@ const NotificationBell = ({ allLink }) => {
   useEffect(() => {
     load();
     const s = getSocket();
+    const seen = new Set();
     const onNew = (n) => {
+      // The same notification can arrive twice (reconnects): count, list and sound it once.
+      if (n.id && seen.has(n.id)) return;
+      if (n.id) seen.add(n.id);
+      // Already looking at this conversation? The chat screen marks it read at once: no toast, no sound.
+      const viewing = n.type === CHAT && n.link && pathRef.current === n.link && document.visibilityState === 'visible';
       setUnread((u) => u + 1);
-      setItems((list) => [{ ...n, id: n.id || `live-${Date.now()}` }, ...list].slice(0, 8));
-      toast.info(n.title);
+      setItems((list) => [{ ...n, id: n.id || `live-${Date.now()}` }, ...list.filter((x) => x.id !== n.id)].slice(0, 8));
+      const soundKey = n.id || `${n.type}:${n.link}:${n.createdAt}`;
+      if (viewing) {
+        playNotificationSound(soundKey, { silent: true }); // handled here: no other tab chimes either
+        return;
+      }
+      playNotificationSound(soundKey);
+      toast.info(n.type === CHAT ? `${n.title}: ${n.message}` : n.title);
+    };
+    // Chat notifications of a conversation were read (it was opened, cleared or deleted somewhere).
+    const onSync = ({ link, unread: count }) => {
+      if (typeof count === 'number') setUnread(count);
+      if (link) setItems((list) => list.map((x) => (x.type === CHAT && x.link === link && !x.readAt ? { ...x, readAt: new Date().toISOString() } : x)));
     };
     s.on('notification:new', onNew);
-    return () => s.off('notification:new', onNew);
+    s.on('notification:sync', onSync);
+    s.on('connect', load); // catch up after a reconnect
+    return () => {
+      s.off('notification:new', onNew);
+      s.off('notification:sync', onSync);
+      s.off('connect', load);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -82,8 +115,16 @@ const NotificationBell = ({ allLink }) => {
               <li key={n.id}>
                 <button onClick={() => openItem(n)} className={`flex w-full gap-3 px-4 py-3 text-left hover:bg-leafwhite ${n.readAt ? '' : 'bg-field-50/50'}`}>
                   <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${n.readAt ? 'bg-transparent' : 'accent-bg'}`} aria-hidden />
+                  {n.type === CHAT && (
+                    <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-green-50 text-green-700" aria-hidden>
+                      <MessageCircle className="h-4 w-4" />
+                    </span>
+                  )}
                   <span className="min-w-0">
-                    <span className="block text-sm font-semibold">{n.title}</span>
+                    <span className="block text-sm font-semibold">
+                      {n.title}
+                      {n.type === CHAT && <span className="ml-1.5 text-xs font-normal text-green-700">{t('components.notifications.newMessage', 'New message')}</span>}
+                    </span>
                     <span className="line-clamp-2 block text-sm text-soil-500">{n.message}</span>
                     <span className="mt-0.5 block text-xs text-soil-400">{timeAgo(n.createdAt)}</span>
                   </span>

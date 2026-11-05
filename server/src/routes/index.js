@@ -20,6 +20,7 @@ router.use('/transport', require('../modules/transport/transport.routes'));
 router.use('/tracking', require('../modules/tracking/tracking.routes'));
 router.use('/payments', require('../modules/payments/payments.routes'));
 router.use('/settlements', require('../modules/settlements/settlements.routes'));
+router.use('/chat', require('../modules/chat/chat.routes'));
 router.use('/notifications', require('../modules/notifications/notifications.routes'));
 router.use('/reports', require('../modules/reports/reports.routes'));
 
