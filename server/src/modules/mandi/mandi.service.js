@@ -20,7 +20,7 @@ const list = async (ownerId, query) => {
     ...(query.status ? { status: query.status } : {}),
     ...(q.search ? { OR: [{ commodityName: { contains: q.search, mode: 'insensitive' } }, { lotCode: { contains: q.search, mode: 'insensitive' } }] } : {}),
   };
-  const [items, total] = await prisma.$transaction([
+  const [items, total] = await Promise.all([
     prisma.mandiLot.findMany({ where, skip, take, orderBy, include: { ...LOT_INCLUDE, _count: { select: { orderItems: true } } } }),
     prisma.mandiLot.count({ where }),
   ]);

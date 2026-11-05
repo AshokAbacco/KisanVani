@@ -12,7 +12,7 @@ const list = async (query, isAdmin) => {
       ? { OR: [{ name: { contains: q.search, mode: 'insensitive' } }, { localName: { contains: q.search, mode: 'insensitive' } }] }
       : {}),
   };
-  const [items, total] = await prisma.$transaction([
+  const [items, total] = await Promise.all([
     prisma.product.findMany({ where, skip, take, orderBy: query.sortBy ? orderBy : { name: 'asc' }, include: { category: true } }),
     prisma.product.count({ where }),
   ]);

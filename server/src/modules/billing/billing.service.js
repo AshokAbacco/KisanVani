@@ -189,7 +189,7 @@ const listInvoices = async (user, query) => {
         }
       : {}),
   };
-  const [items, total, totals] = await prisma.$transaction([
+  const [items, total, totals] = await Promise.all([
     prisma.salesInvoice.findMany({ where, skip, take, orderBy, include: { _count: { select: { items: true } } } }),
     prisma.salesInvoice.count({ where }),
     prisma.salesInvoice.aggregate({ where: { ...where, status: 'COMPLETED' }, _sum: { total: true } }),

@@ -123,7 +123,7 @@ const listPurchases = async (shopId, query) => {
     ...dateRange(q),
     ...(q.search ? { OR: [{ poNumber: { contains: q.search, mode: 'insensitive' } }, { supplier: { name: { contains: q.search, mode: 'insensitive' } } }] } : {}),
   };
-  const [items, total] = await prisma.$transaction([
+  const [items, total] = await Promise.all([
     prisma.purchaseOrder.findMany({ where, skip, take, orderBy, include: { supplier: { select: { name: true } }, _count: { select: { items: true } } } }),
     prisma.purchaseOrder.count({ where }),
   ]);

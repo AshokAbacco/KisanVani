@@ -73,7 +73,7 @@ const list = async (user, query) => {
       q.search ? { OR: [{ settlementNumber: { contains: q.search, mode: 'insensitive' } }, { order: { orderNumber: { contains: q.search, mode: 'insensitive' } } }] } : {},
     ],
   };
-  const [items, total, sums] = await prisma.$transaction([
+  const [items, total, sums] = await Promise.all([
     prisma.settlement.findMany({
       where,
       skip,

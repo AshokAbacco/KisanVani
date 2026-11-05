@@ -80,7 +80,7 @@ const Bubble = ({ message, mine, onEdit }) => {
           {mine && <MessageTicks status={message.status} />}
         </span>
 
-        {mine && (
+        {mine && !message.pending && (
           <div className="absolute right-1 top-1" ref={ref}>
             <button
               type="button"
@@ -164,7 +164,10 @@ const ChatWindow = ({ me, conversation, messages, hasMore, loading, typing, onBa
     const el = input.current;
     if (!el) return;
     el.style.height = 'auto';
-    el.style.height = `${Math.min(el.scrollHeight, 140)}px`;
+    // + border, so one line fits exactly; a scrollbar only appears past the maximum height.
+    const full = el.scrollHeight + (el.offsetHeight - el.clientHeight);
+    el.style.height = `${Math.min(full, 140)}px`;
+    el.style.overflowY = full > 140 ? 'auto' : 'hidden';
   }, [text]);
 
   const startEdit = (m) => {
@@ -180,17 +183,27 @@ const ChatWindow = ({ me, conversation, messages, hasMore, loading, typing, onBa
   const submit = async (e) => {
     e?.preventDefault();
     const body = text.trim();
-    if (!body || sending) return;
-    setSending(true);
+    if (!body) return;
     setError(null);
-    try {
-      if (editing) {
-        await onEdit(editing.id, body);
-        setEditing(null);
-      } else {
-        stickToBottom.current = true;
+    if (!editing) {
+      // Like WhatsApp: the box clears at once and the message appears with a clock until the server
+      // confirms it, so you can keep typing and send the next one straight away.
+      stickToBottom.current = true;
+      setText('');
+      input.current?.focus();
+      try {
         await onSend(body);
+      } catch (err) {
+        setError(err.message);
+        setText((current) => current || body); // give the text back so it can be sent again
       }
+      return;
+    }
+    if (sending) return;
+    setSending(true);
+    try {
+      await onEdit(editing.id, body);
+      setEditing(null);
       setText('');
     } catch (err) {
       setError(err.message);

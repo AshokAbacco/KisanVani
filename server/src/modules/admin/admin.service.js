@@ -7,9 +7,10 @@ const { TRIP_ACTIVE_STATUSES } = require('../../constants');
 const authRepo = require('../auth/auth.repository');
 const authService = require('../auth/auth.service');
 const reports = require('../reports/reports.service');
+const { forgetUser } = require('../../middlewares/auth');
 
 const dashboard = async (query) => {
-  const [roles, vehicles, verifiedVehicles, orders, tradeValue, posSales, activeTrips, pendingApprovals, pendingVehicles] = await Promise.all([
+  const [roles, vehicles, verifiedVehicles, orders, tradeValue, posSales, activeTrips, pendingApprovals, pendingVehicles, charts] = await Promise.all([
     prisma.user.groupBy({ by: ['role'], _count: { _all: true } }),
     prisma.vehicle.count(),
     prisma.vehicle.count({ where: { verificationStatus: 'VERIFIED' } }),
@@ -19,9 +20,9 @@ const dashboard = async (query) => {
     prisma.trip.count({ where: { status: { in: TRIP_ACTIVE_STATUSES } } }),
     prisma.user.count({ where: { status: 'PENDING_APPROVAL' } }),
     prisma.vehicle.count({ where: { verificationStatus: 'PENDING' } }),
+    reports.summary({ role: 'ADMIN' }, query),
   ]);
   const byRole = Object.fromEntries(roles.map((r) => [r.role, r._count._all]));
-  const charts = await reports.summary({ role: 'ADMIN' }, query);
   return {
     cards: {
       farmers: byRole.FARMER || 0,
@@ -60,7 +61,7 @@ const listUsers = async (query) => {
         }
       : {}),
   };
-  const [items, total] = await prisma.$transaction([
+  const [items, total] = await Promise.all([
     prisma.user.findMany({
       where,
       skip,
@@ -140,6 +141,7 @@ const updateUser = async (admin, id, data, _ip) => {
   const before = await prisma.user.findUnique({ where: { id } });
   if (!before) throw ApiError.notFound('User not found');
   await prisma.user.update({ where: { id }, data });
+  forgetUser(id);
   return getUser(id);
 };
 
@@ -155,6 +157,7 @@ const setStatus = async (admin, id, { status, reason }, _ip) => {
     await tx.user.update({ where: { id }, data: { status, statusReason: reason || null } });
     if (status !== 'ACTIVE') await tx.refreshToken.updateMany({ where: { userId: id, revokedAt: null }, data: { revokedAt: new Date() } });
   });
+  forgetUser(id);
   if (status === 'ACTIVE' && user.status === 'PENDING_APPROVAL') {
     await notify(id, { type: 'ACCOUNT_APPROVED', title: 'Account approved', message: 'Welcome to KisanVani! Your account is now active.', link: '/' });
   }

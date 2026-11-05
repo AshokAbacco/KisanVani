@@ -13,6 +13,7 @@ const start = async () => {
   try {
     await prisma.$queryRaw`SELECT 1`;
     logger.info('Connected to PostgreSQL');
+    await prisma.warmUp(); // open a few pooled connections now, not on the first visitor's request
   } catch (err) {
     logger.error(`Cannot connect to PostgreSQL. Check DATABASE_URL in server/.env (${err.message})`);
     process.exit(1);

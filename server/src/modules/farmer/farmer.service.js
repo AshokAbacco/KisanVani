@@ -19,7 +19,7 @@ const list = async (farmerId, query) => {
     ...(query.status ? { status: query.status } : {}),
     ...(q.search ? { OR: [{ cropName: { contains: q.search, mode: 'insensitive' } }, { variety: { contains: q.search, mode: 'insensitive' } }] } : {}),
   };
-  const [items, total] = await prisma.$transaction([
+  const [items, total] = await Promise.all([
     prisma.harvestListing.findMany({ where, skip, take, orderBy, include: { ...LISTING_INCLUDE, _count: { select: { orderItems: true } } } }),
     prisma.harvestListing.count({ where }),
   ]);
@@ -119,19 +119,21 @@ const removeImage = async (user, id, url) => {
 
 /** Crop-wise aggregate of the farmer's listings ("My Crops"). */
 const crops = async (farmerId) => {
-  const rows = await prisma.harvestListing.groupBy({
-    by: ['productId', 'cropName'],
-    where: { farmerId },
-    _sum: { totalQuantityKg: true, availableQuantityKg: true },
-    _count: { _all: true },
-    _avg: { pricePerKg: true },
-    _max: { harvestAt: true },
-  });
-  const sold = await prisma.orderItem.groupBy({
-    by: ['productId'],
-    where: { order: { sellerId: farmerId, status: 'RECEIVED' } },
-    _sum: { receivedQuantityKg: true, lineTotal: true },
-  });
+  const [rows, sold] = await Promise.all([
+    prisma.harvestListing.groupBy({
+      by: ['productId', 'cropName'],
+      where: { farmerId },
+      _sum: { totalQuantityKg: true, availableQuantityKg: true },
+      _count: { _all: true },
+      _avg: { pricePerKg: true },
+      _max: { harvestAt: true },
+    }),
+    prisma.orderItem.groupBy({
+      by: ['productId'],
+      where: { order: { sellerId: farmerId, status: 'RECEIVED' } },
+      _sum: { receivedQuantityKg: true, lineTotal: true },
+    }),
+  ]);
   const soldBy = Object.fromEntries(sold.map((s) => [s.productId, s._sum]));
   const products = await prisma.product.findMany({ where: { id: { in: rows.map((r) => r.productId) } }, select: { id: true, emoji: true } });
   const emoji = Object.fromEntries(products.map((p) => [p.id, p.emoji]));

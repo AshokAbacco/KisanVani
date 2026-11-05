@@ -12,6 +12,7 @@ const settings = require('../../services/settings.service');
 const email = require('../../services/email.service');
 const { notifyMany } = require('../../services/notification.service');
 const repo = require('./auth.repository');
+const { forgetUser } = require('../../middlewares/auth');
 
 const RESET_TTL_MS = 15 * 60_000;
 const MAX_OTP_ATTEMPTS = 5;
@@ -25,10 +26,11 @@ const signAccessToken = (user) =>
     audience: 'kisanvani-app',
   });
 
-const issueRefreshToken = async (userId, meta = {}, family = crypto.randomUUID(), client = prisma) => {
+const issueRefreshToken = async (userId, meta = {}, family = crypto.randomUUID(), client = prisma, id = undefined) => {
   const token = randomToken(48);
   const record = await client.refreshToken.create({
     data: {
+      id,
       userId,
       family,
       tokenHash: refreshHash(token),
@@ -41,8 +43,8 @@ const issueRefreshToken = async (userId, meta = {}, family = crypto.randomUUID()
 };
 
 const buildSession = async (user, meta) => {
-  const { token: refreshToken } = await issueRefreshToken(user.id, meta);
-  const profileUser = await repo.findWithProfile(user.id);
+  // Independent queries run side by side (each round trip to a far-away database is expensive).
+  const [{ token: refreshToken }, profileUser] = await Promise.all([issueRefreshToken(user.id, meta), repo.findWithProfile(user.id)]);
   return { accessToken: signAccessToken(user), refreshToken, user: profileUser };
 };
 
@@ -122,6 +124,22 @@ const register = async (input, meta) => {
 };
 
 /**
+ * Passwords hashed with a higher bcrypt cost than BCRYPT_ROUNDS (e.g. 12 → 10) are re-hashed after a
+ * successful sign-in, so later sign-ins are faster on small servers. Runs in the background.
+ */
+const upgradeHashCost = (user, password) => {
+  try {
+    if (bcrypt.getRounds(user.passwordHash) <= config.bcryptRounds) return;
+  } catch {
+    return;
+  }
+  bcrypt
+    .hash(password, config.bcryptRounds)
+    .then((passwordHash) => prisma.user.updateMany({ where: { id: user.id, passwordHash: user.passwordHash }, data: { passwordHash } }))
+    .catch(() => {});
+};
+
+/**
  * One sign-in for every role. E-mail and mobile are unique, so the identifier points to exactly one
  * account; its role comes from the database and the client sends the user to that role's dashboard.
  */
@@ -134,8 +152,9 @@ const login = async ({ identifier, password }, meta) => {
   if (user.status === 'SUSPENDED') throw new ApiError(403, 'Your account has been suspended. Contact support.', 'ACCOUNT_SUSPENDED');
   if (user.status === 'DEACTIVATED') throw new ApiError(403, 'Your account has been deactivated', 'ACCOUNT_DEACTIVATED');
 
-  await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
-  return buildSession(user, meta);
+  const [session] = await Promise.all([buildSession(user, meta), prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } })]);
+  upgradeHashCost(user, password);
+  return session;
 };
 
 /**
@@ -168,29 +187,28 @@ const refresh = async (token, meta) => {
   }
   if (record.expiresAt < new Date()) throw new ApiError(401, 'Session expired', 'REFRESH_TOKEN_EXPIRED');
 
+  // Rotation in as few database round trips as possible (each one is slow when the database is far away):
+  // 1. claim the old token — the conditional update lets only one of two concurrent refreshes win,
+  //    and the profile loads at the same time;
+  // 2. store the new token (its id was chosen up front so the claim could point to it).
+  const nextId = crypto.randomUUID();
+  const [claimed, profileUser] = await Promise.all([
+    prisma.refreshToken.updateMany({ where: { id: record.id, revokedAt: null }, data: { revokedAt: new Date(), replacedBy: nextId } }),
+    repo.findWithProfile(record.userId),
+  ]);
+  // Lost the race to another tab of the same browser a moment ago: same as the grace case above.
+  if (claimed.count !== 1) return { accessToken: signAccessToken(record.user), refreshToken: null, user: profileUser };
+
   let next;
   try {
-    next = await prisma.$transaction(async (tx) => {
-      const issued = await issueRefreshToken(record.userId, meta, record.family, tx);
-      const revoked = await tx.refreshToken.updateMany({
-        where: { id: record.id, revokedAt: null },
-        data: { revokedAt: new Date(), replacedBy: issued.record.id },
-      });
-      // Two concurrent refreshes with the same token: only one may rotate it.
-      if (revoked.count !== 1) throw new ApiError(401, 'Session already refreshed', 'REFRESH_CONFLICT');
-      return issued;
-    });
+    next = await issueRefreshToken(record.userId, meta, record.family, prisma, nextId);
   } catch (err) {
-    // Lost the race to another tab of the same browser a moment ago: same as the grace case above.
-    if (err.code === 'REFRESH_CONFLICT') return graceSession(record);
+    // Could not store the new token: give the old one back so the user stays signed in.
+    await prisma.refreshToken.updateMany({ where: { id: record.id, replacedBy: nextId }, data: { revokedAt: null, replacedBy: null } }).catch(() => {});
     throw err;
   }
 
-  return {
-    accessToken: signAccessToken(record.user),
-    refreshToken: next.token,
-    user: await repo.findWithProfile(record.userId),
-  };
+  return { accessToken: signAccessToken(record.user), refreshToken: next.token, user: profileUser };
 };
 
 const logout = async (token) => {
@@ -263,6 +281,7 @@ const resetPassword = async ({ token, password }, _meta) => {
     await tx.user.update({ where: { id: record.userId }, data: { passwordHash, passwordChangedAt: new Date() } });
     await tx.refreshToken.updateMany({ where: { userId: record.userId, revokedAt: null }, data: { revokedAt: new Date() } });
   });
+  forgetUser(record.userId);
   return { message: 'Password updated. Please sign in with your new password.' };
 };
 
@@ -276,6 +295,7 @@ const changePassword = async (userId, { currentPassword, newPassword }, meta) =>
     prisma.user.update({ where: { id: userId }, data: { passwordHash, passwordChangedAt: new Date() } }),
     prisma.refreshToken.updateMany({ where: { userId, revokedAt: null }, data: { revokedAt: new Date() } }),
   ]);
+  forgetUser(userId);
   const { token } = await issueRefreshToken(userId, meta);
   return { accessToken: signAccessToken(user), refreshToken: token };
 };
@@ -314,6 +334,7 @@ const updateProfile = async (user, input) => {
     }
     if (Object.keys(data).length) await tx[modelName].update({ where: { userId: user.id }, data });
   });
+  forgetUser(user.id);
 
   return repo.findWithProfile(user.id);
 };

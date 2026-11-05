@@ -37,7 +37,7 @@ const list = async (user, query) => {
       q.search ? { OR: [{ paymentNumber: { contains: q.search, mode: 'insensitive' } }, { reference: { contains: q.search, mode: 'insensitive' } }] } : {},
     ],
   };
-  const [items, total] = await prisma.$transaction([
+  const [items, total] = await Promise.all([
     prisma.payment.findMany({ where, skip, take, orderBy, include: PAYMENT_INCLUDE }),
     prisma.payment.count({ where }),
   ]);

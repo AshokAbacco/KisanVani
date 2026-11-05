@@ -20,6 +20,18 @@ export const REQUEST_TIMEOUT_MS = 90000;
 const api = axios.create({ baseURL: API_BASE_URL, withCredentials: true, timeout: REQUEST_TIMEOUT_MS });
 
 /**
+ * Fire-and-forget ping sent as soon as the site opens. If the server is asleep it starts waking up
+ * while the visitor is still reading the page or typing their password, instead of on "Sign in".
+ */
+export const wakeServer = () => {
+  try {
+    fetch(`${new URL(API_BASE_URL).origin}/health`, { mode: 'cors', cache: 'no-store', keepalive: true }).catch(() => {});
+  } catch {
+    /* best effort */
+  }
+};
+
+/**
  * True only when the server itself said the session is over (401/403).
  * A timeout, network error or 5xx means "server not reachable right now" — not "signed out".
  */

@@ -81,7 +81,7 @@ const listRequests = async (user, query) => {
         : {},
     ],
   };
-  const [items, total] = await prisma.$transaction([
+  const [items, total] = await Promise.all([
     prisma.transportRequest.findMany({ where, skip, take, orderBy, include: REQUEST_INCLUDE }),
     prisma.transportRequest.count({ where }),
   ]);
@@ -243,7 +243,7 @@ const listTrips = async (user, query) => {
         : {},
     ],
   };
-  const [items, total] = await prisma.$transaction([
+  const [items, total] = await Promise.all([
     prisma.trip.findMany({
       where,
       skip,

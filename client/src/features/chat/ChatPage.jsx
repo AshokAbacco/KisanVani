@@ -18,6 +18,19 @@ const byLatest = (a, b) => new Date(b.lastMessageAt || 0) - new Date(a.lastMessa
 const isVisible = () => typeof document === 'undefined' || document.visibilityState === 'visible';
 
 /**
+ * Adds my confirmed message to the list. If it is still shown as "sending" (a temporary copy added the
+ * moment Send was pressed), that copy is replaced, so the message never appears twice.
+ */
+const mergeMine = (list, message) => {
+  if (list.some((m) => m.id === message.id)) return list;
+  const i = list.findIndex((m) => m.pending && m.senderId === message.senderId && m.body === message.body);
+  if (i === -1) return [...list, message];
+  const next = [...list];
+  next[i] = { ...message, status: upgradeStatus(message.status, list[i].status) }; // keep a "read" that arrived first
+  return next;
+};
+
+/**
  * WhatsApp-style chat: conversation list on the left, the open conversation on the right
  * (one pane at a time on phones). Who you can talk to is decided by the server.
  * Route: <base>/chat and <base>/chat/:conversationId
@@ -132,7 +145,7 @@ const ChatPage = () => {
         return [summary, ...rest].sort(byLatest);
       });
       if (open) {
-        setMessages((list) => (list.some((m) => m.id === message.id) ? list : [...list, message]));
+        setMessages((list) => (incoming ? (list.some((m) => m.id === message.id) ? list : [...list, message]) : mergeMine(list, message)));
         if (incoming) markRead(conversationId);
       }
       if (incoming) {
@@ -205,14 +218,27 @@ const ChatPage = () => {
     navigate(`${base}/${conv.id}`);
   };
 
+  // The message shows up at once with a clock icon (like WhatsApp) and gets its ticks when the server confirms.
   const send = async (body) => {
-    try {
-      const message = await chatApi.send(activeId, body);
-      setMessages((list) => (list.some((m) => m.id === message.id) ? list : [...list, message]));
+    const conversationId = activeId;
+    const temp = { id: `tmp-${Date.now()}-${Math.random().toString(36).slice(2)}`, conversationId, senderId: me.id, body, createdAt: new Date().toISOString(), status: 'PENDING', pending: true };
+    const showLast = (message) =>
       setConversations((list) =>
-        [...list.filter((c) => c.id !== activeId), { ...(list.find((c) => c.id === activeId) || active), lastMessage: message, lastMessageAt: message.createdAt }].sort(byLatest)
+        [...list.filter((c) => c.id !== conversationId), { ...(list.find((c) => c.id === conversationId) || active), lastMessage: message, lastMessageAt: message.createdAt }].sort(byLatest)
       );
+    setMessages((list) => [...list, temp]);
+    showLast(temp);
+    try {
+      const message = await chatApi.send(conversationId, body);
+      setMessages((list) => {
+        if (!list.some((m) => m.id === temp.id)) return list; // another chat is open now
+        if (list.some((m) => m.id === message.id)) return list.filter((m) => m.id !== temp.id); // the live update came first
+        return list.map((m) => (m.id === temp.id ? { ...message, status: upgradeStatus(message.status, m.status) } : m));
+      });
+      setConversations((list) => list.map((c) => (c.id === conversationId && (!c.lastMessage || c.lastMessage.id === temp.id) ? { ...c, lastMessage: message, lastMessageAt: message.createdAt } : c)));
     } catch (e) {
+      setMessages((list) => list.filter((m) => m.id !== temp.id));
+      setConversations((list) => list.map((c) => (c.id === conversationId && c.lastMessage?.id === temp.id ? { ...c, lastMessage: null } : c)));
       throw new Error(errorMessage(e));
     }
   };

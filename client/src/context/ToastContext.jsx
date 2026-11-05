@@ -40,7 +40,7 @@ export const ToastProvider = ({ children }) => {
   return (
     <ToastContext.Provider value={api}>
       {children}
-      <div className="pointer-events-none fixed inset-x-0 bottom-20 z-[100] flex flex-col items-center gap-2 px-4 sm:bottom-6 sm:items-end sm:pr-6" aria-live="polite" role="status">
+      <div className="pointer-events-none fixed inset-x-0 top-20 z-[100] flex flex-col items-center gap-2 px-4 sm:items-end sm:pr-6" aria-live="polite" role="status">
         {toasts.map((t) => {
           const { icon: Icon, cls } = STYLES[t.type];
           return (

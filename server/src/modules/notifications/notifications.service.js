@@ -6,7 +6,7 @@ const { paginate, pageMeta } = require('../../utils/pagination');
 const list = async (userId, query) => {
   const { q, skip, take } = paginate(query, ['createdAt'], 'createdAt');
   const where = { userId, ...(query.unread === 'true' ? { readAt: null } : {}) };
-  const [items, total, unread] = await prisma.$transaction([
+  const [items, total, unread] = await Promise.all([
     prisma.notification.findMany({ where, skip, take, orderBy: { createdAt: 'desc' } }),
     prisma.notification.count({ where }),
     prisma.notification.count({ where: { userId, readAt: null } }),

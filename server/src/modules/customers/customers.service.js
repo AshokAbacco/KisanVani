@@ -11,7 +11,7 @@ const list = async (shopId, query) => {
     ...(query.withCredit === 'true' ? { creditBalance: { gt: 0 } } : {}),
     ...(q.search ? { OR: [{ name: { contains: q.search, mode: 'insensitive' } }, { mobile: { contains: q.search } }] } : {}),
   };
-  const [items, total, outstanding] = await prisma.$transaction([
+  const [items, total, outstanding] = await Promise.all([
     prisma.customer.findMany({ where, skip, take, orderBy, include: { _count: { select: { invoices: true } } } }),
     prisma.customer.count({ where }),
     prisma.customer.aggregate({ where: { shopId }, _sum: { creditBalance: true } }),

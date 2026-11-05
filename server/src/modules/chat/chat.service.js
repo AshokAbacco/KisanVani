@@ -1,3 +1,5 @@
+const crypto = require('node:crypto');
+const logger = require('../../config/logger');
 const prisma = require('../../config/prisma');
 const ApiError = require('../../utils/ApiError');
 const { emitTo, userRoom } = require('../../sockets/io');
@@ -174,19 +176,43 @@ const contacts = async (me, { search = '' } = {}) => {
 /* ───────────────────────────── Conversations ───────────────────────────── */
 
 /** The user's chat list, newest first. Also marks messages waiting for them as delivered. */
+/** The newest visible message of every conversation of `userId`, in one query. */
+const lastMessagesFor = async (userId) => {
+  const rows = await prisma.$queryRaw`
+    SELECT DISTINCT ON (m."conversationId")
+      m.id, m."conversationId", m."senderId", m.body, m."editedAt", m."deliveredAt", m."readAt", m."createdAt"
+    FROM chat_messages m
+    JOIN chat_participants p ON p."conversationId" = m."conversationId" AND p."userId" = ${userId}
+    WHERE p."deletedAt" IS NULL
+      AND (p."clearedAt" IS NULL OR m."createdAt" > p."clearedAt")
+    ORDER BY m."conversationId", m."createdAt" DESC`;
+  return new Map(rows.map((m) => [m.conversationId, m]));
+};
+
 const listConversations = async (me) => {
-  await markDelivered(me.id);
-  const parts = await prisma.chatParticipant.findMany({
-    where: { userId: me.id, deletedAt: null },
-    include: { user: { select: { role: true } }, conversation: { include: { participants: { include: { user: { select: PERSON } } } } } },
+  // Everything below is independent, so it runs side by side: one database round trip instead of 3 + one per chat.
+  const [, parts, unread, lastByConversation] = await Promise.all([
+    markDelivered(me.id),
+    prisma.chatParticipant.findMany({
+      where: { userId: me.id, deletedAt: null },
+      include: { conversation: { include: { participants: { include: { user: { select: PERSON } } } } } },
+    }),
+    unreadByConversation(me.id),
+    lastMessagesFor(me.id),
+  ]);
+  const items = parts.map((p) => {
+    const partner = p.conversation.participants.find((x) => x.userId !== me.id)?.user;
+    if (!partner) return null;
+    const last = lastByConversation.get(p.conversationId);
+    return {
+      id: p.conversationId,
+      partner: toPerson(partner),
+      lastMessage: last ? toMessage(last) : null,
+      lastMessageAt: last?.createdAt || null,
+      unread: unread.get(p.conversationId) ?? 0,
+      canMessage: canSendTo({ id: me.id, role: me.role }, partner),
+    };
   });
-  const unread = await unreadByConversation(me.id);
-  const items = await Promise.all(
-    parts.map((p) => {
-      const partner = p.conversation.participants.find((x) => x.userId !== me.id)?.user;
-      return partner ? summarize(me.id, p, partner, unread.get(p.conversationId)) : null;
-    })
-  );
   return items
     .filter(Boolean)
     .sort((a, b) => new Date(b.lastMessageAt || 0) - new Date(a.lastMessageAt || 0) || a.partner.name.localeCompare(b.partner.name));
@@ -253,25 +279,36 @@ const sendMessage = async (me, conversationId, { body }) => {
   const { partner } = await loadMembership(me.id, conversationId);
   if (!canSendTo(me, partner)) throw ApiError.forbidden('You cannot send messages to this user');
 
+  // The three writes are independent, so they run side by side: one database round trip instead of five
+  // (a transaction would add BEGIN/COMMIT and run them one after another, slow with a far-away database).
   const now = new Date();
-  const message = await prisma.$transaction(async (tx) => {
-    const m = await tx.chatMessage.create({
-      data: { conversationId, senderId: me.id, body, createdAt: now, deliveredAt: presence.isOnline(partner.id) ? now : null },
-    });
-    await tx.chatConversation.update({ where: { id: conversationId }, data: { lastMessageAt: now } });
+  const [message] = await Promise.all([
+    prisma.chatMessage.create({
+      data: { id: crypto.randomUUID(), conversationId, senderId: me.id, body, createdAt: now, deliveredAt: presence.isOnline(partner.id) ? now : null },
+    }),
+    prisma.chatConversation.update({ where: { id: conversationId }, data: { lastMessageAt: now } }),
     // A new message brings a deleted conversation back for both people (like WhatsApp).
-    await tx.chatParticipant.updateMany({ where: { conversationId, deletedAt: { not: null } }, data: { deletedAt: null } });
-    return m;
-  });
+    prisma.chatParticipant.updateMany({ where: { conversationId, deletedAt: { not: null } }, data: { deletedAt: null } }),
+  ]);
 
   const payload = toMessage(message);
+  // Live updates, unread badge and the bell notification go out after the reply, so the sender
+  // isn't kept waiting for them.
+  setImmediate(() => {
+    fanOutMessage(me, partner, conversationId, payload, body).catch((err) => logger.warn(`chat fan-out failed for ${conversationId}: ${err.message}`));
+  });
+  return payload;
+};
+
+const fanOutMessage = async (me, partner, conversationId, payload, body) => {
   const [mineSummary, theirSummary] = await Promise.all([getConversation(me, conversationId), getConversation(partner, conversationId)]);
   emitTo(userRoom(partner.id), 'chat:message', { conversationId, message: payload, conversation: theirSummary });
   emitTo(userRoom(me.id), 'chat:message', { conversationId, message: payload, conversation: mineSummary });
-  await pushUnread(partner.id);
-  // Header notification (bell + sound), one per message, opening the conversation directly.
-  await notify(partner.id, { type: CHAT_NOTIFICATION, title: me.name, message: preview(body), link: chatLink(partner, conversationId) });
-  return payload;
+  await Promise.all([
+    pushUnread(partner.id),
+    // Header notification (bell + sound), one per message, opening the conversation directly.
+    notify(partner.id, { type: CHAT_NOTIFICATION, title: me.name, message: preview(body), link: chatLink(partner, conversationId) }),
+  ]);
 };
 
 const editMessage = async (me, messageId, { body }) => {
@@ -291,7 +328,9 @@ const editMessage = async (me, messageId, { body }) => {
 const markRead = async (me, conversationId) => {
   const { partner } = await loadMembership(me.id, conversationId);
   const now = new Date();
-  const incoming = { conversationId, senderId: { not: me.id }, readAt: null };
+  // Only up to `now`: the sender is told "read up to now", so a message arriving in between must stay
+  // unread here (the next markRead picks it up and reports it), otherwise its blue ticks never show.
+  const incoming = { conversationId, senderId: { not: me.id }, readAt: null, createdAt: { lte: now } };
   const [, read] = await prisma.$transaction([
     prisma.chatMessage.updateMany({ where: { ...incoming, deliveredAt: null }, data: { deliveredAt: now } }),
     prisma.chatMessage.updateMany({ where: incoming, data: { readAt: now } }),
@@ -313,7 +352,7 @@ const markDelivered = async (userId) => {
   if (!waiting.length) return 0;
   const now = new Date();
   const res = await prisma.chatMessage.updateMany({
-    where: { deliveredAt: null, senderId: { not: userId }, conversationId: { in: waiting.map((w) => w.conversationId) } },
+    where: { deliveredAt: null, senderId: { not: userId }, createdAt: { lte: now }, conversationId: { in: waiting.map((w) => w.conversationId) } },
     data: { deliveredAt: now },
   });
   for (const w of waiting) emitTo(userRoom(w.senderId), 'chat:status', { conversationId: w.conversationId, status: 'DELIVERED', upTo: now });

@@ -10,7 +10,7 @@ const list = async (shopId, query) => {
     ...(query.includeInactive === 'true' ? {} : { isActive: true }),
     ...(q.search ? { OR: [{ name: { contains: q.search, mode: 'insensitive' } }, { mobile: { contains: q.search } }] } : {}),
   };
-  const [items, total] = await prisma.$transaction([
+  const [items, total] = await Promise.all([
     prisma.supplier.findMany({ where, skip, take, orderBy, include: { _count: { select: { purchaseOrders: true } } } }),
     prisma.supplier.count({ where }),
   ]);

@@ -42,7 +42,7 @@ const list = async (shopId, query) => {
   };
   const orderBy = sortMap[q.sortBy] || { product: { name: 'asc' } };
 
-  const [items, total] = await prisma.$transaction([
+  const [items, total] = await Promise.all([
     prisma.inventoryItem.findMany({ where, skip, take, orderBy, include: ITEM_INCLUDE }),
     prisma.inventoryItem.count({ where }),
   ]);
@@ -108,7 +108,7 @@ const transactions = async (shopId, query) => {
     ...(query.type ? { type: query.type } : {}),
     ...dateRange(q),
   };
-  const [items, total] = await prisma.$transaction([
+  const [items, total] = await Promise.all([
     prisma.inventoryTransaction.findMany({
       where,
       skip,
