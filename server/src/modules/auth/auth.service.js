@@ -138,29 +138,53 @@ const login = async ({ identifier, password }, meta) => {
   return buildSession(user, meta);
 };
 
+/**
+ * Several tabs of one browser share one refresh-token cookie, and they often renew at the same moment
+ * (page reloads, sockets reconnecting when the access token expires). The first request rotates the
+ * token; the others arrive with the token it just replaced. Within this short window that is the same
+ * browser racing itself, not theft: they get a new access token and keep the browser's newest cookie.
+ */
+const REUSE_GRACE_MS = 30_000;
+
+/** Access token only — no new refresh token, so the cookie the winning tab received stays in place. */
+const graceSession = async (record) => ({
+  accessToken: signAccessToken(record.user),
+  refreshToken: null,
+  user: await repo.findWithProfile(record.userId),
+});
+
 /** Rotates a refresh token. Re-use of a revoked token revokes the whole token family (theft detection). */
 const refresh = async (token, meta) => {
   if (!token) throw new ApiError(401, 'No session', 'NO_REFRESH_TOKEN');
   const record = await prisma.refreshToken.findUnique({ where: { tokenHash: refreshHash(token) }, include: { user: true } });
   if (!record) throw new ApiError(401, 'Invalid session', 'INVALID_REFRESH_TOKEN');
+  if (record.user.status !== 'ACTIVE') throw new ApiError(403, 'Your account is not active', 'ACCOUNT_INACTIVE');
 
   if (record.revokedAt) {
+    const sameBrowserRace = record.replacedBy && Date.now() - record.revokedAt.getTime() < REUSE_GRACE_MS && record.expiresAt > new Date();
+    if (sameBrowserRace) return graceSession(record);
     await prisma.refreshToken.updateMany({ where: { family: record.family, revokedAt: null }, data: { revokedAt: new Date() } });
     throw new ApiError(401, 'Session is no longer valid. Please sign in again.', 'REFRESH_TOKEN_REUSED');
   }
   if (record.expiresAt < new Date()) throw new ApiError(401, 'Session expired', 'REFRESH_TOKEN_EXPIRED');
-  if (record.user.status !== 'ACTIVE') throw new ApiError(403, 'Your account is not active', 'ACCOUNT_INACTIVE');
 
-  const next = await prisma.$transaction(async (tx) => {
-    const issued = await issueRefreshToken(record.userId, meta, record.family, tx);
-    const revoked = await tx.refreshToken.updateMany({
-      where: { id: record.id, revokedAt: null },
-      data: { revokedAt: new Date(), replacedBy: issued.record.id },
+  let next;
+  try {
+    next = await prisma.$transaction(async (tx) => {
+      const issued = await issueRefreshToken(record.userId, meta, record.family, tx);
+      const revoked = await tx.refreshToken.updateMany({
+        where: { id: record.id, revokedAt: null },
+        data: { revokedAt: new Date(), replacedBy: issued.record.id },
+      });
+      // Two concurrent refreshes with the same token: only one may rotate it.
+      if (revoked.count !== 1) throw new ApiError(401, 'Session already refreshed', 'REFRESH_CONFLICT');
+      return issued;
     });
-    // Two concurrent refreshes with the same token: only one may win.
-    if (revoked.count !== 1) throw new ApiError(401, 'Session already refreshed', 'REFRESH_CONFLICT');
-    return issued;
-  });
+  } catch (err) {
+    // Lost the race to another tab of the same browser a moment ago: same as the grace case above.
+    if (err.code === 'REFRESH_CONFLICT') return graceSession(record);
+    throw err;
+  }
 
   return {
     accessToken: signAccessToken(record.user),

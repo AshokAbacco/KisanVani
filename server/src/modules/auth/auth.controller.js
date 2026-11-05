@@ -17,7 +17,8 @@ const meta = (req) => ({ ip: req.ip, userAgent: req.get('user-agent') });
 
 /** The refresh token never reaches JavaScript: it lives only in an httpOnly cookie. */
 const sendSession = (res, session, status = 200) => {
-  res.cookie(COOKIE, session.refreshToken, cookieOptions());
+  // No refresh token = another tab of this browser just rotated it; keep the cookie it received.
+  if (session.refreshToken) res.cookie(COOKIE, session.refreshToken, cookieOptions());
   return res.status(status).json({ success: true, data: { accessToken: session.accessToken, user: session.user } });
 };
 

@@ -24,11 +24,20 @@ api.interceptors.request.use((config) => {
 
 let refreshing = null;
 
-/** Single-flight refresh: concurrent 401s wait for one refresh call. */
+const postRefresh = () => axios.post(`${API_BASE_URL}/auth/refresh`, {}, { withCredentials: true });
+
+/**
+ * All tabs of this browser share one refresh-token cookie, which changes on every refresh.
+ * A browser-wide lock makes the tabs take turns, so each one sends the newest cookie
+ * (the server also tolerates a near-simultaneous race, but turns avoid it altogether).
+ */
+const refreshInTurn = () =>
+  typeof navigator !== 'undefined' && navigator.locks?.request ? navigator.locks.request('kv-auth-refresh', postRefresh) : postRefresh();
+
+/** Single-flight refresh: concurrent 401s in this tab wait for one refresh call. */
 export const refreshSession = () => {
   if (!refreshing) {
-    refreshing = axios
-      .post(`${API_BASE_URL}/auth/refresh`, {}, { withCredentials: true })
+    refreshing = refreshInTurn()
       .then((res) => {
         setAccessToken(res.data.data.accessToken);
         return res.data.data;
