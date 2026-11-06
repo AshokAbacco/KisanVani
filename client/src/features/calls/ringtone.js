@@ -24,16 +24,38 @@ if (typeof window !== 'undefined') {
   ['pointerdown', 'keydown', 'touchstart'].forEach((e) => window.addEventListener(e, unlock, { passive: true }));
 }
 
-const beep = (c, freqs, at, length, volume) => {
+/**
+ * Loud output chain for the ringtone: a limiter lets it play at full volume without distorting on
+ * small phone speakers. (Web pages always play at the phone's MEDIA volume — the system ringtone and
+ * ringer volume are not available to websites.)
+ */
+let loudOut = null;
+const loud = (c) => {
+  if (loudOut && loudOut.context === c) return loudOut;
+  const limiter = c.createDynamicsCompressor();
+  limiter.threshold.setValueAtTime(-6, c.currentTime);
+  limiter.knee.setValueAtTime(0, c.currentTime);
+  limiter.ratio.setValueAtTime(20, c.currentTime);
+  limiter.attack.setValueAtTime(0.002, c.currentTime);
+  limiter.release.setValueAtTime(0.1, c.currentTime);
+  const master = c.createGain();
+  master.gain.setValueAtTime(1, c.currentTime);
+  limiter.connect(master);
+  master.connect(c.destination);
+  loudOut = limiter;
+  return loudOut;
+};
+
+const beep = (c, freqs, at, length, volume, { type = 'sine', out = c.destination } = {}) => {
   const gain = c.createGain();
-  gain.connect(c.destination);
+  gain.connect(out);
   gain.gain.setValueAtTime(0.0001, at);
   gain.gain.exponentialRampToValueAtTime(volume, at + 0.03);
   gain.gain.setValueAtTime(volume, at + length - 0.05);
   gain.gain.exponentialRampToValueAtTime(0.0001, at + length);
   freqs.forEach((f) => {
     const osc = c.createOscillator();
-    osc.type = 'sine';
+    osc.type = type;
     osc.frequency.setValueAtTime(f, at);
     osc.connect(gain);
     osc.start(at);
@@ -61,14 +83,16 @@ const loop = (pattern, everyMs, vibrate) => {
 };
 
 const ring = (c, t) => {
-  // A bright two-tone "brr-brr", twice.
-  [0, 0.45].forEach((d) => {
-    beep(c, [988, 1319], t + d, 0.18, 0.12);
-    beep(c, [1319, 1568], t + d + 0.2, 0.18, 0.1);
+  // A loud, bright phone-style ring: a quick rising four-note phrase, played twice.
+  // 1–2.5 kHz is where phone speakers are loudest; triangle waves add harmonics that cut through noise.
+  const out = loud(c);
+  const notes = [1047, 1319, 1568, 2093];
+  [0, 0.75].forEach((phrase) => {
+    notes.forEach((f, i) => beep(c, [f, f * 1.005], t + phrase + i * 0.11, 0.16, 0.9, { type: 'triangle', out }));
   });
 };
 
-const ringback = (c, t) => beep(c, [440, 480], t, 1.2, 0.05); // classic "tuuut"
+const ringback = (c, t) => beep(c, [440, 480], t, 1.2, 0.12); // classic "tuuut"
 
 /** Incoming call ringtone, in one tab only. Returns stop(). */
 export const startRingtone = () => {
@@ -76,7 +100,7 @@ export const startRingtone = () => {
   let stopSound = null;
   const play = () => {
     if (stopped) return Promise.resolve();
-    stopSound = loop(ring, 2600, [400, 200, 400]);
+    stopSound = loop(ring, 2400, [500, 200, 500, 200, 500]);
     return new Promise((resolve) => {
       const wait = setInterval(() => {
         if (stopped) {

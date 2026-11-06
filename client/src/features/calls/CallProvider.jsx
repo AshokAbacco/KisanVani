@@ -6,6 +6,7 @@ import { useI18n } from '../../i18n';
 import { CallSession, openMedia } from './callSession';
 import { playHangupTone, startRingback, startRingtone } from './ringtone';
 import CallOverlay from './CallOverlay';
+import { askCallAlerts, showIncomingAlert } from './callAlerts';
 
 /**
  * Voice & video calls for the whole dashboard. Mounted once in DashboardLayout, so an incoming call
@@ -42,7 +43,7 @@ const load = () => {
 };
 
 /** Server reply codes for call:start → what the end screen says. */
-const START_FAILURE = { BUSY: 'BUSY', ALREADY_IN_CALL: 'ALREADY_IN_CALL', FORBIDDEN: 'FORBIDDEN', NOT_FOUND: 'FORBIDDEN', NETWORK: 'NETWORK', FAILED: 'NETWORK' };
+const START_FAILURE = { BUSY: 'BUSY', ALREADY_IN_CALL: 'ALREADY_IN_CALL', FORBIDDEN: 'FORBIDDEN', NOT_FOUND: 'FORBIDDEN', NETWORK: 'NETWORK', FAILED: 'UNAVAILABLE' };
 
 let iceCache = null; // { promise, until }
 const getIceServers = () => {
@@ -191,6 +192,7 @@ export const CallProvider = ({ children }) => {
         toast.info(t('calls.alreadyInCall', 'You are already in a call.'));
         return;
       }
+      askCallAlerts(); // a click: the moment browsers allow asking for notification permission
       clearTimeout(endTimer.current);
       cancelStart.current = false;
       setUi({ phase: 'outgoing', status: 'STARTING', type, isCaller: true, partner, conversationId, callId: null, answeredAt: null });
@@ -242,6 +244,7 @@ export const CallProvider = ({ children }) => {
   const accept = useCallback(async () => {
     const cur = uiRef.current;
     if (!cur || cur.phase !== 'incoming') return;
+    askCallAlerts();
     stopTone();
     setUi({ ...cur, phase: 'connecting' });
     const mediaPromise = openMedia(cur.type);
@@ -276,6 +279,7 @@ export const CallProvider = ({ children }) => {
   const decline = useCallback(() => {
     const cur = uiRef.current;
     if (!cur || cur.phase !== 'incoming') return;
+    askCallAlerts();
     getSocket().emit('call:reject', { callId: cur.callId });
     close();
   }, [close]);
@@ -346,7 +350,13 @@ export const CallProvider = ({ children }) => {
       clearTimeout(endTimer.current);
       setUi({ phase: 'incoming', callId: call.id, conversationId: call.conversationId, type: call.type, isCaller: false, partner: caller, answeredAt: null });
       stopTone();
-      toneRef.current = startRingtone();
+      // Ringtone in the page, plus a system notification (phone's sound + vibration) if the page is in the background.
+      const stopRing = startRingtone();
+      const closeAlert = showIncomingAlert({ callId: call.id, caller, type: call.type });
+      toneRef.current = () => {
+        stopRing();
+        closeAlert();
+      };
     };
 
     const onRinging = ({ callId }) => mine(callId) && setUi((u) => (u.phase === 'outgoing' ? { ...u, status: 'RINGING' } : u));
