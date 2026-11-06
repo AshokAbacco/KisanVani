@@ -172,31 +172,20 @@ const graceSession = async (record) => ({
   user: await repo.findWithProfile(record.userId),
 });
 
-/** Rotates a refresh token. Re-use of a revoked token revokes the whole token family (theft detection). */
-const refresh = async (token, meta) => {
-  if (!token) throw new ApiError(401, 'No session', 'NO_REFRESH_TOKEN');
-  const record = await prisma.refreshToken.findUnique({ where: { tokenHash: refreshHash(token) }, include: { user: true } });
-  if (!record) throw new ApiError(401, 'Invalid session', 'INVALID_REFRESH_TOKEN');
-  if (record.user.status !== 'ACTIVE') throw new ApiError(403, 'Your account is not active', 'ACCOUNT_INACTIVE');
-
-  if (record.revokedAt) {
-    const sameBrowserRace = record.replacedBy && Date.now() - record.revokedAt.getTime() < REUSE_GRACE_MS && record.expiresAt > new Date();
-    if (sameBrowserRace) return graceSession(record);
-    await prisma.refreshToken.updateMany({ where: { family: record.family, revokedAt: null }, data: { revokedAt: new Date() } });
-    throw new ApiError(401, 'Session is no longer valid. Please sign in again.', 'REFRESH_TOKEN_REUSED');
-  }
-  if (record.expiresAt < new Date()) throw new ApiError(401, 'Session expired', 'REFRESH_TOKEN_EXPIRED');
-
-  // Rotation in as few database round trips as possible (each one is slow when the database is far away):
-  // 1. claim the old token — the conditional update lets only one of two concurrent refreshes win,
-  //    and the profile loads at the same time;
-  // 2. store the new token (its id was chosen up front so the claim could point to it).
+/**
+ * Replaces refresh token `fromId` with a new one in the same family, in as few database round trips as
+ * possible (each one is slow when the database is far away):
+ * 1. claim the old token — the conditional update lets only one of two concurrent refreshes win,
+ *    and the profile loads at the same time;
+ * 2. store the new token (its id was chosen up front so the claim could point to it).
+ */
+const rotate = async (fromId, record, meta) => {
   const nextId = crypto.randomUUID();
   const [claimed, profileUser] = await Promise.all([
-    prisma.refreshToken.updateMany({ where: { id: record.id, revokedAt: null }, data: { revokedAt: new Date(), replacedBy: nextId } }),
+    prisma.refreshToken.updateMany({ where: { id: fromId, revokedAt: null }, data: { revokedAt: new Date(), replacedBy: nextId } }),
     repo.findWithProfile(record.userId),
   ]);
-  // Lost the race to another tab of the same browser a moment ago: same as the grace case above.
+  // Lost the race to another tab of the same browser a moment ago: same as the grace case.
   if (claimed.count !== 1) return { accessToken: signAccessToken(record.user), refreshToken: null, user: profileUser };
 
   let next;
@@ -204,11 +193,43 @@ const refresh = async (token, meta) => {
     next = await issueRefreshToken(record.userId, meta, record.family, prisma, nextId);
   } catch (err) {
     // Could not store the new token: give the old one back so the user stays signed in.
-    await prisma.refreshToken.updateMany({ where: { id: record.id, replacedBy: nextId }, data: { revokedAt: null, replacedBy: null } }).catch(() => {});
+    await prisma.refreshToken.updateMany({ where: { id: fromId, replacedBy: nextId }, data: { revokedAt: null, replacedBy: null } }).catch(() => {});
     throw err;
   }
-
   return { accessToken: signAccessToken(record.user), refreshToken: next.token, user: profileUser };
+};
+
+/**
+ * Rotates a refresh token. A user stays signed in until they press "Log out" (or change their password,
+ * or an admin deactivates them): every visit renews the session for another REFRESH_TOKEN_TTL_DAYS.
+ *
+ * Re-use of a replaced token:
+ *  - within a few seconds → tabs of one browser racing each other (grace session);
+ *  - later, but its replacement was never used → the reply carrying the new cookie never arrived
+ *    (weak mobile signal, closed tab, server restart). The browser still only has this token, so
+ *    the session continues instead of signing the user out;
+ *  - later, and the replacement was already used → two different copies of the cookie exist, which means
+ *    it was copied: the whole session family is ended (theft protection).
+ */
+const refresh = async (token, meta) => {
+  if (!token) throw new ApiError(401, 'No session', 'NO_REFRESH_TOKEN');
+  const record = await prisma.refreshToken.findUnique({ where: { tokenHash: refreshHash(token) }, include: { user: true } });
+  if (!record) throw new ApiError(401, 'Invalid session', 'INVALID_REFRESH_TOKEN');
+  if (record.user.status !== 'ACTIVE') throw new ApiError(403, 'Your account is not active', 'ACCOUNT_INACTIVE');
+  if (record.expiresAt < new Date()) throw new ApiError(401, 'Session expired', 'REFRESH_TOKEN_EXPIRED');
+
+  if (!record.revokedAt) return rotate(record.id, record, meta);
+
+  if (record.replacedBy) {
+    if (Date.now() - record.revokedAt.getTime() < REUSE_GRACE_MS) return graceSession(record);
+    const successor = await prisma.refreshToken.findUnique({ where: { id: record.replacedBy }, select: { id: true, revokedAt: true, expiresAt: true } });
+    // The new cookie never reached the browser: continue from the unused replacement.
+    if (successor && !successor.revokedAt && successor.expiresAt > new Date()) return rotate(successor.id, record, meta);
+  }
+
+  // Signed out, password changed, or a copied cookie: end every session of this family.
+  await prisma.refreshToken.updateMany({ where: { family: record.family, revokedAt: null }, data: { revokedAt: new Date() } });
+  throw new ApiError(401, 'Session is no longer valid. Please sign in again.', 'REFRESH_TOKEN_REUSED');
 };
 
 const logout = async (token) => {

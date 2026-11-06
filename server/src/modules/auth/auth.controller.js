@@ -36,7 +36,9 @@ const refresh = async (req, res) => {
   try {
     return sendSession(res, await service.refresh(req.cookies?.[COOKIE], meta(req)));
   } catch (err) {
-    res.clearCookie(COOKIE, { ...cookieOptions(), maxAge: undefined });
+    // Only when the session is really over. A database hiccup, timeout or server restart must not
+    // delete the cookie, or the user would be signed out by something they didn't do.
+    if (err.statusCode === 401) res.clearCookie(COOKIE, { ...cookieOptions(), maxAge: undefined });
     throw err;
   }
 };

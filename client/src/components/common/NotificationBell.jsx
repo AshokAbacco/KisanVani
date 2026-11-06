@@ -1,14 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Bell, MessageCircle } from 'lucide-react';
+import { Bell, MessageCircle, PhoneMissed } from 'lucide-react';
 import { notificationsApi } from '../../services';
 import { getSocket } from '../../services/socket';
 import { timeAgo } from '../../utils/format';
 import { playNotificationSound } from '../../utils/notificationSound';
 import { useToast } from '../../context/ToastContext';
-import { useI18n } from '../../i18n';
+import { translate, useI18n } from '../../i18n';
 
 const CHAT = 'CHAT_MESSAGE';
+const MISSED_CALL = 'CALL_MISSED';
+/** The server stores missed-call text in English; show it in the user's language. */
+const missedCallText = (n) => (/video/i.test(n.message) ? translate('calls.log.missedVideo', 'Missed video call') : translate('calls.log.missedVoice', 'Missed voice call'));
 
 /**
  * Bell with unread count; new notifications arrive over Socket.IO with a sound and a toast.
@@ -54,7 +57,7 @@ const NotificationBell = ({ allLink }) => {
         return;
       }
       playNotificationSound(soundKey);
-      toast.info(n.type === CHAT ? `${n.title}: ${n.message}` : n.title);
+      toast.info(n.type === CHAT ? `${n.title}: ${n.message}` : n.type === MISSED_CALL ? `${missedCallText(n)}: ${n.title}` : n.title);
     };
     // Chat notifications of a conversation were read (it was opened, cleared or deleted somewhere).
     const onSync = ({ link, unread: count }) => {
@@ -120,12 +123,17 @@ const NotificationBell = ({ allLink }) => {
                       <MessageCircle className="h-4 w-4" />
                     </span>
                   )}
+                  {n.type === MISSED_CALL && (
+                    <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-red-50 text-red-600" aria-hidden>
+                      <PhoneMissed className="h-4 w-4" />
+                    </span>
+                  )}
                   <span className="min-w-0">
                     <span className="block text-sm font-semibold">
                       {n.title}
                       {n.type === CHAT && <span className="ml-1.5 text-xs font-normal text-green-700">{t('components.notifications.newMessage', 'New message')}</span>}
                     </span>
-                    <span className="line-clamp-2 block text-sm text-soil-500">{n.message}</span>
+                    <span className={`line-clamp-2 block text-sm ${n.type === MISSED_CALL ? 'text-red-600' : 'text-soil-500'}`}>{n.type === MISSED_CALL ? missedCallText(n) : n.message}</span>
                     <span className="mt-0.5 block text-xs text-soil-400">{timeAgo(n.createdAt)}</span>
                   </span>
                 </button>

@@ -1,9 +1,10 @@
-import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { ArrowLeft, ChevronDown, EllipsisVertical, Eraser, Lock, Pencil, Phone, SendHorizontal, Trash2, X } from 'lucide-react';
+import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { ArrowLeft, ChevronDown, EllipsisVertical, Eraser, Lock, Pencil, Phone, PhoneIncoming, PhoneMissed, PhoneOutgoing, SendHorizontal, Trash2, Video, X } from 'lucide-react';
 import { PresenceAvatar } from './ConversationList';
 import MessageTicks from './MessageTicks';
 import { dayLabel, presenceText, sameDay } from './chatFormat';
 import { formatTime } from '../../utils/format';
+import { formatDuration } from '../calls/callUi';
 import { useI18n } from '../../i18n';
 
 const MAX_LENGTH = 4000;
@@ -114,8 +115,51 @@ const Bubble = ({ message, mine, onEdit }) => {
   );
 };
 
+/** What a call entry in the conversation says, from my point of view. */
+const callSummary = (call, t) => {
+  const video = call.type === 'VIDEO';
+  const out = call.direction === 'OUTGOING';
+  if (call.status === 'ENDED') return { text: video ? t('calls.log.video', 'Video call') : t('calls.log.voice', 'Voice call'), detail: formatDuration(call.duration), missed: false };
+  if (!out && ['MISSED', 'CANCELLED', 'BUSY'].includes(call.status))
+    return { text: video ? t('calls.log.missedVideo', 'Missed video call') : t('calls.log.missedVoice', 'Missed voice call'), missed: true };
+  const key = { CANCELLED: 'cancelled', REJECTED: out ? 'declinedByThem' : 'declinedByMe', MISSED: 'noAnswer', BUSY: 'busy' }[call.status] || 'cancelled';
+  const fallback = { cancelled: 'Cancelled call', declinedByThem: 'Call declined', declinedByMe: 'You declined', noAnswer: 'No answer', busy: 'Busy' }[key];
+  return { text: t(`calls.log.${key}`, fallback), detail: video ? t('calls.log.video', 'Video call') : t('calls.log.voice', 'Voice call'), missed: false };
+};
+
+/** A call in the conversation (like WhatsApp/Instagram): tap to call back. */
+const CallBubble = ({ call, mine, onCall, canCall }) => {
+  const { t } = useI18n();
+  const { text, detail, missed } = callSummary(call, t);
+  const Icon = missed ? PhoneMissed : call.type === 'VIDEO' ? Video : mine ? PhoneOutgoing : PhoneIncoming;
+  return (
+    <div className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
+      <button
+        type="button"
+        onClick={() => canCall && onCall(call.type)}
+        disabled={!canCall}
+        className={`flex min-w-[200px] max-w-[85%] items-center gap-3 rounded-lg px-3 py-2 text-left shadow-[0_1px_0.5px_rgba(11,20,26,0.13)] transition enabled:hover:brightness-[0.98] sm:max-w-[70%] ${
+          mine ? 'rounded-tr-none bg-[#d9fdd3]' : 'rounded-tl-none bg-white'
+        }`}
+        aria-label={`${text}. ${canCall ? t('calls.callBack', 'Call back') : ''}`}
+      >
+        <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-full ${missed ? 'bg-red-100 text-red-600' : 'bg-soil-100 text-soil-600'}`}>
+          <Icon className="h-[18px] w-[18px]" aria-hidden />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className={`block truncate text-[15px] font-medium ${missed ? 'text-red-700' : 'text-soil'}`}>{text}</span>
+          <span className="block truncate text-xs text-soil-500">
+            {detail && <span className="num">{detail} · </span>}
+            <time className="num" dateTime={call.createdAt}>{formatTime(call.createdAt)}</time>
+          </span>
+        </span>
+      </button>
+    </div>
+  );
+};
+
 /** Right pane: header with presence, the message history and the composer. */
-const ChatWindow = ({ me, conversation, messages, hasMore, loading, typing, onBack, onLoadOlder, onSend, onEdit, onTyping, onClear, onDelete }) => {
+const ChatWindow = ({ me, conversation, messages, calls = [], hasMore, loading, typing, onBack, onLoadOlder, onSend, onEdit, onTyping, onClear, onDelete, onCall, inCall = false }) => {
   const { t } = useI18n();
   const partner = conversation.partner;
   const [text, setText] = useState('');
@@ -148,7 +192,18 @@ const ChatWindow = ({ me, conversation, messages, hasMore, loading, typing, onBa
     } else if (stickToBottom.current) {
       el.scrollTop = el.scrollHeight;
     }
-  }, [messages]);
+  }, [messages, calls]);
+
+  // Messages and calls, in time order. Calls older than the oldest loaded message wait until
+  // "load earlier" brings that part of the conversation in.
+  const timeline = useMemo(() => {
+    const from = hasMore && messages.length ? new Date(messages[0].createdAt) : null;
+    const callItems = calls
+      .filter((c) => !from || new Date(c.createdAt) >= from)
+      .map((c) => ({ ...c, kind: 'call', senderId: c.direction === 'OUTGOING' ? me.id : partner.id }));
+    return [...messages, ...callItems].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+  }, [messages, calls, hasMore, me.id, partner.id]);
+  const canCall = conversation.canMessage !== false && !!onCall && !inCall;
 
   const onScroll = () => {
     const el = scroller.current;
@@ -230,7 +285,7 @@ const ChatWindow = ({ me, conversation, messages, hasMore, loading, typing, onBa
   return (
     <section className="flex h-full min-h-0 flex-col" aria-label={partner.name}>
       {/* Header */}
-      <header className="flex h-16 shrink-0 items-center gap-2 border-b border-soil-200 bg-soil-50 px-2 sm:px-4">
+      <header className="flex h-16 shrink-0 items-center gap-1 border-b border-soil-200 bg-soil-50 px-2 sm:gap-2 sm:px-4">
         <button type="button" onClick={onBack} className="grid h-10 w-10 place-items-center rounded-full text-soil-600 hover:bg-soil-200 md:hidden" aria-label={t('chat.back', 'Back to chats')}>
           <ArrowLeft className="h-5 w-5" aria-hidden />
         </button>
@@ -242,10 +297,30 @@ const ChatWindow = ({ me, conversation, messages, hasMore, loading, typing, onBa
           </p>
           <p className={`truncate text-xs ${typing || partner.online ? 'text-green-700' : 'text-soil-500'}`}>{presenceText(partner, typing)}</p>
         </div>
-        {partner.mobile && (
-          <a href={`tel:${partner.mobile}`} className="grid h-10 w-10 place-items-center rounded-full text-soil-600 hover:bg-soil-200" aria-label={t('chat.call', 'Call {name}', { name: partner.name })} title={partner.mobile}>
-            <Phone className="h-5 w-5" aria-hidden />
-          </a>
+        {/* In-app voice & video calls (WebRTC) — never the phone's dialer */}
+        {onCall && conversation.canMessage !== false && (
+          <>
+            <button
+              type="button"
+              onClick={() => onCall('VOICE')}
+              disabled={inCall}
+              className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-soil-600 transition hover:bg-soil-200 disabled:cursor-not-allowed disabled:opacity-40 sm:h-10 sm:w-10"
+              aria-label={t('calls.voiceCallWith', 'Voice call {name}', { name: partner.name })}
+              title={t('calls.voiceCall', 'Voice call')}
+            >
+              <Phone className="h-5 w-5" aria-hidden />
+            </button>
+            <button
+              type="button"
+              onClick={() => onCall('VIDEO')}
+              disabled={inCall}
+              className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-soil-600 transition hover:bg-soil-200 disabled:cursor-not-allowed disabled:opacity-40 sm:h-10 sm:w-10"
+              aria-label={t('calls.videoCallWith', 'Video call {name}', { name: partner.name })}
+              title={t('calls.videoCall', 'Video call')}
+            >
+              <Video className="h-5 w-5" aria-hidden />
+            </button>
+          </>
         )}
         <HeaderMenu onClear={onClear} onDelete={onDelete} />
       </header>
@@ -282,25 +357,25 @@ const ChatWindow = ({ me, conversation, messages, hasMore, loading, typing, onBa
 
         {loading && !messages.length && <p className="py-10 text-center text-sm text-soil-500">{t('common.loading')}</p>}
 
-        {!loading && !messages.length && (
+        {!loading && !timeline.length && (
           <p className="mx-auto mt-10 max-w-xs rounded-lg bg-white/80 px-4 py-3 text-center text-sm text-soil-500 shadow-sm">{t('chat.sayHello', 'Say hello to {name} 👋', { name: partner.name })}</p>
         )}
 
         <div className="space-y-1">
-          {messages.map((m, i) => {
-            const prev = messages[i - 1];
+          {timeline.map((m, i) => {
+            const prev = timeline[i - 1];
             const newDay = !prev || !sameDay(prev.createdAt, m.createdAt);
             const mine = m.senderId === me.id;
             const gap = prev && !newDay && prev.senderId !== m.senderId;
             return (
-              <Fragment key={m.id}>
+              <Fragment key={m.kind === 'call' ? `call-${m.id}` : m.id}>
                 {newDay && (
                   <div className="sticky top-0 z-10 flex justify-center py-2">
                     <span className="rounded-lg bg-white/95 px-3 py-1 text-xs font-medium text-soil-600 shadow-sm">{dayLabel(m.createdAt)}</span>
                   </div>
                 )}
                 <div className={gap ? 'pt-2' : ''}>
-                  <Bubble message={m} mine={mine} onEdit={startEdit} />
+                  {m.kind === 'call' ? <CallBubble call={m} mine={mine} onCall={onCall} canCall={canCall} /> : <Bubble message={m} mine={mine} onEdit={startEdit} />}
                 </div>
               </Fragment>
             );

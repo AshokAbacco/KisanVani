@@ -5,7 +5,8 @@ import ConversationList from './ConversationList';
 import NewChatPanel from './NewChatPanel';
 import ChatWindow from './ChatWindow';
 import ConfirmDialog from '../../components/modals/ConfirmDialog';
-import { chatApi } from '../../services';
+import { callsApi, chatApi } from '../../services';
+import { useCall } from '../calls/CallProvider';
 import { getSocket } from '../../services/socket';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
@@ -39,6 +40,7 @@ const ChatPage = () => {
   const { t } = useI18n();
   const { user: me } = useAuth();
   const toast = useToast();
+  const caller = useCall();
   const navigate = useNavigate();
   const { conversationId: activeId } = useParams();
   const base = `${roleBase(me.role)}/chat`;
@@ -48,6 +50,7 @@ const ChatPage = () => {
   const [panel, setPanel] = useState('list'); // list | new
   const [opened, setOpened] = useState(null); // active conversation when it is not (yet) in the list
   const [messages, setMessages] = useState([]);
+  const [calls, setCalls] = useState([]); // call history of the open conversation
   const [hasMore, setHasMore] = useState(false);
   const [msgLoading, setMsgLoading] = useState(false);
   const [typing, setTyping] = useState({});
@@ -104,8 +107,13 @@ const ChatPage = () => {
   // Opening a conversation (from the list, "+", or a link).
   useEffect(() => {
     setMessages([]);
+    setCalls([]);
     setHasMore(false);
     if (!activeId) return;
+    callsApi
+      .history(activeId, { limit: 100 })
+      .then((list) => activeRef.current === activeId && setCalls(list))
+      .catch(() => {});
     setPanel('list');
     if (!conversations.some((c) => c.id === activeId)) {
       chatApi
@@ -186,11 +194,17 @@ const ChatPage = () => {
 
     const onVisible = () => isVisible() && activeRef.current && markRead(activeRef.current);
 
+    // A call in this conversation finished: show it among the messages.
+    const onCallLog = ({ conversationId, call }) => {
+      if (conversationId === activeRef.current) setCalls((list) => (list.some((c) => c.id === call.id) ? list : [call, ...list]));
+    };
+
     s.on('chat:message', onMessage);
     s.on('chat:message-updated', onUpdated);
     s.on('chat:status', onStatus);
     s.on('chat:presence', onPresence);
     s.on('chat:typing', onTyping);
+    s.on('call:log', onCallLog);
     s.io.on('reconnect', onReconnect);
     document.addEventListener('visibilitychange', onVisible);
     const timers = typingTimers.current;
@@ -200,6 +214,7 @@ const ChatPage = () => {
       s.off('chat:status', onStatus);
       s.off('chat:presence', onPresence);
       s.off('chat:typing', onTyping);
+      s.off('call:log', onCallLog);
       s.io.off('reconnect', onReconnect);
       document.removeEventListener('visibilitychange', onVisible);
       Object.values(timers).forEach(clearTimeout);
@@ -260,6 +275,7 @@ const ChatPage = () => {
       if (confirm === 'clear') {
         await chatApi.clear(activeId);
         setMessages([]);
+        setCalls([]);
         setHasMore(false);
         setConversations((list) => list.map((c) => (c.id === activeId ? { ...c, lastMessage: null, unread: 0 } : c)));
         toast.success(t('chat.cleared', 'Chat cleared'));
@@ -283,7 +299,7 @@ const ChatPage = () => {
   // Fills the space under the header; on phones only one pane is shown at a time.
   return (
     <div className="-mx-4 -mb-24 -mt-6 h-[calc(100dvh-4rem-3.5rem)] overflow-hidden border-soil-200 bg-white sm:-mx-6 lg:mx-0 lg:-mb-4 lg:mt-0 lg:h-[calc(100dvh-4rem-4rem)] lg:rounded-2xl lg:border lg:shadow-sm">
-      <div className="grid h-full min-h-0 md:grid-cols-[minmax(300px,380px)_1fr]">
+      <div className="grid h-full min-h-0 grid-cols-1 md:grid-cols-[minmax(300px,380px)_minmax(0,1fr)]">
         <aside className={`h-full min-h-0 border-r border-soil-200 ${activeId ? 'hidden md:block' : 'block'}`}>
           {panel === 'new' ? (
             <NewChatPanel onBack={() => setPanel('list')} onPick={pickContact} />
@@ -292,7 +308,7 @@ const ChatPage = () => {
           )}
         </aside>
 
-        <div className={`h-full min-h-0 ${activeId ? 'block' : 'hidden md:block'}`}>
+        <div className={`h-full min-h-0 min-w-0 ${activeId ? 'block' : 'hidden md:block'}`}>
           {active ? (
             <ChatWindow
               me={me}
@@ -308,6 +324,9 @@ const ChatPage = () => {
               onTyping={typingPing}
               onClear={() => setConfirm('clear')}
               onDelete={() => setConfirm('delete')}
+              calls={calls}
+              inCall={!!caller?.inCall}
+              onCall={caller ? (type) => caller.startCall({ conversationId: active.id, partner: active.partner, type }) : undefined}
             />
           ) : (
             <div className="hidden h-full flex-col items-center justify-center border-b-[6px] border-green-600 bg-soil-50 px-8 text-center md:flex">

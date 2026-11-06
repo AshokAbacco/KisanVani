@@ -14,6 +14,8 @@ const start = async () => {
     await prisma.$queryRaw`SELECT 1`;
     logger.info('Connected to PostgreSQL');
     await prisma.warmUp(); // open a few pooled connections now, not on the first visitor's request
+    // Calls live in memory, so none can survive a restart: close any the last run left open.
+    await require('./modules/calls/calls.service').closeStaleCalls().catch((err) => logger.warn(`Closing old calls failed: ${err.message}`));
   } catch (err) {
     logger.error(`Cannot connect to PostgreSQL. Check DATABASE_URL in server/.env (${err.message})`);
     process.exit(1);

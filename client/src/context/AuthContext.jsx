@@ -71,13 +71,11 @@ export const AuthProvider = ({ children }) => {
             setHint(false);
             setWaking(false);
             setStatus('anonymous');
-          } else if (attempt < RETRY_DELAYS_MS.length) {
-            setWaking(true);
-            timer = setTimeout(() => restore(attempt + 1), RETRY_DELAYS_MS[attempt]);
           } else {
-            // Still unreachable: show the sign-in page but keep the hint, so the next reload tries again.
-            setWaking(false);
-            setStatus('anonymous');
+            // Server asleep, restarting or offline: keep showing "waking up" and keep trying (every 20 s
+            // after the first few tries). The user is never sent to the sign-in page for this.
+            setWaking(true);
+            timer = setTimeout(() => restore(attempt + 1), RETRY_DELAYS_MS[Math.min(attempt, RETRY_DELAYS_MS.length - 1)]);
           }
         });
     restore();

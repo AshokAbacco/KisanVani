@@ -14,7 +14,8 @@ const schema = z.object({
   JWT_ACCESS_SECRET: z.string().min(8),
   JWT_REFRESH_SECRET: z.string().min(8),
   JWT_ACCESS_EXPIRES_IN: z.string().default('15m'),
-  REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().positive().default(7),
+  // Sliding: every visit renews the session for this many days. Browsers keep cookies for at most 400 days.
+  REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().positive().max(400).default(365),
   BCRYPT_ROUNDS: z.coerce.number().int().min(4).max(15).default(10),
   COOKIE_SECURE: bool(false),
   COOKIE_SAME_SITE: z.enum(['lax', 'strict', 'none']).default('lax'),
@@ -39,6 +40,18 @@ const schema = z.object({
 
   TRACKING_MIN_INTERVAL_SEC: z.coerce.number().min(1).default(5),
   TRACKING_STALE_AFTER_SEC: z.coerce.number().min(10).default(120),
+  // Voice & video calls (WebRTC). STUN finds the public address; TURN relays media when a direct
+  // connection is impossible (mobile data, strict office/hotel networks) — needed in production.
+  STUN_URLS: z.string().default('stun:stun.l.google.com:19302,stun:stun1.l.google.com:19302'),
+  TURN_URLS: z.string().optional(), // e.g. turn:turn.example.com:3478,turns:turn.example.com:5349?transport=tcp
+  TURN_USERNAME: z.string().optional(), // static credentials …
+  TURN_CREDENTIAL: z.string().optional(),
+  TURN_SECRET: z.string().optional(), // … or coturn "use-auth-secret": short-lived credentials per user
+  TURN_CREDENTIAL_TTL_SEC: z.coerce.number().int().min(300).default(6 * 3600),
+  CLOUDFLARE_TURN_KEY_ID: z.string().optional(), // … or Cloudflare Realtime TURN
+  CLOUDFLARE_TURN_API_TOKEN: z.string().optional(),
+  CALL_RING_TIMEOUT_SEC: z.coerce.number().int().min(10).max(120).default(40),
+  CALL_RECONNECT_GRACE_SEC: z.coerce.number().int().min(5).max(120).default(30),
 
   LOG_LEVEL: z.string().default('info'),
   LOG_TO_FILE: bool(true),
@@ -107,6 +120,18 @@ const config = {
     staleAfterSec: env.TRACKING_STALE_AFTER_SEC,
   },
   log: { level: env.LOG_LEVEL, toFile: env.LOG_TO_FILE && env.NODE_ENV !== 'test' },
+  calls: {
+    stunUrls: env.STUN_URLS.split(',').map((s) => s.trim()).filter(Boolean),
+    turnUrls: (env.TURN_URLS || '').split(',').map((s) => s.trim()).filter(Boolean),
+    turnUsername: env.TURN_USERNAME,
+    turnCredential: env.TURN_CREDENTIAL,
+    turnSecret: env.TURN_SECRET,
+    turnTtlSec: env.TURN_CREDENTIAL_TTL_SEC,
+    cloudflareKeyId: env.CLOUDFLARE_TURN_KEY_ID,
+    cloudflareToken: env.CLOUDFLARE_TURN_API_TOKEN,
+    ringTimeoutMs: env.CALL_RING_TIMEOUT_SEC * 1000,
+    reconnectGraceMs: env.CALL_RECONNECT_GRACE_SEC * 1000,
+  },
 };
 
 // In development, also allow localhost / 127.0.0.1 / ::1 / private LAN IPs on any port.

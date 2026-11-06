@@ -205,6 +205,11 @@ export const chatApi = {
   remove: (id) => dataOf(api.delete(`/chat/conversations/${id}`)),
 };
 
+export const callsApi = {
+  iceServers: () => dataOf(api.get('/calls/ice-servers')),
+  history: (conversationId, params) => dataOf(api.get('/calls', { params: { conversationId, ...params } })),
+};
+
 export const notificationsApi = {
   list: (params) => unwrap(api.get('/notifications', { params })),
   unreadCount: () => dataOf(api.get('/notifications/unread-count')),

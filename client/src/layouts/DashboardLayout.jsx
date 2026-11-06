@@ -11,6 +11,7 @@ import { useI18n } from '../i18n';
 import { NAV, QUICK_NAV, PROFILE_LINKS, findActive } from '../constants/nav';
 import { ROLES } from '../constants/roles';
 import useChatUnread from '../hooks/useChatUnread';
+import { CallProvider } from '../features/calls/CallProvider';
 
 /** `badges` maps a sidebar item key to a count shown beside it (e.g. unread chat messages). */
 const SidebarNav = ({ role, active, onNavigate, badges = {} }) => {
@@ -133,78 +134,81 @@ const DashboardLayout = () => {
   const quick = QUICK_NAV[role].map((key) => NAV[role].find((it) => it.key === key)).filter(Boolean);
   const notificationsPath = role === 'ADMIN' ? '/admin/notifications' : `${meta.base}/notifications`;
 
+  // CallProvider: calls work on every dashboard page, so an incoming call rings wherever the user is.
   return (
-    <div data-role={role} className="min-h-screen bg-leafwhite">
-      {/* Desktop sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-soil-200 bg-white lg:flex">
-        <div className="flex h-16 items-center border-b border-soil-200 px-5">
-          <Logo to={meta.base} />
-        </div>
-        <div className="mx-3 mt-3 flex items-center gap-2 rounded-lg accent-soft px-3 py-2">
-          <meta.icon className="h-4 w-4 accent-text" aria-hidden />
-          <span className="text-sm font-semibold accent-text">{meta.label}</span>
-        </div>
-        <SidebarNav role={role} active={active} badges={badges} />
-      </aside>
+    <CallProvider>
+      <div data-role={role} className="min-h-screen bg-leafwhite">
+        {/* Desktop sidebar */}
+        <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-soil-200 bg-white lg:flex">
+          <div className="flex h-16 items-center border-b border-soil-200 px-5">
+            <Logo to={meta.base} />
+          </div>
+          <div className="mx-3 mt-3 flex items-center gap-2 rounded-lg accent-soft px-3 py-2">
+            <meta.icon className="h-4 w-4 accent-text" aria-hidden />
+            <span className="text-sm font-semibold accent-text">{meta.label}</span>
+          </div>
+          <SidebarNav role={role} active={active} badges={badges} />
+        </aside>
 
-      {/* Mobile drawer */}
-      {drawer && (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="absolute inset-0 bg-soil/40" onClick={() => setDrawer(false)} aria-hidden />
-          <aside className="absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col bg-white shadow-lift">
-            <div className="flex h-16 items-center justify-between border-b border-soil-200 px-4">
-              <Logo to={meta.base} />
-              <button onClick={() => setDrawer(false)} className="rounded-lg p-2 hover:bg-soil-100" aria-label={t('layout.closeMenu')}>
-                <X className="h-5 w-5" />
+        {/* Mobile drawer */}
+        {drawer && (
+          <div className="fixed inset-0 z-50 lg:hidden">
+            <div className="absolute inset-0 bg-soil/40" onClick={() => setDrawer(false)} aria-hidden />
+            <aside className="absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col bg-white shadow-lift">
+              <div className="flex h-16 items-center justify-between border-b border-soil-200 px-4">
+                <Logo to={meta.base} />
+                <button onClick={() => setDrawer(false)} className="rounded-lg p-2 hover:bg-soil-100" aria-label={t('layout.closeMenu')}>
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              <SidebarNav role={role} active={active} badges={badges} onNavigate={() => setDrawer(false)} />
+            </aside>
+          </div>
+        )}
+
+        <div className="lg:pl-64">
+          <header className="sticky top-0 z-20 flex h-16 items-center justify-between gap-3 border-b border-soil-200 bg-white/95 px-4 backdrop-blur sm:px-6">
+            <div className="flex items-center gap-2">
+              <button onClick={() => setDrawer(true)} className="relative rounded-lg p-2 hover:bg-soil-100 lg:hidden" aria-label={t('layout.openMenu')}>
+                <Menu className="h-5 w-5" />
+                {chatUnread > 0 && <span className="absolute right-1 top-1 h-2.5 w-2.5 rounded-full bg-green-600 ring-2 ring-white" aria-hidden />}
               </button>
+              <span className="hidden text-sm text-soil-500 sm:inline">
+                {role === 'SHOPKEEPER' && user.shopProfile?.shopName}
+                {role === 'FARMER' && (user.farmerProfile?.farmName || t('layout.myFarm'))}
+                {role === 'MANDI_OWNER' && user.mandiProfile?.mandiName}
+                {role === 'DRIVER' && t('layout.licence', '', { number: user.driverProfile?.licenseNumber || '' })}
+                {role === 'ADMIN' && t('layout.platformAdmin')}
+              </span>
             </div>
-            <SidebarNav role={role} active={active} badges={badges} onNavigate={() => setDrawer(false)} />
-          </aside>
+            <div className="flex items-center gap-1">
+              {/* Same picker as the website navbar: one language for the whole app */}
+              <LanguageSwitcher variant="dashboard" compact className="sm:hidden" />
+              <LanguageSwitcher variant="dashboard" className="hidden sm:block" />
+              <NotificationBell allLink={notificationsPath} />
+              <ProfileMenu user={user} base={meta.base} onLogout={signOut} />
+            </div>
+          </header>
+
+          <main className="mx-auto max-w-[1400px] px-4 pb-24 pt-6 sm:px-6 lg:pb-10">
+            <SectionTabs active={active} pathname={location.pathname} />
+            <ErrorBoundary resetKey={location.pathname}>
+              <Outlet />
+            </ErrorBoundary>
+          </main>
         </div>
-      )}
 
-      <div className="lg:pl-64">
-        <header className="sticky top-0 z-20 flex h-16 items-center justify-between gap-3 border-b border-soil-200 bg-white/95 px-4 backdrop-blur sm:px-6">
-          <div className="flex items-center gap-2">
-            <button onClick={() => setDrawer(true)} className="relative rounded-lg p-2 hover:bg-soil-100 lg:hidden" aria-label={t('layout.openMenu')}>
-              <Menu className="h-5 w-5" />
-              {chatUnread > 0 && <span className="absolute right-1 top-1 h-2.5 w-2.5 rounded-full bg-green-600 ring-2 ring-white" aria-hidden />}
-            </button>
-            <span className="hidden text-sm text-soil-500 sm:inline">
-              {role === 'SHOPKEEPER' && user.shopProfile?.shopName}
-              {role === 'FARMER' && (user.farmerProfile?.farmName || t('layout.myFarm'))}
-              {role === 'MANDI_OWNER' && user.mandiProfile?.mandiName}
-              {role === 'DRIVER' && t('layout.licence', '', { number: user.driverProfile?.licenseNumber || '' })}
-              {role === 'ADMIN' && t('layout.platformAdmin')}
-            </span>
-          </div>
-          <div className="flex items-center gap-1">
-            {/* Same picker as the website navbar: one language for the whole app */}
-            <LanguageSwitcher variant="dashboard" compact className="sm:hidden" />
-            <LanguageSwitcher variant="dashboard" className="hidden sm:block" />
-            <NotificationBell allLink={notificationsPath} />
-            <ProfileMenu user={user} base={meta.base} onLogout={signOut} />
-          </div>
-        </header>
-
-        <main className="mx-auto max-w-[1400px] px-4 pb-24 pt-6 sm:px-6 lg:pb-10">
-          <SectionTabs active={active} pathname={location.pathname} />
-          <ErrorBoundary resetKey={location.pathname}>
-            <Outlet />
-          </ErrorBoundary>
-        </main>
+        {/* Mobile quick navigation */}
+        <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-4 border-t border-soil-200 bg-white lg:hidden" aria-label={t('layout.quickNav')}>
+          {quick.map((it) => (
+            <Link key={it.key} to={it.tabs[0].to} className={`flex flex-col items-center gap-0.5 py-2 text-[11px] ${active?.item === it ? 'accent-text font-semibold' : 'text-soil-500'}`}>
+              <it.icon className="h-5 w-5" aria-hidden />
+              <span className="max-w-full truncate px-1">{it.label}</span>
+            </Link>
+          ))}
+        </nav>
       </div>
-
-      {/* Mobile quick navigation */}
-      <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-4 border-t border-soil-200 bg-white lg:hidden" aria-label={t('layout.quickNav')}>
-        {quick.map((it) => (
-          <Link key={it.key} to={it.tabs[0].to} className={`flex flex-col items-center gap-0.5 py-2 text-[11px] ${active?.item === it ? 'accent-text font-semibold' : 'text-soil-500'}`}>
-            <it.icon className="h-5 w-5" aria-hidden />
-            <span className="max-w-full truncate px-1">{it.label}</span>
-          </Link>
-        ))}
-      </nav>
-    </div>
+    </CallProvider>
   );
 };
 

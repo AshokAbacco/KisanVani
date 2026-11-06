@@ -6,6 +6,7 @@ const logger = require('../config/logger');
 const { setIO, userRoom } = require('./io');
 const registerTrackingHandlers = require('./tracking.socket');
 const registerChatHandlers = require('./chat.socket');
+const registerCallHandlers = require('./call.socket');
 
 /**
  * Socket.IO server. Every connection must present a valid access token; the user is re-loaded
@@ -23,7 +24,7 @@ const initSockets = (httpServer) => {
       const token = socket.handshake.auth?.token;
       if (!token) return next(new Error('UNAUTHORIZED'));
       const payload = jwt.verify(token, config.jwt.accessSecret, { issuer: 'kisanvani', audience: 'kisanvani-app' });
-      const user = await prisma.user.findUnique({ where: { id: payload.sub }, select: { id: true, role: true, status: true, name: true } });
+      const user = await prisma.user.findUnique({ where: { id: payload.sub }, select: { id: true, role: true, status: true, name: true, avatarUrl: true } });
       if (!user || user.status !== 'ACTIVE') return next(new Error('UNAUTHORIZED'));
       socket.data.user = user;
       next();
@@ -38,6 +39,7 @@ const initSockets = (httpServer) => {
     if (user.role === 'ADMIN') socket.join('admins');
     registerTrackingHandlers(io, socket);
     registerChatHandlers(io, socket);
+    registerCallHandlers(io, socket);
     socket.on('error', (err) => logger.warn(`Socket error for ${user.id}: ${err.message}`));
   });
 
