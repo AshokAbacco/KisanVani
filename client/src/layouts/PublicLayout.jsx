@@ -220,9 +220,9 @@ const PublicLayout = () => {
               )}
               {supportEmail && (
                 <li>
-                  <a href={`mailto:${supportEmail}`} className="flex items-start gap-2 hover:text-white">
+                  <a href={`mailto:info.kisanvani@gmail.com`} className="flex items-start gap-2 hover:text-white">
                     <Mail className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-                    <span className="min-w-0 break-all">{supportEmail}</span>
+                    <span className="min-w-0 break-all">info.kisanvani@gmail.com</span>
                   </a>
                 </li>
               )}
